@@ -1,7 +1,13 @@
 // RECONSTRUCTED — the original July 21, 2026 extraction script was not preserved.
+import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const MARKER_CLASS = 'flip-basic-num';
+const DEFAULT_CONCURRENCY = 4;
+const USAGE = [
+  'Usage: node harness/extract_book_text.mjs <url>',
+  '       node harness/extract_book_text.mjs --inventory <path> [--concurrency <1-8>]'
+].join('\n');
 const BLOCK_ENDINGS = /<\/(?:address|article|aside|blockquote|dd|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|table|tbody|td|tfoot|th|thead|tr|ul)\s*>/gi;
 const NAMED_ENTITIES = {
   amp: '&',
@@ -162,10 +168,10 @@ export function extractPageText(html) {
       : `${existing}\n${text}`);
   }
 
-  return {
-    textAvailable: true,
-    pages: [...pagesByNumber].map(([page, text]) => ({ page, text }))
-  };
+  const pages = [...pagesByNumber].map(([page, text]) => ({ page, text }));
+  return pages.length === 0
+    ? { textAvailable: false, pages: [] }
+    : { textAvailable: true, pages };
 }
 
 function validateBookUrl(url) {
@@ -189,18 +195,122 @@ export async function fetchBookText(url, fetchImpl = fetch) {
   return { url, ...extractPageText(await response.text()) };
 }
 
-async function main() {
-  const [url, ...extraArguments] = process.argv.slice(2);
-  if (url === undefined || extraArguments.length > 0) {
-    process.stderr.write('Usage: node harness/extract_book_text.mjs <url>\n');
-    process.exitCode = 1;
-    return;
+function validateInventory(inventory) {
+  if (!Array.isArray(inventory)) {
+    throw new Error('Inventory must be a JSON array');
   }
 
+  inventory.forEach((item, index) => {
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) {
+      throw new Error(`Inventory item ${index + 1} must be an object with an HTTP(S) url`);
+    }
+    try {
+      validateBookUrl(item.url);
+    } catch {
+      throw new Error(`Inventory item ${index + 1} must be an object with an HTTP(S) url`);
+    }
+  });
+}
+
+function validateConcurrency(concurrency) {
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 8) {
+    throw new Error('Concurrency must be an integer from 1 to 8');
+  }
+}
+
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+export async function fetchBookTextInventory(
+  inventory,
+  { concurrency = DEFAULT_CONCURRENCY, fetchImpl = fetch } = {}
+) {
+  validateInventory(inventory);
+  validateConcurrency(concurrency);
+
+  const results = new Array(inventory.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < inventory.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      const item = inventory[index];
+      try {
+        const { textAvailable, pages } = await fetchBookText(item.url, fetchImpl);
+        const result = { ...item, textAvailable, pages };
+        delete result.error;
+        results[index] = result;
+      } catch (error) {
+        const result = { ...item, error: errorMessage(error) };
+        delete result.textAvailable;
+        delete result.pages;
+        results[index] = result;
+      }
+    }
+  }
+
+  const workerCount = Math.min(concurrency, inventory.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
+function parseArguments(arguments_) {
+  if (arguments_.length === 1 && !arguments_[0].startsWith('--')) {
+    return { mode: 'single', url: arguments_[0] };
+  }
+  if (arguments_.length === 2 && arguments_[0] === '--inventory') {
+    return { mode: 'inventory', path: arguments_[1], concurrency: DEFAULT_CONCURRENCY };
+  }
+  if (
+    arguments_.length === 4 &&
+    arguments_[0] === '--inventory' &&
+    arguments_[2] === '--concurrency'
+  ) {
+    if (!/^[1-8]$/.test(arguments_[3])) {
+      throw new Error('Concurrency must be an integer from 1 to 8');
+    }
+    return {
+      mode: 'inventory',
+      path: arguments_[1],
+      concurrency: Number.parseInt(arguments_[3], 10)
+    };
+  }
+  throw new Error(USAGE);
+}
+
+async function readInventory(path) {
+  let serialized;
   try {
-    process.stdout.write(`${JSON.stringify(await fetchBookText(url), null, 2)}\n`);
+    serialized = await readFile(path, 'utf8');
   } catch (error) {
-    process.stderr.write(`${error.message}\n`);
+    throw new Error(`Unable to read inventory: ${errorMessage(error)}`);
+  }
+  try {
+    return JSON.parse(serialized);
+  } catch {
+    throw new Error('Inventory must contain valid JSON');
+  }
+}
+
+async function main() {
+  try {
+    const command = parseArguments(process.argv.slice(2));
+    if (command.mode === 'single') {
+      process.stdout.write(`${JSON.stringify(await fetchBookText(command.url), null, 2)}\n`);
+      return;
+    }
+
+    const results = await fetchBookTextInventory(await readInventory(command.path), {
+      concurrency: command.concurrency
+    });
+    process.stdout.write(`${JSON.stringify(results, null, 2)}\n`);
+    if (results.some((result) => Object.hasOwn(result, 'error'))) {
+      process.exitCode = 1;
+    }
+  } catch (error) {
+    process.stderr.write(`${errorMessage(error)}\n`);
     process.exitCode = 1;
   }
 }

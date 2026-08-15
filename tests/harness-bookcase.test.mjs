@@ -7,6 +7,7 @@ import {
   fetchBookcase,
   normalizeBook
 } from '../harness/extract_bookcase.mjs';
+import { runNodeCli, withHttpServer } from './cli-test-helpers.mjs';
 
 const directFixture = await readFile(
   new URL('./fixtures/bookcase-direct.html', import.meta.url),
@@ -296,4 +297,55 @@ test('fetchBookcase names non-successful HTTP responses', async () => {
     () => fetchBookcase('https://example.test/bookcase', async () => ({ ok: false, status: 503 })),
     /Bookcase request failed: HTTP 503/
   );
+});
+
+test('bookcase CLI uses its default URL and writes successful JSON', async () => {
+  const preload = new URL('./fixtures/bookcase-cli-fetch-preload.mjs', import.meta.url).href;
+  const result = await runNodeCli('harness/extract_bookcase.mjs', [], {
+    nodeArguments: ['--import', preload],
+    env: { BOOKCASE_CLI_HTML: directFixture }
+  });
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, '');
+  assert.deepEqual(JSON.parse(result.stdout).map(({ pos, title }) => ({ pos, title })), [
+    { pos: 1, title: 'Alpha' },
+    { pos: 2, title: 'Beta' }
+  ]);
+});
+
+test('bookcase CLI accepts one explicit URL and writes successful JSON', async () => {
+  await withHttpServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html' });
+    response.end(directFixture);
+  }, async (baseUrl) => {
+    const result = await runNodeCli('harness/extract_bookcase.mjs', [`${baseUrl}/bookcase`]);
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, '');
+    assert.equal(JSON.parse(result.stdout).length, 2);
+  });
+});
+
+test('bookcase CLI reports HTTP failures', async () => {
+  await withHttpServer((_request, response) => {
+    response.writeHead(503);
+    response.end('unavailable');
+  }, async (baseUrl) => {
+    const result = await runNodeCli('harness/extract_bookcase.mjs', [`${baseUrl}/bookcase`]);
+
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, 'Bookcase request failed: HTTP 503\n');
+  });
+});
+
+test('bookcase CLI rejects extra arguments instead of ignoring them', async () => {
+  const result = await runNodeCli('harness/extract_bookcase.mjs', [
+    'https://example.test/bookcase', 'extra'
+  ]);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.equal(result.stderr, 'Usage: node harness/extract_bookcase.mjs [url]\n');
 });

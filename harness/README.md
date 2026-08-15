@@ -15,7 +15,7 @@ This directory documents and supports a reproducible, model-neutral version of t
 ## RECONSTRUCTED components
 
 - `extract_bookcase.mjs` reconstructs bookcase inventory extraction.
-- `extract_book_text.mjs` reconstructs one-book page-text extraction.
+- `extract_book_text.mjs` reconstructs single-book and bounded-inventory page-text extraction.
 - `review_prompt.md` reconstructs a model-neutral review packet.
 - `rubric.md` reconstructs the report's anchored validity scale.
 - `calibration.md` reconstructs the reported calibration and adjudication record.
@@ -38,7 +38,23 @@ Extract one publication using its canonical `url` from `data/master.json`:
 node harness/extract_book_text.mjs "https://online.fliphtml5.com/lvrgy/zzmw/"
 ```
 
-The command writes a JSON object containing the source URL, `textAvailable`, and ordered page objects. It performs one-book extraction only.
+The command writes a JSON object containing the source URL, `textAvailable`, and ordered page objects.
+
+Extract every HTTP(S) `url` in a JSON-array inventory:
+
+```powershell
+node harness/extract_book_text.mjs --inventory data/master.json
+```
+
+Set an explicit concurrency from 1 through 8 when needed:
+
+```powershell
+node harness/extract_book_text.mjs --inventory data/master.json --concurrency 2
+```
+
+Inventory extraction defaults to four concurrent requests and never exceeds the selected bound. It makes one request per input item, preserves every input object and its order in the pretty-printed result array, and adds either `textAvailable` plus `pages` or an `error` message. One failed item does not stop the others: the complete array is still written to standard output, then the process exits with status 1 if any item failed. A fully successful batch exits with status 0. Keep any extracted text outside this repository.
+
+Inventory mode only extracts text. It does not invoke a model, review a book, or perform the 214-book evaluation.
 
 ## Insert a review model
 

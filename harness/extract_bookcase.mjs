@@ -486,7 +486,13 @@ export async function fetchBookcase(url, fetchImpl = fetch) {
 }
 
 async function main() {
-  const url = process.argv[2] ?? DEFAULT_BOOKCASE_URL;
+  const arguments_ = process.argv.slice(2);
+  if (arguments_.length > 1) {
+    process.stderr.write('Usage: node harness/extract_bookcase.mjs [url]\n');
+    process.exitCode = 1;
+    return;
+  }
+  const url = arguments_[0] ?? DEFAULT_BOOKCASE_URL;
   try {
     process.stdout.write(`${JSON.stringify(await fetchBookcase(url), null, 2)}\n`);
   } catch (error) {
