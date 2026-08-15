@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, readFile, readdir } from 'node:fs/promises';
+import { access, copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
 
 const originals = new Map([
   ['reports/REPORT.md', '53c777712e6ff985e1259da5ebe47aa05e499c81d5d0de9916eba9b17ff90cfa'],
@@ -10,23 +16,127 @@ const originals = new Map([
   ['data/original-master.json', 'fb96f7d70a0abece7e1a3f1995d1df67eb3ea5b7134565115e68e5431ffccf13']
 ]);
 
-test('pins frozen artifacts as binary and canonical master as LF text', async () => {
-  const attributes = await readFile(new URL('../.gitattributes', import.meta.url), 'utf8');
-  const entries = attributes
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
-    .map((line) => {
-      const [pattern, ...spec] = line.split(/\s+/);
-      return [pattern, spec.join(' ')];
-    });
-  const attributesByPattern = new Map(entries);
+const repositoryRoot = new URL('..', import.meta.url);
+const attributePaths = [...originals.keys(), 'data/master.json'];
+const gitEnvironment = {
+  ...Object.fromEntries(
+    Object.entries(process.env).filter(([name]) => !name.toUpperCase().startsWith('GIT_'))
+  ),
+  LANG: 'C',
+  LC_ALL: 'C'
+};
 
-  assert.equal(attributesByPattern.size, entries.length, 'attribute patterns must be unique');
+async function resolveAttributes(cwd, env = gitEnvironment) {
+  const { stdout } = await execFileAsync(
+    'git',
+    ['check-attr', 'text', 'eol', '--', ...attributePaths],
+    { cwd, encoding: 'utf8', env }
+  );
+  return new Map(
+    stdout.trim().split(/\r?\n/).map((line) => {
+      const match = line.match(/^(.+): (text|eol): (.+)$/);
+      assert.ok(match, `unexpected git check-attr output: ${line}`);
+      return [`${match[1]}:${match[2]}`, match[3]];
+    })
+  );
+}
+
+function assertProvenanceAttributes(resolvedAttributes, source) {
   for (const relativePath of originals.keys()) {
-    assert.equal(attributesByPattern.get(relativePath), '-text', `${relativePath} must stay binary`);
+    assert.equal(
+      resolvedAttributes.get(`${relativePath}:text`),
+      'unset',
+      `${relativePath} must resolve text as unset from ${source}`
+    );
+    assert.equal(
+      resolvedAttributes.get(`${relativePath}:eol`),
+      'unspecified',
+      `${relativePath} must not resolve an EOL conversion from ${source}`
+    );
   }
-  assert.equal(attributesByPattern.get('data/master.json'), 'text eol=lf');
+  assert.equal(
+    resolvedAttributes.get('data/master.json:text'),
+    'set',
+    `data/master.json must resolve text as set from ${source}`
+  );
+  assert.equal(
+    resolvedAttributes.get('data/master.json:eol'),
+    'lf',
+    `data/master.json must resolve eol as lf from ${source}`
+  );
+}
+
+test('resolves tracked and repository provenance attributes', async (t) => {
+  let isInsideWorkTree = false;
+  try {
+    const { stdout } = await execFileAsync(
+      'git',
+      ['rev-parse', '--is-inside-work-tree'],
+      { cwd: repositoryRoot, encoding: 'utf8', env: gitEnvironment }
+    );
+    isInsideWorkTree = stdout.trim() === 'true';
+  } catch (error) {
+    const gitIsUnavailable = error.code === 'ENOENT';
+    const isNotRepositoryError = /not a git repository/i.test(error.stderr ?? '');
+    let repositoryMetadataExists = false;
+    try {
+      await access(new URL('../.git', import.meta.url));
+      repositoryMetadataExists = true;
+    } catch (metadataError) {
+      if (metadataError.code !== 'ENOENT') {
+        throw metadataError;
+      }
+    }
+    if (!gitIsUnavailable && !(isNotRepositoryError && !repositoryMetadataExists)) {
+      throw error;
+    }
+  }
+
+  if (!isInsideWorkTree) {
+    assert.ok(!process.env.CI, 'CI must run this suite inside a git work tree');
+    t.skip('no git work tree (source archive); attribute resolution cannot be verified here');
+    return;
+  }
+
+  await execFileAsync(
+    'git',
+    ['ls-files', '--error-unmatch', '--', '.gitattributes'],
+    { cwd: repositoryRoot, encoding: 'utf8', env: gitEnvironment }
+  );
+
+  const scratch = await mkdtemp(join(tmpdir(), 'superstonk-attributes-'));
+  try {
+    const emptyConfig = join(scratch, 'empty.gitconfig');
+    const emptyTemplate = join(scratch, 'empty-template');
+    await writeFile(emptyConfig, '');
+    await mkdir(emptyTemplate);
+    await copyFile(new URL('../.gitattributes', import.meta.url), join(scratch, '.gitattributes'));
+    const hermeticEnvironment = {
+      ...gitEnvironment,
+      HOME: scratch,
+      USERPROFILE: scratch,
+      XDG_CONFIG_HOME: scratch,
+      GIT_CONFIG_GLOBAL: emptyConfig,
+      GIT_CONFIG_SYSTEM: emptyConfig,
+      GIT_ATTR_NOSYSTEM: '1'
+    };
+    await execFileAsync('git', ['init', '--quiet', `--template=${emptyTemplate}`], {
+      cwd: scratch,
+      encoding: 'utf8',
+      env: hermeticEnvironment
+    });
+
+    assertProvenanceAttributes(
+      await resolveAttributes(scratch, hermeticEnvironment),
+      'the tracked .gitattributes alone'
+    );
+    assertProvenanceAttributes(
+      await resolveAttributes(repositoryRoot),
+      'this repository'
+    );
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
 });
 
 test('data/master.json checks out with LF line endings on every platform', async () => {
@@ -74,12 +184,28 @@ test('reproduces the published calibration statistics from pre-adjudication rati
   const master = JSON.parse(
     await readFile(new URL('../data/master.json', import.meta.url), 'utf8')
   );
-  const calibrationDocuments = await Promise.all(
-    ['harness/calibration.md', 'README.md'].map(async (relativePath) => ({
-      relativePath,
-      contents: await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8')
-    }))
-  );
+  const calibrationDocuments = await Promise.all([
+    {
+      relativePath: 'harness/calibration.md',
+      claims: ['exact', 'withinOne', 'meanDrift'],
+      statesDriftDirection: true
+    },
+    {
+      relativePath: 'README.md',
+      claims: ['exact', 'withinOne', 'meanDrift'],
+      statesDriftDirection: true
+    },
+    {
+      relativePath: 'harness/README.md',
+      claims: ['meanDrift'],
+      statesDriftDirection: true
+    }
+  ].map(async ({ relativePath, claims, statesDriftDirection }) => ({
+    relativePath,
+    claims,
+    statesDriftDirection,
+    contents: await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8')
+  })));
   const sample = master.filter((record) => record.calibration);
   const historicalRatings = master
     .filter((record) => Object.hasOwn(record, 'validity_rating_original'))
@@ -108,14 +234,35 @@ test('reproduces the published calibration statistics from pre-adjudication rati
     { pos: 54, validity_rating_original: 3 },
     { pos: 180, validity_rating_original: 2 }
   ]);
-  for (const { relativePath, contents } of calibrationDocuments) {
-    const exact = `${statistics.exact}/${statistics.sampleSize} exact`;
-    const withinOne = `${statistics.withinOne}/${statistics.sampleSize} within ±1`;
-    const meanDrift = `+${statistics.meanDrift.toFixed(2)}`;
-
-    assert.ok(contents.includes(exact), `${relativePath} must report ${exact}`);
-    assert.ok(contents.includes(withinOne), `${relativePath} must report ${withinOne}`);
-    assert.ok(contents.includes(meanDrift), `${relativePath} must report ${meanDrift}`);
+  const publishedClaims = {
+    exact: `${statistics.exact}/${statistics.sampleSize} exact`,
+    withinOne: `${statistics.withinOne}/${statistics.sampleSize} within ±1`,
+    meanDrift: `${statistics.meanDrift < 0 ? '' : '+'}${statistics.meanDrift.toFixed(2)}`
+  };
+  const driftDirection = statistics.meanDrift < 0 ? 'lower' : 'higher';
+  const escapedMeanDrift = publishedClaims.meanDrift.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const driftClaim = new RegExp(
+    `(?:[Tt]he stronger model rated slightly ${driftDirection} on average \\(${escapedMeanDrift}\\)|` +
+    `[Mm]ean drift was \\*\\*${escapedMeanDrift}\\*\\*: the stronger model rated slightly ${driftDirection} on average)`
+  );
+  for (const { relativePath, claims, statesDriftDirection, contents } of calibrationDocuments) {
+    for (const claim of claims) {
+      assert.ok(
+        Object.hasOwn(publishedClaims, claim),
+        `unknown calibration claim '${claim}' listed for ${relativePath}`
+      );
+      assert.ok(
+        contents.includes(publishedClaims[claim]),
+        `${relativePath} must report ${publishedClaims[claim]}`
+      );
+    }
+    if (statesDriftDirection) {
+      assert.match(
+        contents,
+        driftClaim,
+        `${relativePath} must state that the stronger model rated slightly ${driftDirection} on average by ${publishedClaims.meanDrift}`
+      );
+    }
   }
 });
 
@@ -175,11 +322,6 @@ test('preserves the direction and subject of the documented calibration bias', a
   for (const relativePath of ['harness/README.md', 'harness/calibration.md']) {
     const contents = await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
-    assert.match(
-      contents,
-      /(?:[Tt]he stronger model rated slightly higher on average \(\+0\.27\)|[Mm]ean drift was (?:\*\*)?\+0\.27(?:\*\*)?: the stronger model rated slightly higher on average)/,
-      `${relativePath} must state that the stronger model rated +0.27 higher`
-    );
     assert.ok(
       contents.includes(
         'Claude Haiku under-credited articles whose predictions were accurate at the time of writing.'
