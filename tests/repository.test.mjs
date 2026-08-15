@@ -10,15 +10,33 @@ const originals = new Map([
   ['data/original-master.json', 'fb96f7d70a0abece7e1a3f1995d1df67eb3ea5b7134565115e68e5431ffccf13']
 ]);
 
-test('marks exactly the immutable source artifacts as binary', async () => {
+test('pins frozen artifacts as binary and canonical master as LF text', async () => {
   const attributes = await readFile(new URL('../.gitattributes', import.meta.url), 'utf8');
+  const entries = attributes
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'))
+    .map((line) => {
+      const [pattern, ...spec] = line.split(/\s+/);
+      return [pattern, spec.join(' ')];
+    });
+  const attributesByPattern = new Map(entries);
 
-  assert.deepEqual(attributes.trim().split(/\r?\n/), [
-    'reports/REPORT.md -text',
-    'reports/BOOKS.md -text',
-    'data/library_review.csv -text',
-    'data/original-master.json -text'
-  ]);
+  assert.equal(attributesByPattern.size, entries.length, 'attribute patterns must be unique');
+  for (const relativePath of originals.keys()) {
+    assert.equal(attributesByPattern.get(relativePath), '-text', `${relativePath} must stay binary`);
+  }
+  assert.equal(attributesByPattern.get('data/master.json'), 'text eol=lf');
+});
+
+test('data/master.json checks out with LF line endings on every platform', async () => {
+  const bytes = await readFile(new URL('../data/master.json', import.meta.url));
+
+  assert.equal(
+    bytes.includes(0x0d),
+    false,
+    'data/master.json must contain no CR bytes; check .gitattributes eol=lf'
+  );
 });
 
 test('preserves the immutable original artifacts and baseline record sequence', async () => {

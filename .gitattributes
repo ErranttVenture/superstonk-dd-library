@@ -2,3 +2,4 @@ reports/REPORT.md -text
 reports/BOOKS.md -text
 data/library_review.csv -text
 data/original-master.json -text
+data/master.json text eol=lf
