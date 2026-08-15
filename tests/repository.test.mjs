@@ -74,9 +74,11 @@ test('reproduces the published calibration statistics from pre-adjudication rati
   const master = JSON.parse(
     await readFile(new URL('../data/master.json', import.meta.url), 'utf8')
   );
-  const calibrationDocument = await readFile(
-    new URL('../harness/calibration.md', import.meta.url),
-    'utf8'
+  const calibrationDocuments = await Promise.all(
+    ['harness/calibration.md', 'README.md'].map(async (relativePath) => ({
+      relativePath,
+      contents: await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8')
+    }))
   );
   const sample = master.filter((record) => record.calibration);
   const historicalRatings = master
@@ -106,11 +108,15 @@ test('reproduces the published calibration statistics from pre-adjudication rati
     { pos: 54, validity_rating_original: 3 },
     { pos: 180, validity_rating_original: 2 }
   ]);
-  assert.ok(calibrationDocument.includes(`${statistics.exact}/${statistics.sampleSize} exact`));
-  assert.ok(calibrationDocument.includes(
-    `${statistics.withinOne}/${statistics.sampleSize} within ±1`
-  ));
-  assert.ok(calibrationDocument.includes(`+${statistics.meanDrift.toFixed(2)}`));
+  for (const { relativePath, contents } of calibrationDocuments) {
+    const exact = `${statistics.exact}/${statistics.sampleSize} exact`;
+    const withinOne = `${statistics.withinOne}/${statistics.sampleSize} within ±1`;
+    const meanDrift = `+${statistics.meanDrift.toFixed(2)}`;
+
+    assert.ok(contents.includes(exact), `${relativePath} must report ${exact}`);
+    assert.ok(contents.includes(withinOne), `${relativePath} must report ${withinOne}`);
+    assert.ok(contents.includes(meanDrift), `${relativePath} must report ${meanDrift}`);
+  }
 });
 
 test('labels every reconstructed harness file and preserves review anchors', async () => {
