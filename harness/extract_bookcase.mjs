@@ -112,7 +112,7 @@ function scanBalancedJson(source, start) {
       }
       stack.pop();
       if (stack.length === 0) {
-        return source.slice(start, index + 1);
+        return { serialized: source.slice(start, index + 1), end: index + 1 };
       }
     }
   }
@@ -123,15 +123,17 @@ function scanBalancedJson(source, start) {
 function parseBookDataValue(source, start) {
   const character = source[start];
   let serialized;
+  let end;
   if (character === '"' || character === "'") {
     const literal = scanQuotedLiteral(source, start);
     serialized = decodeJavaScriptString(literal.body);
+    end = literal.end;
   } else {
-    serialized = scanBalancedJson(source, start);
+    ({ serialized, end } = scanBalancedJson(source, start));
   }
 
   try {
-    return JSON.parse(serialized);
+    return { value: JSON.parse(serialized), end };
   } catch {
     bookDataError('invalid JSON');
   }
@@ -210,19 +212,104 @@ function normalizeUploadDate(value, field, index) {
   return `${match[1]}-${match[2]}-${match[3]}`;
 }
 
+function isIdentifierCharacter(character) {
+  return character !== undefined && /[A-Za-z0-9_$]/.test(character);
+}
+
+function skipJavaScriptString(source, start) {
+  const quote = source[start];
+  let escaped = false;
+  for (let index = start + 1; index < source.length; index += 1) {
+    const character = source[index];
+    if (escaped) {
+      escaped = false;
+    } else if (character === '\\') {
+      escaped = true;
+    } else if (character === quote) {
+      return index + 1;
+    }
+  }
+  return source.length;
+}
+
+function skipJavaScriptComment(source, start) {
+  if (source[start + 1] === '/') {
+    const newline = source.indexOf('\n', start + 2);
+    return newline === -1 ? source.length : newline + 1;
+  }
+  const close = source.indexOf('*/', start + 2);
+  return close === -1 ? source.length : close + 2;
+}
+
+function hasValidTerminator(source, end) {
+  let index = end;
+  while (/\s/.test(source[index] ?? '')) {
+    index += 1;
+  }
+  return index === source.length || [';', ',', '}'].includes(source[index]);
+}
+
+function findBookDataCandidates(script) {
+  const candidates = [];
+
+  for (let index = 0; index < script.length; index += 1) {
+    const character = script[index];
+    if (character === '"' || character === "'" || character === '`') {
+      index = skipJavaScriptString(script, index) - 1;
+      continue;
+    }
+    if (character === '/' && (script[index + 1] === '/' || script[index + 1] === '*')) {
+      index = skipJavaScriptComment(script, index) - 1;
+      continue;
+    }
+    if (
+      !script.startsWith('bookData', index) ||
+      isIdentifierCharacter(script[index - 1]) ||
+      isIdentifierCharacter(script[index + 'bookData'.length])
+    ) {
+      continue;
+    }
+
+    let delimiter = index + 'bookData'.length;
+    while (/\s/.test(script[delimiter] ?? '')) {
+      delimiter += 1;
+    }
+    if (script[delimiter] !== '=' && script[delimiter] !== ':') {
+      continue;
+    }
+
+    let valueStart = delimiter + 1;
+    while (/\s/.test(script[valueStart] ?? '')) {
+      valueStart += 1;
+    }
+    try {
+      const parsed = parseBookDataValue(script, valueStart);
+      if (hasValidTerminator(script, parsed.end)) {
+        candidates.push(asBookArray(parsed.value));
+      }
+      index = parsed.end - 1;
+    } catch {
+      // This assignment is not a valid embedded JSON value. Continue lexing.
+    }
+  }
+
+  return candidates;
+}
+
 export function extractBookData(html) {
   if (typeof html !== 'string') {
     bookDataError('HTML must be a string');
   }
-  const assignment = /\bbookData\s*[:=]/g.exec(html);
-  if (assignment === null) {
-    bookDataError('assignment not found');
+  const candidates = [];
+  const scripts = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi;
+  let match;
+  while ((match = scripts.exec(html)) !== null) {
+    candidates.push(...findBookDataCandidates(match[1]));
   }
-  let start = assignment.index + assignment[0].length;
-  while (/\s/.test(html[start] ?? '')) {
-    start += 1;
+  if (candidates.length !== 1) {
+    bookDataError('expected exactly one valid assignment');
   }
-  return asBookArray(parseBookDataValue(html, start));
+  return candidates[0];
 }
 
 export function normalizeBook(raw, index) {

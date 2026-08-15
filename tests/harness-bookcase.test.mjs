@@ -48,6 +48,34 @@ test('extractBookData rejects malformed embedded JSON', () => {
   );
 });
 
+test('extractBookData rejects a bookData decoy in page body text', () => {
+  assert.throws(
+    () => extractBookData('<p>Archived notes: bookData = []</p>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData rejects a bookData decoy in a JavaScript string', () => {
+  assert.throws(
+    () => extractBookData('<script>const note = "bookData = []";</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData rejects a direct value followed by an expression', () => {
+  assert.throws(
+    () => extractBookData('<script>bookData = [] + makeBooks();</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData rejects multiple valid bookData assignments', () => {
+  assert.throws(
+    () => extractBookData('<script>bookData = []; bookData = [];</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
 test('extractBookData unwraps the only array in a containing object', () => {
   const records = extractBookData(
     '<script>bookData: {"total": 1, "books": [{"title":"Alpha"}]};</script>'
