@@ -10,8 +10,21 @@ permissions:
   contents: read
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
+  test:
+    name: test (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node-version: 18
+          - os: ubuntu-latest
+            node-version: 20
+          - os: ubuntu-latest
+            node-version: 22
+          - os: windows-latest
+            node-version: 20
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -19,5 +32,20 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
-      - run: npm test && npm run validate
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        run: npm test
+      - name: Validate repository
+        if: ${{ !cancelled() }}
+        run: npm run validate
+
+  validate:
+    needs: test
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Assert matrix succeeded
+        run: |
+          echo "test result: ${{ needs.test.result }}"
+          [ "${{ needs.test.result }}" = "success" ] || exit 1
