@@ -34,9 +34,59 @@ function textFromHtml(html) {
 }
 
 function classList(attributes) {
-  const quoted = /(?:^|\s)class\s*=\s*(["'])(.*?)\1/i.exec(attributes);
-  const unquoted = /(?:^|\s)class\s*=\s*([^\s>"']+)/i.exec(attributes);
-  return (quoted?.[2] ?? unquoted?.[1] ?? '').trim().split(/\s+/).filter(Boolean);
+  let index = 0;
+
+  while (index < attributes.length) {
+    while (/\s/.test(attributes[index] ?? '') || attributes[index] === '/') {
+      index += 1;
+    }
+
+    const nameStart = index;
+    while (/[^\s=/>]/.test(attributes[index] ?? '')) {
+      index += 1;
+    }
+    const name = attributes.slice(nameStart, index);
+    if (name === '') {
+      index += 1;
+      continue;
+    }
+
+    while (/\s/.test(attributes[index] ?? '')) {
+      index += 1;
+    }
+
+    let value = '';
+    if (attributes[index] === '=') {
+      index += 1;
+      while (/\s/.test(attributes[index] ?? '')) {
+        index += 1;
+      }
+
+      const quote = attributes[index];
+      if (quote === '"' || quote === "'") {
+        const valueStart = ++index;
+        while (index < attributes.length && attributes[index] !== quote) {
+          index += 1;
+        }
+        value = attributes.slice(valueStart, index);
+        if (attributes[index] === quote) {
+          index += 1;
+        }
+      } else {
+        const valueStart = index;
+        while (/[^\s>]/.test(attributes[index] ?? '')) {
+          index += 1;
+        }
+        value = attributes.slice(valueStart, index);
+      }
+    }
+
+    if (name.toLowerCase() === 'class') {
+      return value.trim().split(/\s+/).filter(Boolean);
+    }
+  }
+
+  return [];
 }
 
 function findMarkers(html) {

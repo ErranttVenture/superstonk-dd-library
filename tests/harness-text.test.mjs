@@ -69,6 +69,17 @@ test('extractPageText recognizes only an HTML class attribute as a page marker',
   );
 });
 
+test('extractPageText ignores class-looking text inside foreign attribute values', () => {
+  assert.deepEqual(
+    extractPageText(`
+      <span data-note="text class=flip-basic-num">1</span><p>Double-quoted value</p>
+      <span data-note='text class=flip-basic-num'>2</span><p>Single-quoted value</p>
+      <span data-note="class=not-a-marker" class="flip-basic-num">3</span><p>Real later class</p>
+    `),
+    { textAvailable: true, pages: [{ page: 3, text: 'Real later class' }] }
+  );
+});
+
 test('fetchBookText fetches and returns the source URL with text', async () => {
   const url = 'https://example.test/book';
   const result = await fetchBookText(url, async (requestedUrl) => {
