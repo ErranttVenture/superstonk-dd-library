@@ -52,4 +52,4 @@ Model invocation is intentionally not bundled because providers expose different
 
 ## Current live status
 
-The final live check has not yet been recorded in this build. Task 7 will replace this statement with the observed integration result: either a successful record count or an exact failure category and date. No live success is claimed here.
+On 2026-08-15, `node harness/extract_bookcase.mjs https://fliphtml5.com/bookcase/kosyg` completed successfully with exit status 0 and returned valid JSON containing 250 inventory records.
