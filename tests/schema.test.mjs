@@ -6,9 +6,13 @@ import {
   validateAgainstSchema,
   validateMasterRecords
 } from '../scripts/schema-validator.mjs';
+import { runNodeCli } from './cli-test-helpers.mjs';
 
 const records = JSON.parse(
   await readFile(new URL('../data/master.json', import.meta.url), 'utf8')
+);
+const originalRecords = JSON.parse(
+  await readFile(new URL('../data/original-master.json', import.meta.url), 'utf8')
 );
 const schema = JSON.parse(
   await readFile(new URL('../data/schema.json', import.meta.url), 'utf8')
@@ -40,6 +44,24 @@ test('all 250 canonical records satisfy the record schema', () => {
   assert.equal(result.total, 250);
   assert.equal(result.valid, 250);
   assert.deepEqual(result.errors, []);
+});
+
+test('all 250 immutable baseline records satisfy the record schema', () => {
+  const result = validateMasterRecords(originalRecords, schema);
+
+  assert.equal(result.total, 250);
+  assert.equal(result.valid, 250);
+  assert.deepEqual(result.errors, []);
+});
+
+test('repository validation CLI checks both current and original master datasets', async () => {
+  const result = await runNodeCli('scripts/validate-repository.mjs');
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, '');
+  assert.match(result.stdout, /Schema validation: 250\/250 records valid/);
+  assert.match(result.stdout, /Original baseline schema validation: 250\/250 records valid/);
+  assert.match(result.stdout, /Original baseline position sequence: 1–250 complete/);
 });
 
 test('record schema permits a string author_response on metadata and reviewed records', () => {

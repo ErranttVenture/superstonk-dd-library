@@ -1,6 +1,6 @@
 # Contributing
 
-This repository is a community audit of a preserved assessment. Rating changes are evidence-led adjudications, not informal edits.
+This repository is a community audit of a preserved assessment. `data/original-master.json` is the immutable baseline and must never be changed. `data/master.json` is the evolving canonical current dataset. Rating changes are evidence-led adjudications, not informal edits.
 
 ## Dispute a rating
 
@@ -15,15 +15,18 @@ Evidence capable of overturning an assessment must meet a primary-source standar
 
 ## Review and accepted changes
 
-Every pull request requires maintainer review. Data changes are made only after a dispute is accepted; maintainers apply or explicitly approve the resulting patch. No drive-by rating edits are accepted, and pull requests that bypass the dispute record are closed.
+Every pull request requires maintainer review. A data change requires an accepted rating dispute or an accepted correction issue; maintainers apply or explicitly approve the resulting patch to `data/master.json`. Rating, claim-assessment, and rationale changes require the dispute path. Metadata, link, transcription, and other factual corrections use the correction path. No drive-by rating edits are accepted, and pull requests that bypass the applicable issue record are closed.
+
+No contribution may modify `data/original-master.json`. It is the permanent launch-state evidence, not a second editable copy of the canonical dataset.
 
 An accepted change never erases the historical assessment. The affected rationale or claim note preserves the original assessment visibly inside an `ADJUDICATED` note, followed by the new conclusion, evidence, and adjudication date. This keeps the audit trail inspectable instead of rewriting history.
 
 ## Author right of reply
 
-An author may always add a response to the canonical record's `author_response` field. This right is unconditional: the response may be added whether the requested rating change is accepted, rejected, or still under review. A response is identified as the author's statement and does not silently alter the reviewer's assessment.
+An author may always add a response to the canonical record's `author_response` field in `data/master.json`. This right is unconditional: the response is added whether the requested rating change is accepted, rejected, or still under review. A response is identified as the author's statement and does not silently alter the reviewer's assessment.
 
 Authors can use the dispute form or a correction issue to provide their response and establish authorship. Maintainer review checks attribution and repository safety, not whether the maintainer agrees with the response.
+When one issue contains both a rating dispute and an author response, the response is accepted independently of the rating decision.
 
 ## Corrections
 

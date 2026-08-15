@@ -10,7 +10,8 @@ This repository is standalone. It must not contain code, history, configuration,
 
 The repository will contain:
 
-- Four byte-for-byte original artifacts: `master.json`, `library_review.csv`, `REPORT.md`, and `BOOKS.md`.
+- Four byte-for-byte immutable original artifacts: `original-master.json`, `library_review.csv`, `REPORT.md`, and `BOOKS.md`.
+- An evolving canonical `master.json`, byte-identical to `original-master.json` at launch and updated only through the governed dispute, correction, and right-of-reply workflows.
 - A JSON Schema for the canonical `master.json` record structure, including an optional `author_response` string.
 - A dependency-free Node.js 18+ reconstruction of the inventory and text-extraction stages.
 - A reconstructed review prompt, output schema, rubric, calibration notes, and harness documentation.
@@ -21,7 +22,9 @@ The repository will not contain extracted FlipHTML5 book text, website code, the
 
 ## Provenance Model
 
-The four supplied review artifacts are originals from the July 21, 2026 run, with the August 13, 2026 conditional-claim adjudication incorporated. They will be copied without normalization or reformatting and verified with SHA-256 hashes before publication.
+The supplied master review artifact, flat export, and two reports are originals from the July 21, 2026 run, with the August 13, 2026 conditional-claim adjudication incorporated. The master artifact will be preserved without normalization as `data/original-master.json`; the other three originals will likewise be copied without rewriting. All four immutable files will be verified with SHA-256 hashes before publication.
+
+`data/master.json` is a separate canonical current copy. At launch it is byte-identical to `data/original-master.json`. It is deliberately not permanently hash-locked because accepted disputes, corrections, and unconditional author replies update the current dataset. Downstream consumers and raw-data links always use `data/master.json`; the baseline exists only to prove the original launch state.
 
 The original temporary harness scripts and frozen prompt were not preserved. Every replacement harness file will therefore carry an obvious `RECONSTRUCTED` label in its file header or opening prose. The top-level README and harness README will explain that the replacements are faithful working reconstructions based on the method documented in the original report, not recovered originals.
 
@@ -39,6 +42,7 @@ superstonk-dd-library/
   package.json
   data/
     master.json
+    original-master.json
     library_review.csv
     schema.json
   reports/
@@ -56,8 +60,11 @@ superstonk-dd-library/
     validate-repository.mjs
   tests/
     fixtures/
-    harness.test.mjs
+    cli-test-helpers.mjs
+    harness-bookcase.test.mjs
+    harness-text.test.mjs
     repository.test.mjs
+    schema.test.mjs
   .github/
     ISSUE_TEMPLATE/
       dispute-rating.yml
@@ -75,9 +82,11 @@ superstonk-dd-library/
 
 ### Original data layer
 
-`data/master.json` is the canonical record set. `data/library_review.csv` is the flat export. The two report files preserve the original prose and catalog. No generated file may overwrite or rewrite these artifacts.
+`data/original-master.json` is the immutable baseline snapshot. `data/library_review.csv` is the immutable flat export, and the two report files preserve the original prose and catalog. No generated file or contribution may overwrite or rewrite those four originals.
 
-`data/schema.json` will use JSON Schema Draft 2020-12 and describe the actual union of record shapes observed across all 250 records. It will reject undocumented properties while accurately representing optional and nullable fields. The optional `author_response` string is permitted for future right-of-reply additions without being inserted into existing records.
+`data/master.json` is the evolving canonical current record set. Consumers continue to use it, and accepted governance changes update it while preserving the historical assessment in `ADJUDICATED` notes where applicable. It is schema-validated and must retain 250 records, but it is not permanently hash-locked or permanently required to equal the baseline.
+
+`data/schema.json` will use JSON Schema Draft 2020-12 and describe the actual union of record shapes observed across all 250 records. It will reject review fields on metadata-only rows and incomplete core review payloads while retaining the observed optional calibration and insufficient-text fields plus nullable validity ratings. The optional `author_response` string is permitted in either branch for future right-of-reply additions without being inserted into existing records.
 
 ### Reconstructed extraction layer
 
@@ -99,7 +108,7 @@ The README will lead with methodology in a collapsible `<details>` block, then a
 
 `CONTRIBUTING.md` will make rating disputes the primary contribution path. Overturning evidence must be a filing, regulator report, or contemporaneous primary record. Accepted changes preserve the original assessment visibly in an `ADJUDICATED` note. Authors always receive an `author_response` field regardless of the outcome of their requested rating change.
 
-Issue forms will collect the minimum structured information required for rating disputes and factual corrections. `CODEOWNERS` will assign all paths to `@ErranttVenture`. Data changes will require maintainer review and the dispute workflow.
+Issue forms will collect the minimum structured information required for rating disputes and factual corrections. `CODEOWNERS` will assign all paths to `@ErranttVenture`. Data changes require maintainer review plus an accepted dispute or correction issue; rating, claim-assessment, and rationale changes specifically require the dispute workflow. The immutable baseline is never changed.
 
 ## Licensing
 
@@ -114,8 +123,8 @@ Implementation will follow red-green-refactor for executable behavior. Tests wil
 The verification command will check:
 
 1. Required files and directories exist.
-2. All 250 canonical records validate against `data/schema.json`.
-3. Original copies match the recorded source SHA-256 hashes.
+2. All 250 canonical current records and all 250 immutable baseline records validate against `data/schema.json`.
+3. The immutable baseline, CSV, and reports match the recorded source SHA-256 hashes; launch verification separately proves current `master.json` is initially byte-identical to the baseline.
 4. Every reconstructed harness artifact contains a `RECONSTRUCTED` label.
 5. Extractors correctly parse representative and malformed fixtures.
 6. README ordering, `<details>` pairing, licensing statements, provenance language, and excluded-text notice are present.
@@ -140,6 +149,6 @@ After independent review and fresh full verification, GitHub CLI will create `Er
 
 ## Acceptance Conditions
 
-Publication occurs only after all requested files are present, hashes prove the four originals are unchanged, schema validation reports 250 of 250 records, reconstructed provenance is unambiguous, automated tests pass, a live extraction attempt is documented truthfully, and the tracked tree contains no secrets or unrelated project references.
+Publication occurs only after all requested files are present, hashes prove the four immutable originals are unchanged, schema validation reports 250 of 250 records for both the baseline and current master, initial byte identity is verified separately, reconstructed provenance is unambiguous, automated tests pass, a live extraction attempt is documented truthfully, and the tracked tree contains no secrets or unrelated project references.
 
 The handoff will include the repository URL, source hashes, validation and test results, live extractor status, and the account-permission checklist for branch protection, CODEOWNERS confirmation, Reddit follow-ups, and the separate future decision about website data consumption.

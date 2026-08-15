@@ -62,16 +62,18 @@ Disagreement is part of the audit. Read the [contribution and right-of-reply pol
 
 ## Re-run the evaluation
 
-The [`harness/`](harness/README.md) directory documents how to inventory the bookcase, extract one publication, construct the review packet, validate model output, and record a rerun with another model. Model invocation is deliberately provider-neutral, and the full 214-book run is not launched automatically.
+The [`harness/`](harness/README.md) directory documents how to inventory the bookcase, extract one publication or a bounded JSON inventory, construct the review packet, validate model output, and record a rerun with another model. Model invocation is deliberately provider-neutral, and the full 214-book review is not launched automatically.
 
 ## Licensing
 
-Executable code and tooling are available under the [MIT License](LICENSE). The canonical review data and reports are available under [CC BY-SA 4.0](LICENSE-DATA), so published adaptations remain available under the same terms.
+Executable code and tooling are available under the [MIT License](LICENSE). The immutable baseline, evolving canonical review data, flat export, and reports are available under [CC BY-SA 4.0](LICENSE-DATA), so published adaptations remain available under the same terms.
 
 The original FlipHTML5 book text is excluded from this repository. Those publications remain the work of their authors; they are neither relicensed nor redistributed here. Canonical records contain source URLs so readers can inspect the publications at their original locations.
 
 ## Provenance
 
-The four original artifacts—[`reports/REPORT.md`](reports/REPORT.md), [`reports/BOOKS.md`](reports/BOOKS.md), [`data/library_review.csv`](data/library_review.csv), and [`data/master.json`](data/master.json)—are preserved byte-for-byte from the July 21, 2026 review with the August 13, 2026 conditional-claim adjudication incorporated.
+Four immutable original artifacts—[`reports/REPORT.md`](reports/REPORT.md), [`reports/BOOKS.md`](reports/BOOKS.md), [`data/library_review.csv`](data/library_review.csv), and [`data/original-master.json`](data/original-master.json)—preserve the July 21, 2026 review with the August 13, 2026 conditional-claim adjudication incorporated. The baseline JSON is hash-locked and must never change.
+
+[`data/master.json`](data/master.json) is the evolving canonical current dataset for consumers, raw-data links, accepted disputes, corrections, and author replies. At initial publication it is byte-for-byte identical to `data/original-master.json`; future governed adjudications may change only `master.json` while the baseline continues to prove the launch state.
 
 The temporary scripts and frozen prompt used for the original run were not preserved. Every replacement under [`harness/`](harness/README.md) is prominently labeled **RECONSTRUCTED**: it is a faithful working reconstruction based on the original report and canonical data, not a recovered original.
