@@ -139,6 +139,41 @@ test('extractBookData ignores an else-block regex decoy when a real assignment f
   );
 });
 
+test('extractBookData rejects a regex decoy after an optional-binding catch block', () => {
+  assert.throws(
+    () => extractBookData('<script>try { throw 1; } catch {} /bookData = [{"source":"regex"}];/;</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData ignores an optional-binding catch regex decoy when a real assignment follows', () => {
+  assert.deepEqual(
+    extractBookData('<script>try { throw 1; } catch {} /bookData = [{"source":"regex"}];/; bookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
+test('extractBookData keeps the parenthesized catch-header path for regex statements', () => {
+  assert.deepEqual(
+    extractBookData('<script>try {} catch (error) {} /bookData = [{"source":"regex"}];/; bookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
+test('extractBookData keeps division inside a bound catch body from swallowing a real assignment', () => {
+  assert.deepEqual(
+    extractBookData('<script>try {} catch (error) { const ratio = error / divisor; bookData = [{"source":"real"}]; }</script>'),
+    [{ source: 'real' }]
+  );
+});
+
+test('extractBookData keeps division after a catch-named method call from swallowing a real assignment', () => {
+  assert.deepEqual(
+    extractBookData('<script>const ratio = promise.catch(handler) / divisor; bookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
 test('extractBookData ignores a try-finally regex decoy when a real assignment follows', () => {
   assert.deepEqual(
     extractBookData('<script>try {} finally {} /bookData = [{"source":"regex"}];/; bookData = [{"source":"real"}];</script>'),

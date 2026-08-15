@@ -9,7 +9,7 @@ const REGEX_PREFIX_KEYWORDS = new Set([
   'return', 'throw', 'typeof', 'void', 'yield'
 ]);
 const CONTROL_HEADER_KEYWORDS = new Set(['catch', 'for', 'if', 'switch', 'while', 'with']);
-const STATEMENT_BODY_KEYWORDS = new Set(['do', 'else', 'finally', 'try']);
+const STATEMENT_BODY_KEYWORDS = new Set(['catch', 'do', 'else', 'finally', 'try']);
 
 function bookDataError(reason) {
   throw new Error(reason ? `${BOOK_DATA_ERROR}: ${reason}` : BOOK_DATA_ERROR);
@@ -357,10 +357,11 @@ function findBookDataCandidates(script) {
     if (isJavaScriptIdentifierStart(character)) {
       const end = skipJavaScriptIdentifier(script, index);
       const word = script.slice(index, end);
-      pendingControlHeader = CONTROL_HEADER_KEYWORDS.has(word);
+      const isCatchClause = word === 'catch' && atStatementStart;
+      pendingControlHeader = CONTROL_HEADER_KEYWORDS.has(word) && (word !== 'catch' || isCatchClause);
       pendingFunctionDeclaration ||= word === 'function' && atStatementStart;
       expectsExpression = REGEX_PREFIX_KEYWORDS.has(word);
-      atStatementStart = STATEMENT_BODY_KEYWORDS.has(word);
+      atStatementStart = STATEMENT_BODY_KEYWORDS.has(word) && (word !== 'catch' || isCatchClause);
       index = end - 1;
       continue;
     }
@@ -397,6 +398,7 @@ function findBookDataCandidates(script) {
         ? 'function-declaration'
         : atStatementStart ? 'statement-block' : 'object';
       delimiters.push({ opening: '{', kind });
+      pendingControlHeader = false;
       pendingFunctionDeclaration = false;
       expectsExpression = true;
       atStatementStart = kind !== 'object';
