@@ -87,15 +87,20 @@ test('reconstructed calibration records the original checks and adjudications', 
   }
 });
 
-test('attributes the documented calibration bias to Claude Haiku', async () => {
+test('preserves the direction and subject of the documented calibration bias', async () => {
   for (const relativePath of ['harness/README.md', 'harness/calibration.md']) {
     const contents = await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
-    assert.ok(contents.includes('Claude Haiku'), `${relativePath} must name the low-cost rater`);
     assert.match(
       contents,
-      /(?:Claude Haiku|Haiku|low-cost rater) under-credited/,
-      `${relativePath} must attribute under-crediting to Haiku or the low-cost rater`
+      /(?:[Tt]he stronger model rated slightly higher on average \(\+0\.27\)|[Mm]ean drift was (?:\*\*)?\+0\.27(?:\*\*)?: the stronger model rated slightly higher on average)/,
+      `${relativePath} must state that the stronger model rated +0.27 higher`
+    );
+    assert.ok(
+      contents.includes(
+        'Claude Haiku under-credited articles whose predictions were accurate at the time of writing.'
+      ),
+      `${relativePath} must attribute accurate-at-writing under-crediting to Claude Haiku`
     );
   }
 });
