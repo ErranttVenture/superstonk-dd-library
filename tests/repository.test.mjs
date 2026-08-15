@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
 const originals = new Map([
@@ -33,6 +33,58 @@ test('preserves the original review artifacts and master record sequence', async
   assert.ok(Array.isArray(master));
   assert.equal(master.length, 250);
   assert.deepEqual(master.map((record) => record.pos), Array.from({ length: 250 }, (_, index) => index + 1));
+});
+
+test('labels every reconstructed harness file and preserves review anchors', async () => {
+  const harnessDirectory = new URL('../harness/', import.meta.url);
+  const entries = await readdir(harnessDirectory, { withFileTypes: true });
+  const files = entries.filter((entry) => entry.isFile());
+
+  assert.ok(files.length > 0);
+  for (const file of files) {
+    const contents = await readFile(new URL(file.name, harnessDirectory), 'utf8');
+    assert.match(contents, /RECONSTRUCTED/, `${file.name} must disclose reconstruction provenance`);
+  }
+
+  const rubric = await readFile(new URL('../harness/rubric.md', import.meta.url), 'utf8');
+  assert.ok(rubric.includes(
+    '5 = factually accurate, predictions largely came true · 4 = grounded in primary sources, core thesis not falsified · 3 = real data, significant unproven leaps · 2 = speculation dominates, key predictions failed · 1 = core claims falsified or purely conspiratorial.'
+  ));
+});
+
+test('reconstructed review prompt includes the packet contract and cited hindsight facts', async () => {
+  const prompt = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
+
+  for (const requiredText of [
+    '{{BOOK_METADATA}}',
+    '{{BOOK_TEXT}}',
+    'output_schema.json',
+    'SEC staff report',
+    '122–147%',
+    '~20% by February 2021',
+    '~$483 intraday on January 28, 2021',
+    'EU PFOF ban',
+    '$70M Robinhood action',
+    '~$2.55T in December 2022'
+  ]) {
+    assert.ok(prompt.includes(requiredText), `review_prompt.md must contain ${requiredText}`);
+  }
+});
+
+test('reconstructed calibration records the original checks and adjudications', async () => {
+  const calibration = await readFile(new URL('../harness/calibration.md', import.meta.url), 'utf8');
+
+  for (const requiredText of [
+    '12/22 exact',
+    '20/22 within ±1',
+    '+0.27',
+    '#9',
+    '#180',
+    '#54',
+    'ADJUDICATED'
+  ]) {
+    assert.ok(calibration.includes(requiredText), `calibration.md must contain ${requiredText}`);
+  }
 });
 
 test('stores the CC BY-SA legal code without altering its trailing whitespace', async () => {
