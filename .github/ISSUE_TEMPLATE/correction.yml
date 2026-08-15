@@ -1,0 +1,27 @@
+name: Report a correction
+description: Report a metadata, link, transcription, or documentation error.
+title: "[Correction]: "
+labels:
+  - correction
+body:
+  - id: location
+    type: input
+    attributes:
+      label: Location
+      description: Identify the file, record, field, or link.
+    validations:
+      required: true
+  - id: correction
+    type: textarea
+    attributes:
+      label: Correction
+      description: State what is wrong and the exact replacement.
+    validations:
+      required: true
+  - id: evidence
+    type: textarea
+    attributes:
+      label: Evidence
+      description: Link a source that verifies the correction.
+    validations:
+      required: true

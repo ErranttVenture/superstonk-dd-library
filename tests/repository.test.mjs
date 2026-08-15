@@ -113,3 +113,99 @@ test('stores the CC BY-SA legal code without altering its trailing whitespace', 
   assert.equal((dataLicense.match(/^Section [1-8] -- /gm) ?? []).length, 8);
   assert.match(dataLicense, /creativecommons\.org\.\n$/);
 });
+
+test('publishes the community landing page in the required order', async () => {
+  const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
+  const detailsStart = readme.indexOf('<details>');
+  const startHere = readme.indexOf('## Start here');
+
+  assert.ok(detailsStart >= 0, 'README.md must contain a methodology details block');
+  assert.ok(detailsStart < startHere, 'methodology details must precede Start here');
+  assert.equal((readme.match(/<details>/g) ?? []).length, 1);
+  assert.equal((readme.match(/<\/details>/g) ?? []).length, 1);
+
+  for (const requiredText of [
+    '250 books',
+    '6,821 pages',
+    'AI-assisted',
+    'human-directed',
+    'community audit layer',
+    'primary-source',
+    'source-characterization accuracy',
+    'educational value',
+    'u/writerofjots',
+    'u/humdingler',
+    'MIT',
+    'CC BY-SA 4.0',
+    'RECONSTRUCTED',
+    'July 21, 2026',
+    'August 13, 2026',
+    'FlipHTML5 book text',
+    'data/master.json'
+  ]) {
+    assert.ok(readme.includes(requiredText), `README.md must contain ${requiredText}`);
+  }
+
+  for (const row of [
+    '| 4 — Mostly accurate / directionally right | 11 | 5% |',
+    '| 3 — Mixed: real data, unproven leaps | 25 | 12% |',
+    '| 2 — Speculation-dominated / failed predictions | 166 | 79% |',
+    '| 1 — Falsified or conspiratorial | 7 | 3% |'
+  ]) {
+    assert.ok(readme.includes(row), `README.md must preserve distribution row: ${row}`);
+  }
+});
+
+test('documents the governed dispute and right-of-reply workflow', async () => {
+  const contributing = await readFile(new URL('../CONTRIBUTING.md', import.meta.url), 'utf8');
+
+  for (const requiredText of [
+    'book',
+    'dispute',
+    'evidence',
+    'proposed_change',
+    'author_response',
+    'ADJUDICATED',
+    'primary-source',
+    'maintainer review',
+    'No drive-by rating edits',
+    'CC BY-SA 4.0'
+  ]) {
+    assert.ok(contributing.includes(requiredText), `CONTRIBUTING.md must contain ${requiredText}`);
+  }
+});
+
+test('assigns exact repository ownership', async () => {
+  const codeowners = (await readFile(new URL('../CODEOWNERS', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  assert.equal(codeowners, '* @ErranttVenture\n');
+});
+
+test('ships structurally valid concise issue forms with required fields', async () => {
+  const forms = new Map([
+    ['dispute-rating.yml', ['book', 'dispute', 'evidence', 'proposed_change']],
+    ['correction.yml', ['location', 'correction', 'evidence']]
+  ]);
+
+  for (const [filename, requiredIds] of forms) {
+    const form = (
+      await readFile(new URL(`../.github/ISSUE_TEMPLATE/${filename}`, import.meta.url), 'utf8')
+    ).replace(/\r\n/g, '\n');
+    assert.match(form, /^name: .+/m, `${filename} must declare a name`);
+    assert.match(form, /^description: .+/m, `${filename} must declare a description`);
+    assert.match(form, /^body:\s*$/m, `${filename} must declare a body`);
+    assert.doesNotMatch(form, /^assignees:/m, `${filename} must not declare assignees`);
+    assert.doesNotMatch(form, /^blank_issues_enabled:/m, `${filename} must not configure blank issues`);
+
+    for (const id of requiredIds) {
+      const fieldStart = form.indexOf(`  - id: ${id}\n`);
+      assert.ok(fieldStart >= 0, `${filename} must contain field id ${id}`);
+      const nextField = form.indexOf('\n  - ', fieldStart + 1);
+      const field = form.slice(fieldStart, nextField < 0 ? undefined : nextField);
+      assert.match(
+        field,
+        /\n    validations:\n      required: true(?:\n|$)/,
+        `${filename} field ${id} must be required`
+      );
+    }
+  }
+});

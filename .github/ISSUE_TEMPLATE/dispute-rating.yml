@@ -1,0 +1,34 @@
+name: Dispute a rating
+description: Challenge a rating or claim assessment with primary evidence.
+title: "[Rating dispute]: "
+labels:
+  - dispute
+body:
+  - id: book
+    type: input
+    attributes:
+      label: Book
+      description: Give the canonical number, title, and source URL.
+    validations:
+      required: true
+  - id: dispute
+    type: textarea
+    attributes:
+      label: Disputed assessment
+      description: Identify the exact rating, claim, or rationale at issue.
+    validations:
+      required: true
+  - id: evidence
+    type: textarea
+    attributes:
+      label: Primary-source evidence
+      description: Link filings, regulator reports, or contemporaneous records.
+    validations:
+      required: true
+  - id: proposed_change
+    type: textarea
+    attributes:
+      label: Proposed change
+      description: State the replacement rating, assessment, or wording.
+    validations:
+      required: true
