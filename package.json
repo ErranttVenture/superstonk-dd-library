@@ -1,0 +1,12 @@
+{
+  "name": "superstonk-dd-library",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Auditable data and reconstructed harness for the SuperStonk DD Library review",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test",
+    "validate": "node scripts/validate-repository.mjs"
+  }
+}
