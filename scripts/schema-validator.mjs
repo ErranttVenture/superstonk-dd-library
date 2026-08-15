@@ -36,6 +36,11 @@ function assertSupportedSchema(schema) {
     }
   }
 
+  if (Object.hasOwn(schema, 'additionalProperties') &&
+      typeof schema.additionalProperties !== 'boolean') {
+    throw new Error('schema-valued additionalProperties is unsupported');
+  }
+
   for (const child of Object.values(schema.$defs ?? {})) {
     assertSupportedSchema(child);
   }
@@ -61,7 +66,7 @@ function resolveLocalReference(reference, rootSchema) {
   let target = rootSchema;
   for (const encodedPart of reference.slice(2).split('/')) {
     const part = encodedPart.replace(/~1/g, '/').replace(/~0/g, '~');
-    if (!target || typeof target !== 'object' || !(part in target)) {
+    if (!target || typeof target !== 'object' || !Object.hasOwn(target, part)) {
       throw new Error(`local schema reference not found: ${reference}`);
     }
     target = target[part];

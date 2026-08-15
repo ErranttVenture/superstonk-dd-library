@@ -168,6 +168,27 @@ test('remote refs throw instead of being silently ignored', () => {
   );
 });
 
+test('local refs cannot resolve inherited Object prototype properties', () => {
+  assert.throws(
+    () => validateAgainstSchema({ $defs: {}, $ref: '#/$defs/toString' }, 'value'),
+    /local schema reference not found: #\/\x24defs\/toString/
+  );
+  assert.throws(
+    () => validateAgainstSchema({ $ref: '#/constructor' }, 'value'),
+    /local schema reference not found: #\/constructor/
+  );
+});
+
+test('schema-valued additionalProperties is rejected instead of bypassing preflight', () => {
+  assert.throws(
+    () => validateAgainstSchema({
+      type: 'object',
+      additionalProperties: { minLength: 1 }
+    }, { unexpected: '' }),
+    /schema-valued additionalProperties is unsupported/
+  );
+});
+
 test('reconstructed output schema accepts a canonical review-stage payload', () => {
   const reviewFields = [
     'summary',
