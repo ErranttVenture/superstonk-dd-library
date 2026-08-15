@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -288,15 +288,18 @@ test('reproduces the published calibration statistics from pre-adjudication rati
   }
 });
 
-test('labels every reconstructed harness file and preserves review anchors', async () => {
+test('labels only the still-reconstructed extraction scripts, and does not mislabel recovered ones', async () => {
   const harnessDirectory = new URL('../harness/', import.meta.url);
-  const entries = await readdir(harnessDirectory, { withFileTypes: true });
-  const files = entries.filter((entry) => entry.isFile());
+  const stillReconstructed = ['extract_bookcase.mjs', 'extract_book_text.mjs'];
+  const recoveredVerbatim = ['rubric.md', 'review_prompt.md', 'output_schema.json', 'calibration.md'];
 
-  assert.ok(files.length > 0);
-  for (const file of files) {
-    const contents = await readFile(new URL(file.name, harnessDirectory), 'utf8');
-    assert.match(contents, /RECONSTRUCTED/, `${file.name} must disclose reconstruction provenance`);
+  for (const file of stillReconstructed) {
+    const contents = await readFile(new URL(file, harnessDirectory), 'utf8');
+    assert.match(contents, /RECONSTRUCTED/, `${file} must disclose reconstruction provenance`);
+  }
+  for (const file of recoveredVerbatim) {
+    const contents = await readFile(new URL(file, harnessDirectory), 'utf8');
+    assert.doesNotMatch(contents, /RECONSTRUCTED/, `${file} is verbatim-recovered and must not claim reconstruction`);
   }
 
   const rubric = await readFile(new URL('../harness/rubric.md', import.meta.url), 'utf8');
@@ -305,20 +308,29 @@ test('labels every reconstructed harness file and preserves review anchors', asy
   ));
 });
 
-test('reconstructed review prompt includes the packet contract and cited hindsight facts', async () => {
+test('recovered review prompt includes the real packet contract and every hindsight fact', async () => {
   const prompt = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
 
   for (const requiredText of [
-    '{{BOOK_METADATA}}',
-    '{{BOOK_TEXT}}',
-    'output_schema.json',
-    'SEC staff report',
-    '122–147%',
-    '~20% by February 2021',
-    '~$483 intraday on January 28, 2021',
-    'EU PFOF ban',
-    '$70M Robinhood action',
-    '~$2.55T in December 2022'
+    '{{BOOK_PACKET_PATH}}',
+    '{{REVIEW_OUTPUT_PATH}}',
+    // one distinctive phrase per hindsight bullet, in original order — the reconstruction this
+    // replaces kept 6 of these 15 and dropped every "directionally right" concession
+    'No "MOASS" (Mother of All Short Squeezes) ever occurred',
+    'GameStop did a 4-for-1 stock split (via dividend) in July 2022',
+    "The SEC's October 2021 staff report",
+    '~122% of float (Jan 2021) to ~20% by Feb 2021',
+    'Citadel was never margin-called into collapse',
+    'Direct registration (DRS/Computershare) grew to ~75M shares',
+    'inflation predictions were directionally right',
+    'The Fed reverse repo facility peaked ~$2.55T (Dec 2022)',
+    'Evergrande defaulted (Dec 2021)',
+    'claims of CS fragility were directionally right',
+    'Archegos (Mar 2021) was a real swaps blow-up',
+    'the EU banned PFOF (phase-out by 2026)',
+    'Fails-to-deliver (FTDs) and naked shorting are real, documented market phenomena historically',
+    'launched an NFT marketplace in 2022',
+    'DTCC/NSCC/OCC continue operating normally'
   ]) {
     assert.ok(prompt.includes(requiredText), `review_prompt.md must contain ${requiredText}`);
   }

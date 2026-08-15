@@ -1,17 +1,25 @@
-# RECONSTRUCTED validity rubric
+# Validity & evidence-quality rubric
 
-> **RECONSTRUCTED:** The original July 21, 2026 rubric file was not preserved. This document is reconstructed from `reports/REPORT.md`; it is not a verbatim recovery.
+> **Recovered verbatim.** This is the `RUBRIC` constant from the original review workflow script, used unchanged for all 214 reviews and the calibration verify pass. See [`PROVENANCE.md`](PROVENANCE.md) for where it was recovered from. The prior version of this file reconstructed only the validity axis; it silently dropped evidence quality as a second, separately-rated dimension the real rubric always carried.
 
-## Original anchor line
+## Published one-line summary
 
-5 = factually accurate, predictions largely came true · 4 = grounded in primary sources, core thesis not falsified · 3 = real data, significant unproven leaps · 2 = speculation dominates, key predictions failed · 1 = core claims falsified or purely conspiratorial.
+This condensed line is genuine, unedited content from [`reports/REPORT.md`](../reports/REPORT.md) (one of the four immutable original artifacts) — it is the human-facing shorthand for the validity axis below, not a separate scale:
 
-## How to apply the anchors
+**What "validity" means here:** 5 = factually accurate, predictions largely came true · 4 = grounded in primary sources, core thesis not falsified · 3 = real data, significant unproven leaps · 2 = speculation dominates, key predictions failed · 1 = core claims falsified or purely conspiratorial.
 
-- **5 — factually accurate, predictions largely came true.** Reserve this rating for work whose factual account is accurate and whose predictions were largely borne out.
-- **4 — grounded in primary sources, core thesis not falsified.** Use this rating when primary-source grounding supports the work and hindsight has not falsified its central thesis.
-- **3 — real data, significant unproven leaps.** Use this rating when the work starts from real data but relies on important inferences that remain unproven.
-- **2 — speculation dominates, key predictions failed.** Use this rating when genuine facts or market mechanics are present but the main argument is speculation-heavy and its important predictions failed.
-- **1 — core claims falsified or purely conspiratorial.** Use this rating when hindsight falsifies the central claims or the argument is purely conspiratorial rather than evidential.
+## Original rubric text (verbatim)
 
-These explanations only restate distinctions made in the report. They do not add a new scoring dimension or recover any unpreserved evaluator instructions.
+```
+VALIDITY RATING ANCHORS (1-5, integers only):
+5 - Factual claims check out against the documented record; market mechanics described accurately; any predictions largely came true; speculation clearly labeled as such.
+4 - Mostly accurate and grounded in primary sources (SEC filings, FINRA data, court documents, official statistics); some speculative leaps but labeled; core thesis not falsified by hindsight.
+3 - Mixed: uses genuine data and correctly-described market mechanics, but makes significant unproven inferential leaps; core thesis unproven but not clearly falsified; or accurate factual reporting wrapped in speculative framing.
+2 - Speculation dominates; chains of inference presented as conclusions; data cherry-picked or misinterpreted; key predictions failed.
+1 - Core claims falsified by the record, or conspiratorial claims with no credible evidence; predictions clearly failed; presentation misleading about facts.
+
+EVIDENCE QUALITY ANCHORS (1-5):
+5 - primary sources cited throughout (filings, official data) and used correctly. 4 - mostly primary sources, minor gaps. 3 - mix of real data and unsourced assertion. 2 - mostly unsourced assertion or misused data. 1 - no meaningful evidence.
+```
+
+Both scales are integers only, judged directly against the anchor text above — reviewers were told not to grade on a curve.

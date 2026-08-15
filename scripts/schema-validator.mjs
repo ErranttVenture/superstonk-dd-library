@@ -19,6 +19,7 @@ const supportedKeywords = new Set([
   'minimum',
   'maximum',
   'minItems',
+  'maxItems',
   'uniqueItems',
   'pattern',
   'anyOf',
@@ -137,6 +138,9 @@ function visit(schema, value, path, rootSchema, errors) {
   if (Array.isArray(value)) {
     if (schema.minItems !== undefined && value.length < schema.minItems) {
       errors.push({ path, message: `must contain at least ${schema.minItems} items` });
+    }
+    if (schema.maxItems !== undefined && value.length > schema.maxItems) {
+      errors.push({ path, message: `must contain at most ${schema.maxItems} items` });
     }
     if (schema.uniqueItems === true && value.some((item, index) =>
       value.slice(0, index).some((earlier) => isDeepStrictEqual(earlier, item)))) {

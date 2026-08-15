@@ -125,16 +125,20 @@ test('metadata-only records reject a pre-adjudication validity rating', () => {
   assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
 });
 
-test('array validation rejects too few, duplicate, and wrongly typed items', () => {
+test('array validation rejects too few, too many, duplicate, and wrongly typed items', () => {
   const arraySchema = {
     type: 'array',
     minItems: 2,
+    maxItems: 3,
     uniqueItems: true,
     items: { type: 'string' }
   };
 
   assert.deepEqual(validateAgainstSchema(arraySchema, ['only']), [
     { path: '$', message: 'must contain at least 2 items' }
+  ]);
+  assert.deepEqual(validateAgainstSchema(arraySchema, ['a', 'b', 'c', 'd']), [
+    { path: '$', message: 'must contain at most 3 items' }
   ]);
   assert.deepEqual(validateAgainstSchema(arraySchema, ['same', 'same']), [
     { path: '$', message: 'must contain unique items' }
@@ -257,15 +261,20 @@ test('schema-valued additionalProperties is rejected instead of bypassing prefli
   );
 });
 
-test('reconstructed output schema accepts a canonical review-stage payload', () => {
+test('recovered output schema accepts a canonical review-stage payload', () => {
+  // The real per-book AI schema never had `rating_reconciled` (an adjudication field added
+  // later, downstream of the AI output) and always required pos/is_compilation/content_type —
+  // the reconstruction this replaces had exactly that backwards.
   const reviewFields = [
+    'pos',
+    'is_compilation',
+    'content_type',
     'summary',
     'key_claims',
     'constituents',
     'evidence_quality',
     'speculation_level',
     'validity_rating',
-    'rating_reconciled',
     'validity_rationale',
     'quality_variance',
     'confidence',
@@ -275,7 +284,25 @@ test('reconstructed output schema accepts a canonical review-stage payload', () 
 
   assert.equal(
     outputSchema.$comment,
-    'RECONSTRUCTED — inferred from the original master.json records; this is not the preserved July 21, 2026 output schema.'
+    'Recovered verbatim from the original per-book AI review output schema (the SCHEMA constant in the original workflow script). See PROVENANCE.md. Structured-output enforced per book by the review agent runtime — every field below the top level matches the original property order and names exactly.'
+  );
+  assert.deepEqual(outputSchema.required, [
+    'pos',
+    'is_compilation',
+    'content_type',
+    'summary',
+    'key_claims',
+    'evidence_quality',
+    'speculation_level',
+    'validity_rating',
+    'validity_rationale',
+    'quality_variance',
+    'confidence',
+    'topics'
+  ]);
+  assert.ok(
+    !outputSchema.required.includes('rating_reconciled') && !outputSchema.required.includes('constituents'),
+    'the real per-book schema never required rating_reconciled or constituents'
   );
   assert.deepEqual(validateAgainstSchema(outputSchema, review), []);
 });
