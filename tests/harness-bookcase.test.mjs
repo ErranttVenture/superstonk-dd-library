@@ -76,6 +76,27 @@ test('extractBookData rejects multiple valid bookData assignments', () => {
   );
 });
 
+test('extractBookData rejects a bookData decoy in a regular expression literal', () => {
+  assert.throws(
+    () => extractBookData('<script>const marker = /bookData = [];/;</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData ignores a regex decoy when a real assignment follows', () => {
+  assert.deepEqual(
+    extractBookData('<script>const marker = /bookData = [];/; bookData = [];</script>'),
+    []
+  );
+});
+
+test('extractBookData skips escaped slashes and character classes in regex literals', () => {
+  assert.deepEqual(
+    extractBookData('<script>const marker = /bookData = [];[\\/]/; bookData = [];</script>'),
+    []
+  );
+});
+
 test('extractBookData unwraps the only array in a containing object', () => {
   const records = extractBookData(
     '<script>bookData: {"total": 1, "books": [{"title":"Alpha"}]};</script>'

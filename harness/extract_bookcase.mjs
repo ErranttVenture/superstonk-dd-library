@@ -4,6 +4,10 @@ import { pathToFileURL } from 'node:url';
 const DEFAULT_BOOKCASE_URL = 'https://fliphtml5.com/bookcase/kosyg';
 const BOOK_DATA_ERROR = 'Unable to parse embedded bookData';
 const IDENTIFIER = /^[A-Za-z0-9_-]+$/;
+const REGEX_PREFIX_KEYWORDS = new Set([
+  'await', 'case', 'delete', 'do', 'else', 'in', 'instanceof', 'new', 'of',
+  'return', 'throw', 'typeof', 'void', 'yield'
+]);
 
 function bookDataError(reason) {
   throw new Error(reason ? `${BOOK_DATA_ERROR}: ${reason}` : BOOK_DATA_ERROR);
@@ -241,6 +245,46 @@ function skipJavaScriptComment(source, start) {
   return close === -1 ? source.length : close + 2;
 }
 
+function skipRegularExpression(source, start) {
+  let escaped = false;
+  let characterClass = false;
+  for (let index = start + 1; index < source.length; index += 1) {
+    const character = source[index];
+    if (escaped) {
+      escaped = false;
+    } else if (character === '\\') {
+      escaped = true;
+    } else if (characterClass) {
+      if (character === ']') {
+        characterClass = false;
+      }
+    } else if (character === '[') {
+      characterClass = true;
+    } else if (character === '/') {
+      let flag = index + 1;
+      while (/[A-Za-z]/.test(source[flag] ?? '')) {
+        flag += 1;
+      }
+      return flag;
+    } else if (character === '\n' || character === '\r') {
+      return source.length;
+    }
+  }
+  return source.length;
+}
+
+function isJavaScriptIdentifierStart(character) {
+  return character !== undefined && /[A-Za-z_$]/.test(character);
+}
+
+function skipJavaScriptIdentifier(source, start) {
+  let index = start + 1;
+  while (isIdentifierCharacter(source[index])) {
+    index += 1;
+  }
+  return index;
+}
+
 function hasValidTerminator(source, end) {
   let index = end;
   while (/\s/.test(source[index] ?? '')) {
@@ -251,45 +295,82 @@ function hasValidTerminator(source, end) {
 
 function findBookDataCandidates(script) {
   const candidates = [];
+  let expectsExpression = true;
 
   for (let index = 0; index < script.length; index += 1) {
     const character = script[index];
     if (character === '"' || character === "'" || character === '`') {
       index = skipJavaScriptString(script, index) - 1;
+      expectsExpression = false;
       continue;
     }
     if (character === '/' && (script[index + 1] === '/' || script[index + 1] === '*')) {
       index = skipJavaScriptComment(script, index) - 1;
       continue;
     }
-    if (
-      !script.startsWith('bookData', index) ||
-      isIdentifierCharacter(script[index - 1]) ||
-      isIdentifierCharacter(script[index + 'bookData'.length])
-    ) {
-      continue;
-    }
-
-    let delimiter = index + 'bookData'.length;
-    while (/\s/.test(script[delimiter] ?? '')) {
-      delimiter += 1;
-    }
-    if (script[delimiter] !== '=' && script[delimiter] !== ':') {
-      continue;
-    }
-
-    let valueStart = delimiter + 1;
-    while (/\s/.test(script[valueStart] ?? '')) {
-      valueStart += 1;
-    }
-    try {
-      const parsed = parseBookDataValue(script, valueStart);
-      if (hasValidTerminator(script, parsed.end)) {
-        candidates.push(asBookArray(parsed.value));
+    if (character === '/') {
+      // A slash after an operand is division; only expression-start slashes can be regex literals.
+      if (expectsExpression) {
+        index = skipRegularExpression(script, index) - 1;
+        expectsExpression = false;
+      } else {
+        expectsExpression = true;
       }
-      index = parsed.end - 1;
-    } catch {
-      // This assignment is not a valid embedded JSON value. Continue lexing.
+      continue;
+    }
+    if (
+      script.startsWith('bookData', index) &&
+      !isIdentifierCharacter(script[index - 1]) &&
+      !isIdentifierCharacter(script[index + 'bookData'.length])
+    ) {
+      let delimiter = index + 'bookData'.length;
+      while (/\s/.test(script[delimiter] ?? '')) {
+        delimiter += 1;
+      }
+      if (script[delimiter] === '=' || script[delimiter] === ':') {
+        let valueStart = delimiter + 1;
+        while (/\s/.test(script[valueStart] ?? '')) {
+          valueStart += 1;
+        }
+        try {
+          const parsed = parseBookDataValue(script, valueStart);
+          if (hasValidTerminator(script, parsed.end)) {
+            candidates.push(asBookArray(parsed.value));
+          }
+          index = parsed.end - 1;
+        } catch {
+          // This assignment is not a valid embedded JSON value. Continue lexing.
+        }
+      }
+      expectsExpression = false;
+      continue;
+    }
+    if (isJavaScriptIdentifierStart(character)) {
+      const end = skipJavaScriptIdentifier(script, index);
+      expectsExpression = REGEX_PREFIX_KEYWORDS.has(script.slice(index, end));
+      index = end - 1;
+      continue;
+    }
+    if (/[0-9]/.test(character)) {
+      expectsExpression = false;
+      continue;
+    }
+    if (character === '+' || character === '-') {
+      if (script[index + 1] === character) {
+        expectsExpression = false;
+        index += 1;
+      } else {
+        expectsExpression = true;
+      }
+      continue;
+    }
+    if (['(', '[', '{', ',', ':', ';', '=', '!', '~', '*', '%', '&', '|', '^', '<', '>', '?'].includes(character)) {
+      expectsExpression = true;
+      continue;
+    }
+    if ([')', ']', '}'].includes(character)) {
+      expectsExpression = false;
+      continue;
     }
   }
 
