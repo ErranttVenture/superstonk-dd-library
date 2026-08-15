@@ -86,7 +86,7 @@ superstonk-dd-library/
 
 `data/master.json` is the evolving canonical current record set. Consumers continue to use it, and accepted governance changes update it while preserving the historical assessment in `ADJUDICATED` notes where applicable. It is schema-validated and must retain 250 records, but it is not permanently hash-locked or permanently required to equal the baseline.
 
-`data/schema.json` will use JSON Schema Draft 2020-12 and describe the actual union of record shapes observed across all 250 records. It will reject review fields on metadata-only rows and incomplete core review payloads while retaining the observed optional calibration and insufficient-text fields plus nullable validity ratings. The optional `author_response` string is permitted in either branch for future right-of-reply additions without being inserted into existing records.
+`data/schema.json` will use JSON Schema Draft 2020-12 and describe the actual union of record shapes observed across all 250 records. It will reject review fields on metadata-only rows and incomplete core review payloads while retaining the observed optional calibration and insufficient-text fields plus nullable validity ratings. Reviewed records may carry an optional integer `validity_rating_original` when adjudication changed the initial rating; calibration statistics compare against that historical value and otherwise fall back to `validity_rating`. The optional `author_response` string is permitted in either branch for future right-of-reply additions without being inserted into existing records.
 
 ### Reconstructed extraction layer
 

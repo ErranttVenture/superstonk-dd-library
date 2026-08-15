@@ -52,6 +52,49 @@ test('keeps the evolving canonical master as a complete 250-record dataset', asy
   );
 });
 
+test('reproduces the published calibration statistics from pre-adjudication ratings', async () => {
+  const master = JSON.parse(
+    await readFile(new URL('../data/master.json', import.meta.url), 'utf8')
+  );
+  const calibrationDocument = await readFile(
+    new URL('../harness/calibration.md', import.meta.url),
+    'utf8'
+  );
+  const sample = master.filter((record) => record.calibration);
+  const historicalRatings = master
+    .filter((record) => Object.hasOwn(record, 'validity_rating_original'))
+    .map(({ pos, validity_rating_original }) => ({ pos, validity_rating_original }));
+  const deltas = sample.map((record) =>
+    record.calibration.validity -
+      (record.validity_rating_original ?? record.validity_rating)
+  );
+  const statistics = {
+    sampleSize: sample.length,
+    exact: deltas.filter((delta) => delta === 0).length,
+    withinOne: deltas.filter((delta) => Math.abs(delta) <= 1).length,
+    meanDrift: Number(
+      (deltas.reduce((sum, delta) => sum + delta, 0) / sample.length).toFixed(2)
+    )
+  };
+
+  assert.deepEqual(statistics, {
+    sampleSize: 22,
+    exact: 12,
+    withinOne: 20,
+    meanDrift: 0.27
+  });
+  assert.deepEqual(historicalRatings, [
+    { pos: 9, validity_rating_original: 2 },
+    { pos: 54, validity_rating_original: 3 },
+    { pos: 180, validity_rating_original: 2 }
+  ]);
+  assert.ok(calibrationDocument.includes(`${statistics.exact}/${statistics.sampleSize} exact`));
+  assert.ok(calibrationDocument.includes(
+    `${statistics.withinOne}/${statistics.sampleSize} within ±1`
+  ));
+  assert.ok(calibrationDocument.includes(`+${statistics.meanDrift.toFixed(2)}`));
+});
+
 test('labels every reconstructed harness file and preserves review anchors', async () => {
   const harnessDirectory = new URL('../harness/', import.meta.url);
   const entries = await readdir(harnessDirectory, { withFileTypes: true });

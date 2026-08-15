@@ -113,6 +113,18 @@ test('record schema permits a null validity_rating', () => {
   assert.deepEqual(validateAgainstSchema(schema, candidate), []);
 });
 
+test('record schema permits a pre-adjudication validity rating on reviewed records', () => {
+  const candidate = { ...record, validity_rating_original: 2 };
+
+  assert.deepEqual(validateAgainstSchema(schema, candidate), []);
+});
+
+test('metadata-only records reject a pre-adjudication validity rating', () => {
+  const candidate = { ...metadataRecord, validity_rating_original: 2 };
+
+  assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
+});
+
 test('array validation rejects too few, duplicate, and wrongly typed items', () => {
   const arraySchema = {
     type: 'array',

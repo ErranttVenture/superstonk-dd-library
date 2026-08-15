@@ -6,6 +6,8 @@
 
 Every ninth reviewed book was independently re-rated by a stronger model, producing a 22-book sample. Agreement was **12/22 exact** and **20/22 within ±1** validity point. Mean drift was **+0.27**: the stronger model rated slightly higher on average.
 
+These statistics compare `calibration.validity` with `validity_rating_original` where an adjudication changed the low-cost model's rating, and with `validity_rating` otherwise. The three preserved pre-adjudication ratings are #9 = 2, #54 = 3, and #180 = 2. This produces 12 exact matches, 20 differences within one point, and a total stronger-minus-original delta of 6 across 22 records (`6 / 22 = 0.2727…`, reported as +0.27). `validity_rating` remains the current post-adjudication value.
+
 The two two-point disagreements, **#9** and **#180**, were adjudicated in favor of the stronger model. In both cases, Claude Haiku under-credited articles whose predictions were accurate at the time of writing. The resulting known bias is modest under-crediting by Claude Haiku, the low-cost rater; borderline ratings of 2 should therefore be treated as possible 3s rather than automatically changed.
 
 ## Conditional-claim adjudication
