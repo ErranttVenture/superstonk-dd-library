@@ -1,7 +1,7 @@
 {
   "$comment": "RECONSTRUCTED — inferred from the original master.json records; this is not the preserved July 21, 2026 output schema.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://superstonk-dd-library.example/harness/output_schema.json",
+  "$id": "https://raw.githubusercontent.com/ErranttVenture/superstonk-dd-library/main/harness/output_schema.json",
   "title": "Reconstructed SuperStonk review output",
   "type": "object",
   "required": [

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://superstonk-dd-library.example/data/schema.json",
+  "$id": "https://raw.githubusercontent.com/ErranttVenture/superstonk-dd-library/main/data/schema.json",
   "title": "SuperStonk DD Library canonical record",
   "type": "object",
   "required": [
@@ -14,16 +14,125 @@
     "text_available"
   ],
   "properties": {
+    "pos": { "$ref": "#/$defs/pos" },
+    "title": { "$ref": "#/$defs/string" },
+    "byline": { "$ref": "#/$defs/string" },
+    "pages": { "$ref": "#/$defs/pages" },
+    "uploaded": { "$ref": "#/$defs/uploaded" },
+    "url": { "$ref": "#/$defs/url" },
+    "type": { "$ref": "#/$defs/recordType" },
+    "text_available": { "$ref": "#/$defs/boolean" },
+    "is_compilation": { "$ref": "#/$defs/boolean" },
+    "content_type": { "$ref": "#/$defs/contentType" },
+    "summary": { "$ref": "#/$defs/string" },
+    "key_claims": { "$ref": "#/$defs/keyClaims" },
+    "constituents": { "$ref": "#/$defs/constituents" },
+    "evidence_quality": { "$ref": "#/$defs/rating" },
+    "speculation_level": { "$ref": "#/$defs/speculationLevel" },
+    "validity_rating": { "$ref": "#/$defs/nullableRating" },
+    "rating_reconciled": { "$ref": "#/$defs/boolean" },
+    "validity_rationale": { "$ref": "#/$defs/string" },
+    "quality_variance": { "$ref": "#/$defs/qualityVariance" },
+    "confidence": { "$ref": "#/$defs/confidence" },
+    "topics": { "$ref": "#/$defs/topics" },
+    "calibration": { "$ref": "#/$defs/calibration" },
+    "insufficient_text": { "$ref": "#/$defs/boolean" },
+    "author_response": { "$ref": "#/$defs/string" }
+  },
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "title": "Metadata-only record",
+      "type": "object",
+      "required": [
+        "pos",
+        "title",
+        "byline",
+        "pages",
+        "uploaded",
+        "url",
+        "type",
+        "text_available"
+      ],
+      "properties": {
+        "pos": { "$ref": "#/$defs/pos" },
+        "title": { "$ref": "#/$defs/string" },
+        "byline": { "$ref": "#/$defs/string" },
+        "pages": { "$ref": "#/$defs/pages" },
+        "uploaded": { "$ref": "#/$defs/uploaded" },
+        "url": { "$ref": "#/$defs/url" },
+        "type": { "$ref": "#/$defs/recordType" },
+        "text_available": { "$ref": "#/$defs/boolean" },
+        "author_response": { "$ref": "#/$defs/string" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Reviewed record",
+      "type": "object",
+      "required": [
+        "pos",
+        "title",
+        "byline",
+        "pages",
+        "uploaded",
+        "url",
+        "type",
+        "text_available",
+        "is_compilation",
+        "content_type",
+        "summary",
+        "key_claims",
+        "constituents",
+        "evidence_quality",
+        "speculation_level",
+        "validity_rating",
+        "rating_reconciled",
+        "validity_rationale",
+        "quality_variance",
+        "confidence",
+        "topics"
+      ],
+      "properties": {
+        "pos": { "$ref": "#/$defs/pos" },
+        "title": { "$ref": "#/$defs/string" },
+        "byline": { "$ref": "#/$defs/string" },
+        "pages": { "$ref": "#/$defs/pages" },
+        "uploaded": { "$ref": "#/$defs/uploaded" },
+        "url": { "$ref": "#/$defs/url" },
+        "type": { "$ref": "#/$defs/recordType" },
+        "text_available": { "$ref": "#/$defs/boolean" },
+        "is_compilation": { "$ref": "#/$defs/boolean" },
+        "content_type": { "$ref": "#/$defs/contentType" },
+        "summary": { "$ref": "#/$defs/string" },
+        "key_claims": { "$ref": "#/$defs/keyClaims" },
+        "constituents": { "$ref": "#/$defs/constituents" },
+        "evidence_quality": { "$ref": "#/$defs/rating" },
+        "speculation_level": { "$ref": "#/$defs/speculationLevel" },
+        "validity_rating": { "$ref": "#/$defs/nullableRating" },
+        "rating_reconciled": { "$ref": "#/$defs/boolean" },
+        "validity_rationale": { "$ref": "#/$defs/string" },
+        "quality_variance": { "$ref": "#/$defs/qualityVariance" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "topics": { "$ref": "#/$defs/topics" },
+        "calibration": { "$ref": "#/$defs/calibration" },
+        "insufficient_text": { "$ref": "#/$defs/boolean" },
+        "author_response": { "$ref": "#/$defs/string" }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
     "pos": {
       "type": "integer",
       "minimum": 1,
       "maximum": 250
     },
-    "title": {
+    "string": {
       "type": "string"
     },
-    "byline": {
-      "type": "string"
+    "boolean": {
+      "type": "boolean"
     },
     "pages": {
       "type": "integer",
@@ -37,7 +146,7 @@
       "type": "string",
       "pattern": "^https?://"
     },
-    "type": {
+    "recordType": {
       "enum": [
         "compilation",
         "original",
@@ -45,13 +154,7 @@
         "periodical"
       ]
     },
-    "text_available": {
-      "type": "boolean"
-    },
-    "is_compilation": {
-      "type": "boolean"
-    },
-    "content_type": {
+    "contentType": {
       "enum": [
         "periodical_news",
         "wealth_advice",
@@ -62,49 +165,25 @@
         "psychology_opinion"
       ]
     },
-    "summary": {
-      "type": "string"
+    "rating": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
     },
-    "key_claims": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/claim"
-      }
+    "nullableRating": {
+      "anyOf": [
+        { "$ref": "#/$defs/rating" },
+        { "type": "null" }
+      ]
     },
-    "constituents": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/constituent"
-      }
-    },
-    "evidence_quality": {
-      "$ref": "#/$defs/rating"
-    },
-    "speculation_level": {
+    "speculationLevel": {
       "enum": [
         "low",
         "medium",
         "high"
       ]
     },
-    "validity_rating": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/rating"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "rating_reconciled": {
-      "type": "boolean"
-    },
-    "validity_rationale": {
-      "type": "string"
-    },
-    "quality_variance": {
+    "qualityVariance": {
       "enum": [
         "uniform",
         "mixed",
@@ -126,22 +205,18 @@
         "type": "string"
       }
     },
-    "insufficient_text": {
-      "type": "boolean"
+    "keyClaims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
     },
-    "calibration": {
-      "$ref": "#/$defs/calibration"
-    },
-    "author_response": {
-      "type": "string"
-    }
-  },
-  "additionalProperties": false,
-  "$defs": {
-    "rating": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 5
+    "constituents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constituent"
+      }
     },
     "claim": {
       "type": "object",

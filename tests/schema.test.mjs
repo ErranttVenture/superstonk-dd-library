@@ -17,6 +17,22 @@ const outputSchema = JSON.parse(
   await readFile(new URL('../harness/output_schema.json', import.meta.url), 'utf8')
 );
 const record = records.find((candidate) => candidate.validity_rating !== null);
+const metadataRecord = records.find((candidate) => !Object.hasOwn(candidate, 'summary'));
+const requiredReviewedFields = [
+  'is_compilation',
+  'content_type',
+  'summary',
+  'key_claims',
+  'constituents',
+  'evidence_quality',
+  'speculation_level',
+  'validity_rating',
+  'rating_reconciled',
+  'validity_rationale',
+  'quality_variance',
+  'confidence',
+  'topics'
+];
 
 test('all 250 canonical records satisfy the record schema', () => {
   const result = validateMasterRecords(records, schema);
@@ -26,11 +42,29 @@ test('all 250 canonical records satisfy the record schema', () => {
   assert.deepEqual(result.errors, []);
 });
 
-test('record schema permits a string author_response', () => {
-  const candidate = { ...record, author_response: 'The author disputes claim 2.' };
-
-  assert.deepEqual(validateAgainstSchema(schema, candidate), []);
+test('record schema permits a string author_response on metadata and reviewed records', () => {
+  for (const candidate of [metadataRecord, record]) {
+    assert.deepEqual(validateAgainstSchema(schema, {
+      ...candidate,
+      author_response: 'The author disputes claim 2.'
+    }), []);
+  }
 });
+
+test('metadata-only records cannot contain an isolated review field', () => {
+  const candidate = { ...metadataRecord, summary: 'An incomplete review.' };
+
+  assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
+});
+
+for (const field of requiredReviewedFields) {
+  test(`reviewed records require ${field}`, () => {
+    const candidate = structuredClone(record);
+    delete candidate[field];
+
+    assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
+  });
+}
 
 test('record schema rejects an unknown property and invalid claim assessment', () => {
   const candidate = structuredClone(record);
