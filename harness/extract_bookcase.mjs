@@ -9,6 +9,7 @@ const REGEX_PREFIX_KEYWORDS = new Set([
   'return', 'throw', 'typeof', 'void', 'yield'
 ]);
 const CONTROL_HEADER_KEYWORDS = new Set(['catch', 'for', 'if', 'switch', 'while', 'with']);
+const STATEMENT_BODY_KEYWORDS = new Set(['do', 'else', 'finally', 'try']);
 
 function bookDataError(reason) {
   throw new Error(reason ? `${BOOK_DATA_ERROR}: ${reason}` : BOOK_DATA_ERROR);
@@ -359,7 +360,7 @@ function findBookDataCandidates(script) {
       pendingControlHeader = CONTROL_HEADER_KEYWORDS.has(word);
       pendingFunctionDeclaration ||= word === 'function' && atStatementStart;
       expectsExpression = REGEX_PREFIX_KEYWORDS.has(word);
-      atStatementStart = false;
+      atStatementStart = STATEMENT_BODY_KEYWORDS.has(word);
       index = end - 1;
       continue;
     }
