@@ -1,0 +1,124 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+import {
+  extractBookData,
+  fetchBookcase,
+  normalizeBook
+} from '../harness/extract_bookcase.mjs';
+
+const directFixture = await readFile(
+  new URL('./fixtures/bookcase-direct.html', import.meta.url),
+  'utf8'
+);
+const encodedFixture = await readFile(
+  new URL('./fixtures/bookcase-encoded.html', import.meta.url),
+  'utf8'
+);
+
+test('extractBookData returns records from a direct bookData assignment', () => {
+  const records = extractBookData(directFixture);
+
+  assert.equal(records.length, 2);
+  assert.deepEqual(records[0], {
+    title: 'Alpha', userName: 'abc', bookId: 'one', pages: 12, publishTime: '2021-07-20'
+  });
+});
+
+test('extractBookData decodes a quoted bookData assignment', () => {
+  const records = extractBookData(encodedFixture);
+
+  assert.equal(records.length, 2);
+  assert.equal(records[1].title, 'Beta');
+});
+
+test('extractBookData scans past brackets and escaped quotes in title strings', () => {
+  const records = extractBookData(
+    '<script>bookData = [{"title":"[nested] \\"quoted\\"","userName":"abc","bookId":"one","pages":12,"publishTime":"2021-07-20"}];</script>'
+  );
+
+  assert.equal(records[0].title, '[nested] "quoted"');
+});
+
+test('extractBookData rejects malformed embedded JSON', () => {
+  assert.throws(
+    () => extractBookData('<script>bookData = [{"title":}];</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData unwraps the only array in a containing object', () => {
+  const records = extractBookData(
+    '<script>bookData: {"total": 1, "books": [{"title":"Alpha"}]};</script>'
+  );
+
+  assert.deepEqual(records, [{ title: 'Alpha' }]);
+});
+
+test('extractBookData rejects an object with ambiguous array values', () => {
+  assert.throws(
+    () => extractBookData('<script>bookData = {"books": [], "featured": []};</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('normalizeBook creates the canonical inventory record', () => {
+  assert.deepEqual(
+    normalizeBook({
+      title: 'Alpha', userName: 'abc', bookId: 'one', pages: 12, publishTime: '2021-07-20'
+    }, 0),
+    {
+      pos: 1,
+      title: 'Alpha',
+      byline: 'abc',
+      pages: 12,
+      uploaded: '2021-07-20',
+      url: 'https://online.fliphtml5.com/abc/one/'
+    }
+  );
+});
+
+test('normalizeBook uses the current bookcase aliases and canonicalizes its URL', () => {
+  assert.deepEqual(
+    normalizeBook({
+      title: 'Alpha',
+      description: 'by Example',
+      url: 'http://online.fliphtml5.com/abc/one/',
+      pages: 12,
+      newTime: '2021-07-20 21:41:02'
+    }, 0),
+    {
+      pos: 1,
+      title: 'Alpha',
+      byline: 'by Example',
+      pages: 12,
+      uploaded: '2021-07-20',
+      url: 'https://online.fliphtml5.com/abc/one/'
+    }
+  );
+});
+
+test('fetchBookcase fetches once and normalizes the extracted records', async () => {
+  let requests = 0;
+  const fetchImpl = async (url) => {
+    requests += 1;
+    assert.equal(url, 'https://example.test/bookcase');
+    return { ok: true, text: async () => directFixture };
+  };
+
+  const records = await fetchBookcase('https://example.test/bookcase', fetchImpl);
+
+  assert.equal(requests, 1);
+  assert.deepEqual(records.map(({ pos, url }) => ({ pos, url })), [
+    { pos: 1, url: 'https://online.fliphtml5.com/abc/one/' },
+    { pos: 2, url: 'https://online.fliphtml5.com/def/two/' }
+  ]);
+});
+
+test('fetchBookcase names non-successful HTTP responses', async () => {
+  await assert.rejects(
+    () => fetchBookcase('https://example.test/bookcase', async () => ({ ok: false, status: 503 })),
+    /Bookcase request failed: HTTP 503/
+  );
+});
