@@ -50,6 +50,25 @@ test('extractPageText rejects nonnumeric page markers', () => {
   );
 });
 
+test('extractPageText recognizes only an HTML class attribute as a page marker', () => {
+  assert.deepEqual(
+    extractPageText(`
+      <span data-class="flip-basic-num">1</span><p>Data attribute</p>
+      <span aria-class="flip-basic-num">2</span><p>ARIA attribute</p>
+      <span markerclass="flip-basic-num">3</span><p>Suffixed attribute</p>
+      <span data-kind="page" class="flip-basic-num" aria-label="four">4</span><p>Quoted class</p>
+      <span data-kind="page" class=flip-basic-num aria-label="five">5</span><p>Unquoted class</p>
+    `),
+    {
+      textAvailable: true,
+      pages: [
+        { page: 4, text: 'Quoted class' },
+        { page: 5, text: 'Unquoted class' }
+      ]
+    }
+  );
+});
+
 test('fetchBookText fetches and returns the source URL with text', async () => {
   const url = 'https://example.test/book';
   const result = await fetchBookText(url, async (requestedUrl) => {

@@ -34,8 +34,8 @@ function textFromHtml(html) {
 }
 
 function classList(attributes) {
-  const quoted = /\bclass\s*=\s*(["'])(.*?)\1/i.exec(attributes);
-  const unquoted = /\bclass\s*=\s*([^\s>]+)/i.exec(attributes);
+  const quoted = /(?:^|\s)class\s*=\s*(["'])(.*?)\1/i.exec(attributes);
+  const unquoted = /(?:^|\s)class\s*=\s*([^\s>"']+)/i.exec(attributes);
   return (quoted?.[2] ?? unquoted?.[1] ?? '').trim().split(/\s+/).filter(Boolean);
 }
 
