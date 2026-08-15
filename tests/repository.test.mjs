@@ -87,6 +87,19 @@ test('reconstructed calibration records the original checks and adjudications', 
   }
 });
 
+test('attributes the documented calibration bias to Claude Haiku', async () => {
+  for (const relativePath of ['harness/README.md', 'harness/calibration.md']) {
+    const contents = await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8');
+
+    assert.ok(contents.includes('Claude Haiku'), `${relativePath} must name the low-cost rater`);
+    assert.match(
+      contents,
+      /(?:Claude Haiku|Haiku|low-cost rater) under-credited/,
+      `${relativePath} must attribute under-crediting to Haiku or the low-cost rater`
+    );
+  }
+});
+
 test('stores the CC BY-SA legal code without altering its trailing whitespace', async () => {
   const dataLicense = (await readFile(new URL('../LICENSE-DATA', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 

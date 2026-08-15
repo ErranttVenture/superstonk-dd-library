@@ -6,7 +6,7 @@
 
 Every ninth reviewed book was independently re-rated by a stronger model, producing a 22-book sample. Agreement was **12/22 exact** and **20/22 within ±1** validity point. Mean drift was **+0.27**: the stronger model rated slightly higher on average.
 
-The two two-point disagreements, **#9** and **#180**, were adjudicated in favor of the stronger model. In both cases, the initial rater under-credited predictions that were accurate at the time of writing. The resulting known bias is modest under-crediting by the cheaper rater; borderline ratings of 2 should therefore be treated as possible 3s rather than automatically changed.
+The two two-point disagreements, **#9** and **#180**, were adjudicated in favor of the stronger model. In both cases, Claude Haiku under-credited articles whose predictions were accurate at the time of writing. The resulting known bias is modest under-crediting by Claude Haiku, the low-cost rater; borderline ratings of 2 should therefore be treated as possible 3s rather than automatically changed.
 
 ## Conditional-claim adjudication
 

@@ -8,9 +8,9 @@ This directory documents and supports a reproducible, model-neutral version of t
 
 1. **Inventory.** Programmatically collect title, byline, page count, upload date, position, and source URL for all 250 books.
 2. **Text extraction.** Extract ordered, per-page text for every publication that has a text layer.
-3. **Standardized review.** Send each of 214 reviewable publications to identical low-cost AI agents with the same anchored 1–5 rubric, hindsight facts, and schema-enforced output contract.
+3. **Standardized review.** Send each of 214 reviewable publications to identical low-cost AI agents (Claude Haiku) with the same anchored 1–5 rubric, hindsight facts, and schema-enforced output contract.
 4. **Non-reviewable handling.** Keep metadata-only rows for 8 art books and 28 image-only publications. Summarize but leave unrated the 5 reviewed books whose text is too fragmentary for a fair judgment.
-5. **Calibration.** Independently re-rate every ninth reviewed book with a stronger model, adjudicate the two two-point disagreements, and record the measured drift. The conditional-claim adjudication described in `calibration.md` was a later August 13, 2026 follow-up rather than a silent change to the July method.
+5. **Calibration.** Independently re-rate every ninth reviewed book with a stronger model, adjudicate the two two-point disagreements, and record the measured drift. The stronger model rated slightly higher on average (+0.27), while Claude Haiku under-credited articles whose predictions were accurate at the time of writing. The conditional-claim adjudication described in `calibration.md` was a later August 13, 2026 follow-up rather than a silent change to the July method.
 
 ## RECONSTRUCTED components
 
