@@ -1,0 +1,150 @@
+{
+  "$comment": "RECONSTRUCTED — inferred from the original master.json records; this is not the preserved July 21, 2026 output schema.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://superstonk-dd-library.example/harness/output_schema.json",
+  "title": "Reconstructed SuperStonk review output",
+  "type": "object",
+  "required": [
+    "summary",
+    "key_claims",
+    "constituents",
+    "evidence_quality",
+    "speculation_level",
+    "validity_rating",
+    "rating_reconciled",
+    "validity_rationale",
+    "quality_variance",
+    "confidence",
+    "topics"
+  ],
+  "properties": {
+    "summary": {
+      "type": "string"
+    },
+    "key_claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "constituents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constituent"
+      }
+    },
+    "evidence_quality": {
+      "$ref": "#/$defs/rating"
+    },
+    "speculation_level": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "validity_rating": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/rating"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rating_reconciled": {
+      "type": "boolean"
+    },
+    "validity_rationale": {
+      "type": "string"
+    },
+    "quality_variance": {
+      "enum": [
+        "uniform",
+        "mixed",
+        "na"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "topics": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "author_response": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "rating": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "claim": {
+      "type": "object",
+      "required": [
+        "claim",
+        "kind",
+        "assessment",
+        "note"
+      ],
+      "properties": {
+        "claim": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "verifiable_fact",
+            "speculation",
+            "prediction"
+          ]
+        },
+        "assessment": {
+          "enum": [
+            "holds_up",
+            "partially_holds",
+            "does_not_hold",
+            "cannot_assess"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "constituent": {
+      "type": "object",
+      "required": [
+        "title",
+        "author",
+        "one_line_claim"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "one_line_claim": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
