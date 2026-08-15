@@ -104,18 +104,24 @@ test('resolves tracked and repository provenance attributes', async (t) => {
     { cwd: repositoryRoot, encoding: 'utf8', env: gitEnvironment }
   );
 
-  // Resolve the committed blob and the working copy separately. The commit is what a
-  // fresh clone receives; the working copy is what this checkout would publish next.
-  // Checking only one lets an uncommitted edit in either direction go unnoticed.
-  const { stdout: committedAttributes } = await execFileAsync(
-    'git',
-    ['show', 'HEAD:.gitattributes'],
-    { cwd: repositoryRoot, encoding: 'utf8', env: gitEnvironment }
-  );
-  const workingTreeAttributes = await readFile(
-    new URL('../.gitattributes', import.meta.url),
-    'utf8'
-  );
+  // Git can publish the rules from three places: the commit a fresh clone receives, the
+  // index a plain `git commit` would publish, and the working copy staged next. Each must
+  // carry the guarantee on its own, or an edit to one is propped up by the other two.
+  const showAttributes = async (revision) => (
+    await execFileAsync(
+      'git',
+      ['show', `${revision}:.gitattributes`],
+      { cwd: repositoryRoot, encoding: 'utf8', env: gitEnvironment }
+    )
+  ).stdout;
+  const attributeSources = [
+    { description: 'the committed .gitattributes alone', contents: await showAttributes('HEAD') },
+    { description: 'the staged .gitattributes alone', contents: await showAttributes('') },
+    {
+      description: 'the working-tree .gitattributes alone',
+      contents: await readFile(new URL('../.gitattributes', import.meta.url), 'utf8')
+    }
+  ];
 
   const scratch = await mkdtemp(join(tmpdir(), 'superstonk-attributes-'));
   try {
@@ -123,7 +129,6 @@ test('resolves tracked and repository provenance attributes', async (t) => {
     const emptyTemplate = join(scratch, 'empty-template');
     await writeFile(emptyConfig, '');
     await mkdir(emptyTemplate);
-    await writeFile(join(scratch, '.gitattributes'), committedAttributes);
     const hermeticEnvironment = {
       ...gitEnvironment,
       HOME: scratch,
@@ -139,16 +144,13 @@ test('resolves tracked and repository provenance attributes', async (t) => {
       env: hermeticEnvironment
     });
 
-    assertProvenanceAttributes(
-      await resolveAttributes(scratch, hermeticEnvironment),
-      'the committed .gitattributes alone'
-    );
-
-    await writeFile(join(scratch, '.gitattributes'), workingTreeAttributes);
-    assertProvenanceAttributes(
-      await resolveAttributes(scratch, hermeticEnvironment),
-      'the working-tree .gitattributes alone'
-    );
+    for (const { description, contents } of attributeSources) {
+      await writeFile(join(scratch, '.gitattributes'), contents);
+      assertProvenanceAttributes(
+        await resolveAttributes(scratch, hermeticEnvironment),
+        description
+      );
+    }
 
     assertProvenanceAttributes(
       await resolveAttributes(repositoryRoot),
