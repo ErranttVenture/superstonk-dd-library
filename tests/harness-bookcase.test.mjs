@@ -97,6 +97,55 @@ test('extractBookData skips escaped slashes and character classes in regex liter
   );
 });
 
+test('extractBookData rejects a regex decoy after a control-flow header', () => {
+  assert.throws(
+    () => extractBookData('<script>if (true) /bookData = [{"source":"regex"}];/;</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData ignores a control-flow regex decoy when a real assignment follows', () => {
+  assert.deepEqual(
+    extractBookData('<script>if (true) /bookData = [{"source":"regex"}];/; bookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
+test('extractBookData rejects a regex decoy after a function declaration block', () => {
+  assert.throws(
+    () => extractBookData('<script>function marker() {} /bookData = [{"source":"regex"}];/;</script>'),
+    /Unable to parse embedded bookData/
+  );
+});
+
+test('extractBookData ignores a function-block regex decoy when a real assignment follows', () => {
+  assert.deepEqual(
+    extractBookData('<script>function marker() {} /bookData = [{"source":"regex"}];/; bookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
+test('extractBookData keeps a division operator from swallowing a real assignment', () => {
+  assert.deepEqual(
+    extractBookData('<script>const ratio = 12 / 3; bookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
+test('extractBookData ignores a line-comment decoy before a real assignment', () => {
+  assert.deepEqual(
+    extractBookData('<script>// bookData = [{"source":"comment"}];\nbookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
+test('extractBookData ignores a block-comment decoy before a real assignment', () => {
+  assert.deepEqual(
+    extractBookData('<script>/* bookData = [{"source":"comment"}]; */ bookData = [{"source":"real"}];</script>'),
+    [{ source: 'real' }]
+  );
+});
+
 test('extractBookData unwraps the only array in a containing object', () => {
   const records = extractBookData(
     '<script>bookData: {"total": 1, "books": [{"title":"Alpha"}]};</script>'

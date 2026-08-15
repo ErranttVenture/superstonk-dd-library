@@ -8,6 +8,7 @@ const REGEX_PREFIX_KEYWORDS = new Set([
   'await', 'case', 'delete', 'do', 'else', 'in', 'instanceof', 'new', 'of',
   'return', 'throw', 'typeof', 'void', 'yield'
 ]);
+const CONTROL_HEADER_KEYWORDS = new Set(['catch', 'for', 'if', 'switch', 'while', 'with']);
 
 function bookDataError(reason) {
   throw new Error(reason ? `${BOOK_DATA_ERROR}: ${reason}` : BOOK_DATA_ERROR);
@@ -295,13 +296,18 @@ function hasValidTerminator(source, end) {
 
 function findBookDataCandidates(script) {
   const candidates = [];
+  const delimiters = [];
   let expectsExpression = true;
+  let atStatementStart = true;
+  let pendingControlHeader = false;
+  let pendingFunctionDeclaration = false;
 
   for (let index = 0; index < script.length; index += 1) {
     const character = script[index];
     if (character === '"' || character === "'" || character === '`') {
       index = skipJavaScriptString(script, index) - 1;
       expectsExpression = false;
+      atStatementStart = false;
       continue;
     }
     if (character === '/' && (script[index + 1] === '/' || script[index + 1] === '*')) {
@@ -316,6 +322,7 @@ function findBookDataCandidates(script) {
       } else {
         expectsExpression = true;
       }
+      atStatementStart = false;
       continue;
     }
     if (
@@ -343,16 +350,22 @@ function findBookDataCandidates(script) {
         }
       }
       expectsExpression = false;
+      atStatementStart = false;
       continue;
     }
     if (isJavaScriptIdentifierStart(character)) {
       const end = skipJavaScriptIdentifier(script, index);
-      expectsExpression = REGEX_PREFIX_KEYWORDS.has(script.slice(index, end));
+      const word = script.slice(index, end);
+      pendingControlHeader = CONTROL_HEADER_KEYWORDS.has(word);
+      pendingFunctionDeclaration ||= word === 'function' && atStatementStart;
+      expectsExpression = REGEX_PREFIX_KEYWORDS.has(word);
+      atStatementStart = false;
       index = end - 1;
       continue;
     }
     if (/[0-9]/.test(character)) {
       expectsExpression = false;
+      atStatementStart = false;
       continue;
     }
     if (character === '+' || character === '-') {
@@ -362,14 +375,60 @@ function findBookDataCandidates(script) {
       } else {
         expectsExpression = true;
       }
+      atStatementStart = false;
       continue;
     }
-    if (['(', '[', '{', ',', ':', ';', '=', '!', '~', '*', '%', '&', '|', '^', '<', '>', '?'].includes(character)) {
+    if (character === '(') {
+      delimiters.push({ opening: '(', kind: pendingControlHeader ? 'control-header' : 'group' });
+      pendingControlHeader = false;
       expectsExpression = true;
+      atStatementStart = false;
       continue;
     }
-    if ([')', ']', '}'].includes(character)) {
+    if (character === '[') {
+      delimiters.push({ opening: '[', kind: 'group' });
+      expectsExpression = true;
+      atStatementStart = false;
+      continue;
+    }
+    if (character === '{') {
+      const kind = pendingFunctionDeclaration
+        ? 'function-declaration'
+        : atStatementStart ? 'statement-block' : 'object';
+      delimiters.push({ opening: '{', kind });
+      pendingFunctionDeclaration = false;
+      expectsExpression = true;
+      atStatementStart = kind !== 'object';
+      continue;
+    }
+    if (character === ')') {
+      const delimiter = delimiters.at(-1)?.opening === '(' ? delimiters.pop() : null;
+      expectsExpression = delimiter?.kind === 'control-header';
+      atStatementStart = expectsExpression;
+      continue;
+    }
+    if (character === ']') {
+      if (delimiters.at(-1)?.opening === '[') {
+        delimiters.pop();
+      }
       expectsExpression = false;
+      atStatementStart = false;
+      continue;
+    }
+    if (character === '}') {
+      const delimiter = delimiters.at(-1)?.opening === '{' ? delimiters.pop() : null;
+      expectsExpression = delimiter?.kind === 'statement-block' || delimiter?.kind === 'function-declaration';
+      atStatementStart = expectsExpression;
+      continue;
+    }
+    if (character === ';') {
+      expectsExpression = true;
+      atStatementStart = true;
+      continue;
+    }
+    if ([',', ':', '=', '!', '~', '*', '%', '&', '|', '^', '<', '>', '?'].includes(character)) {
+      expectsExpression = true;
+      atStatementStart = false;
       continue;
     }
   }
