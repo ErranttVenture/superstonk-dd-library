@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -104,13 +104,26 @@ test('resolves tracked and repository provenance attributes', async (t) => {
     { cwd: repositoryRoot, encoding: 'utf8', env: gitEnvironment }
   );
 
+  // Resolve the committed blob and the working copy separately. The commit is what a
+  // fresh clone receives; the working copy is what this checkout would publish next.
+  // Checking only one lets an uncommitted edit in either direction go unnoticed.
+  const { stdout: committedAttributes } = await execFileAsync(
+    'git',
+    ['show', 'HEAD:.gitattributes'],
+    { cwd: repositoryRoot, encoding: 'utf8', env: gitEnvironment }
+  );
+  const workingTreeAttributes = await readFile(
+    new URL('../.gitattributes', import.meta.url),
+    'utf8'
+  );
+
   const scratch = await mkdtemp(join(tmpdir(), 'superstonk-attributes-'));
   try {
     const emptyConfig = join(scratch, 'empty.gitconfig');
     const emptyTemplate = join(scratch, 'empty-template');
     await writeFile(emptyConfig, '');
     await mkdir(emptyTemplate);
-    await copyFile(new URL('../.gitattributes', import.meta.url), join(scratch, '.gitattributes'));
+    await writeFile(join(scratch, '.gitattributes'), committedAttributes);
     const hermeticEnvironment = {
       ...gitEnvironment,
       HOME: scratch,
@@ -128,8 +141,15 @@ test('resolves tracked and repository provenance attributes', async (t) => {
 
     assertProvenanceAttributes(
       await resolveAttributes(scratch, hermeticEnvironment),
-      'the tracked .gitattributes alone'
+      'the committed .gitattributes alone'
     );
+
+    await writeFile(join(scratch, '.gitattributes'), workingTreeAttributes);
+    assertProvenanceAttributes(
+      await resolveAttributes(scratch, hermeticEnvironment),
+      'the working-tree .gitattributes alone'
+    );
+
     assertProvenanceAttributes(
       await resolveAttributes(repositoryRoot),
       'this repository'
@@ -243,7 +263,7 @@ test('reproduces the published calibration statistics from pre-adjudication rati
   const escapedMeanDrift = publishedClaims.meanDrift.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const driftClaim = new RegExp(
     `(?:[Tt]he stronger model rated slightly ${driftDirection} on average \\(${escapedMeanDrift}\\)|` +
-    `[Mm]ean drift was \\*\\*${escapedMeanDrift}\\*\\*: the stronger model rated slightly ${driftDirection} on average)`
+    `[Mm]ean drift was (?:\\*\\*)?${escapedMeanDrift}(?:\\*\\*)?: the stronger model rated slightly ${driftDirection} on average)`
   );
   for (const { relativePath, claims, statesDriftDirection, contents } of calibrationDocuments) {
     for (const claim of claims) {
