@@ -315,6 +315,7 @@ test('labels every harness file with either a reconstruction or a verbatim-recov
       assert.ok(declaresReconstructed, `${file} must disclose reconstruction provenance`);
     } else if (status === 'recovered') {
       assert.ok(!declaresReconstructed, `${file} is verbatim-recovered and must not claim reconstruction`);
+      assert.ok(declaresRecovered, `${file} is verbatim-recovered and must say so`);
     } else {
       assert.ok(
         declaresReconstructed || declaresRecovered,
