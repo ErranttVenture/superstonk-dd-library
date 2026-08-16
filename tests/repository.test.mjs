@@ -292,13 +292,16 @@ test('labels every harness file with either a reconstruction or a verbatim-recov
   const harnessDirectory = new URL('../harness/', import.meta.url);
   // Files not listed here are unrecognised, not exempt: they still have to declare their own
   // provenance (see the default branch below), so a new harness file can't silently ship unlabelled.
+  // 'maintained' is for post-hoc maintained documents (neither reconstructed nor recovered).
   const provenance = new Map([
     ['extract_bookcase.mjs', 'reconstructed'],
     ['extract_book_text.mjs', 'reconstructed'],
     ['rubric.md', 'recovered'],
     ['review_prompt.md', 'recovered'],
     ['output_schema.json', 'recovered'],
-    ['calibration.md', 'recovered']
+    ['calibration.md', 'recovered'],
+    ['ERRATA.md', 'maintained'],
+    ['hindsight.md', 'maintained']
   ]);
 
   const entries = await readdir(harnessDirectory, { withFileTypes: true });
@@ -316,6 +319,12 @@ test('labels every harness file with either a reconstruction or a verbatim-recov
     } else if (status === 'recovered') {
       assert.ok(!declaresReconstructed, `${file} is verbatim-recovered and must not claim reconstruction`);
       assert.ok(declaresRecovered, `${file} is verbatim-recovered and must say so`);
+    } else if (status === 'maintained') {
+      assert.ok(!declaresReconstructed, `${file} is a maintained document and must not claim reconstruction`);
+      assert.ok(
+        /Provenance: MAINTAINED/.test(contents),
+        `${file} is a maintained document and must carry a "Provenance: MAINTAINED" disclosure`
+      );
     } else {
       assert.ok(
         declaresReconstructed || declaresRecovered,

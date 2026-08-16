@@ -1,5 +1,9 @@
 # Hindsight facts — versioned ground truth
 
+**Provenance: MAINTAINED.** This file is not a recovered or reconstructed artifact —
+it is a post-hoc maintained document; see the versioning note in
+[`review_prompt.md`](review_prompt.md).
+
 The hindsight facts block is the ground truth reviewers grade DD claims and predictions
 against. It is versioned:
 

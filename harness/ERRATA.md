@@ -1,5 +1,9 @@
 # Errata — hindsight facts block
 
+**Provenance: MAINTAINED.** This file is not a recovered or reconstructed artifact —
+it is a post-hoc maintained document; see the versioning note in
+[`review_prompt.md`](review_prompt.md).
+
 This file is the evidence trail for challenges to the hindsight facts block in
 [`review_prompt.md`](review_prompt.md). The verbatim v1 block in that file is a frozen
 historical record and is never edited. Accepted amendments become versioned bullets in
