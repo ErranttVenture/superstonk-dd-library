@@ -1,6 +1,6 @@
-# RECONSTRUCTED calibration and adjudication record
+# Calibration and adjudication record
 
-> **RECONSTRUCTED:** The original July 21, 2026 calibration materials were not preserved. This record is reconstructed from `reports/REPORT.md`; it is not a verbatim recovery.
+> The statistics and adjudication record below are drawn directly from [`reports/REPORT.md`](../reports/REPORT.md) (line 10) — one of the four immutable original artifacts, not a guess — so they carry over unchanged. What genuinely was not preserved and had to be recovered is the *prompt and schema* used to produce the calibration sample in the first place: `verifyPrompt()` and `VERIFY_SCHEMA`, recovered verbatim below. See [`PROVENANCE.md`](PROVENANCE.md).
 
 ## Calibration sample
 
@@ -17,3 +17,58 @@ The August 13, 2026 follow-up reviewed every conditional-flavored claim. If the 
 That pass corrected 12 assessments: 10 became `cannot_assess`, and 2 moved upward because their trigger had occurred. Three notes were sharpened. One book rating changed: **#54**, the dlauer FINRA series, moved from 3 to 4 to match its calibration re-rating. Corrected claims carry an **ADJUDICATED** note so the preserved assessment history remains visible.
 
 These figures document the original report's checks. They do not establish new calibration results for future model runs.
+
+## Independent verify pass — prompt and schema (recovered verbatim)
+
+Every ninth reviewed book (`b.p % 9 === 0`) was independently re-rated using a separate prompt, `verifyPrompt()`, run by the session's stronger model rather than the low-cost per-book reviewer. The reviewer was explicitly told not to consult the existing review, to avoid anchoring on it. This is what produced the 22-book calibration sample described above.
+
+### verifyPrompt() (verbatim)
+
+The same two path placeholders from [`review_prompt.md`](review_prompt.md) apply here, plus one new one for the verify-stage output: `${S}/verify/${pad}.json` → `{{VERIFY_OUTPUT_PATH}}`. `${HINDSIGHT}` and `${RUBRIC}` are the same constants expanded verbatim in [`review_prompt.md`](review_prompt.md) and [`rubric.md`](rubric.md) — not duplicated a third time here.
+
+```
+Calibration check for a standardized 214-book review. Independently rate ONE book — do NOT look at any existing review files; form your own judgment.
+
+Read the file: {{BOOK_PACKET_PATH}} (metadata header + page-labeled text).
+
+${HINDSIGHT}
+
+${RUBRIC}
+
+Rate validity_rating and evidence_quality per the anchors, with a 2-3 sentence rationale. Set pos=${p}. Write your JSON to {{VERIFY_OUTPUT_PATH}} using the Write tool, then return it via structured output.
+```
+
+### VERIFY_SCHEMA (verbatim)
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pos",
+    "validity_rating",
+    "evidence_quality",
+    "rationale"
+  ],
+  "properties": {
+    "pos": {
+      "type": "integer"
+    },
+    "validity_rating": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "evidence_quality": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "rationale": {
+      "type": "string"
+    }
+  }
+}
+```
+
+Note this is a smaller, separate schema from [`output_schema.json`](output_schema.json) — the verify pass only ever produced `pos`, `validity_rating`, `evidence_quality`, and a short `rationale`, not a full review object.

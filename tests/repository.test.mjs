@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -288,37 +288,71 @@ test('reproduces the published calibration statistics from pre-adjudication rati
   }
 });
 
-test('labels every reconstructed harness file and preserves review anchors', async () => {
+test('labels every harness file with either a reconstruction or a verbatim-recovery disclosure', async () => {
   const harnessDirectory = new URL('../harness/', import.meta.url);
-  const entries = await readdir(harnessDirectory, { withFileTypes: true });
-  const files = entries.filter((entry) => entry.isFile());
+  // Files not listed here are unrecognised, not exempt: they still have to declare their own
+  // provenance (see the default branch below), so a new harness file can't silently ship unlabelled.
+  const provenance = new Map([
+    ['extract_bookcase.mjs', 'reconstructed'],
+    ['extract_book_text.mjs', 'reconstructed'],
+    ['rubric.md', 'recovered'],
+    ['review_prompt.md', 'recovered'],
+    ['output_schema.json', 'recovered'],
+    ['calibration.md', 'recovered']
+  ]);
 
-  assert.ok(files.length > 0);
+  const entries = await readdir(harnessDirectory, { withFileTypes: true });
+  const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+  assert.ok(files.length >= provenance.size, 'harness/ must contain at least the known provenance-mapped files');
+
   for (const file of files) {
-    const contents = await readFile(new URL(file.name, harnessDirectory), 'utf8');
-    assert.match(contents, /RECONSTRUCTED/, `${file.name} must disclose reconstruction provenance`);
+    const contents = await readFile(new URL(file, harnessDirectory), 'utf8');
+    const declaresReconstructed = /RECONSTRUCTED/.test(contents);
+    const declaresRecovered = /recovered verbatim/i.test(contents);
+    const status = provenance.get(file);
+
+    if (status === 'reconstructed') {
+      assert.ok(declaresReconstructed, `${file} must disclose reconstruction provenance`);
+    } else if (status === 'recovered') {
+      assert.ok(!declaresReconstructed, `${file} is verbatim-recovered and must not claim reconstruction`);
+      assert.ok(declaresRecovered, `${file} is verbatim-recovered and must say so`);
+    } else {
+      assert.ok(
+        declaresReconstructed || declaresRecovered,
+        `${file} is not in the known harness provenance map and must declare itself RECONSTRUCTED or recovered verbatim so it cannot silently skip labeling`
+      );
+    }
   }
 
-  const rubric = await readFile(new URL('../harness/rubric.md', import.meta.url), 'utf8');
+  const rubric = await readFile(new URL('rubric.md', harnessDirectory), 'utf8');
   assert.ok(rubric.includes(
     '5 = factually accurate, predictions largely came true · 4 = grounded in primary sources, core thesis not falsified · 3 = real data, significant unproven leaps · 2 = speculation dominates, key predictions failed · 1 = core claims falsified or purely conspiratorial.'
   ));
 });
 
-test('reconstructed review prompt includes the packet contract and cited hindsight facts', async () => {
+test('recovered review prompt includes the real packet contract and every hindsight fact', async () => {
   const prompt = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
 
   for (const requiredText of [
-    '{{BOOK_METADATA}}',
-    '{{BOOK_TEXT}}',
-    'output_schema.json',
-    'SEC staff report',
-    '122–147%',
-    '~20% by February 2021',
-    '~$483 intraday on January 28, 2021',
-    'EU PFOF ban',
-    '$70M Robinhood action',
-    '~$2.55T in December 2022'
+    '{{BOOK_PACKET_PATH}}',
+    '{{REVIEW_OUTPUT_PATH}}',
+    // one distinctive phrase per hindsight bullet, in original order — the reconstruction this
+    // replaces kept 6 of these 15 and dropped every "directionally right" concession
+    'No "MOASS" (Mother of All Short Squeezes) ever occurred',
+    'GameStop did a 4-for-1 stock split (via dividend) in July 2022',
+    "The SEC's October 2021 staff report",
+    '~122% of float (Jan 2021) to ~20% by Feb 2021',
+    'Citadel was never margin-called into collapse',
+    'Direct registration (DRS/Computershare) grew to ~75M shares',
+    'inflation predictions were directionally right',
+    'The Fed reverse repo facility peaked ~$2.55T (Dec 2022)',
+    'Evergrande defaulted (Dec 2021)',
+    'claims of CS fragility were directionally right',
+    'Archegos (Mar 2021) was a real swaps blow-up',
+    'the EU banned PFOF (phase-out by 2026)',
+    'Fails-to-deliver (FTDs) and naked shorting are real, documented market phenomena historically',
+    'launched an NFT marketplace in 2022',
+    'DTCC/NSCC/OCC continue operating normally'
   ]) {
     assert.ok(prompt.includes(requiredText), `review_prompt.md must contain ${requiredText}`);
   }
