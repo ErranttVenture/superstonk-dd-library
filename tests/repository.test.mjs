@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -288,21 +288,42 @@ test('reproduces the published calibration statistics from pre-adjudication rati
   }
 });
 
-test('labels only the still-reconstructed extraction scripts, and does not mislabel recovered ones', async () => {
+test('labels every harness file with either a reconstruction or a verbatim-recovery disclosure', async () => {
   const harnessDirectory = new URL('../harness/', import.meta.url);
-  const stillReconstructed = ['extract_bookcase.mjs', 'extract_book_text.mjs'];
-  const recoveredVerbatim = ['rubric.md', 'review_prompt.md', 'output_schema.json', 'calibration.md'];
+  // Files not listed here are unrecognised, not exempt: they still have to declare their own
+  // provenance (see the default branch below), so a new harness file can't silently ship unlabelled.
+  const provenance = new Map([
+    ['extract_bookcase.mjs', 'reconstructed'],
+    ['extract_book_text.mjs', 'reconstructed'],
+    ['rubric.md', 'recovered'],
+    ['review_prompt.md', 'recovered'],
+    ['output_schema.json', 'recovered'],
+    ['calibration.md', 'recovered']
+  ]);
 
-  for (const file of stillReconstructed) {
+  const entries = await readdir(harnessDirectory, { withFileTypes: true });
+  const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+  assert.ok(files.length >= provenance.size, 'harness/ must contain at least the known provenance-mapped files');
+
+  for (const file of files) {
     const contents = await readFile(new URL(file, harnessDirectory), 'utf8');
-    assert.match(contents, /RECONSTRUCTED/, `${file} must disclose reconstruction provenance`);
-  }
-  for (const file of recoveredVerbatim) {
-    const contents = await readFile(new URL(file, harnessDirectory), 'utf8');
-    assert.doesNotMatch(contents, /RECONSTRUCTED/, `${file} is verbatim-recovered and must not claim reconstruction`);
+    const declaresReconstructed = /RECONSTRUCTED/.test(contents);
+    const declaresRecovered = /recovered verbatim/i.test(contents);
+    const status = provenance.get(file);
+
+    if (status === 'reconstructed') {
+      assert.ok(declaresReconstructed, `${file} must disclose reconstruction provenance`);
+    } else if (status === 'recovered') {
+      assert.ok(!declaresReconstructed, `${file} is verbatim-recovered and must not claim reconstruction`);
+    } else {
+      assert.ok(
+        declaresReconstructed || declaresRecovered,
+        `${file} is not in the known harness provenance map and must declare itself RECONSTRUCTED or recovered verbatim so it cannot silently skip labeling`
+      );
+    }
   }
 
-  const rubric = await readFile(new URL('../harness/rubric.md', import.meta.url), 'utf8');
+  const rubric = await readFile(new URL('rubric.md', harnessDirectory), 'utf8');
   assert.ok(rubric.includes(
     '5 = factually accurate, predictions largely came true · 4 = grounded in primary sources, core thesis not falsified · 3 = real data, significant unproven leaps · 2 = speculation dominates, key predictions failed · 1 = core claims falsified or purely conspiratorial.'
   ));

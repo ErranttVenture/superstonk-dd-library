@@ -7,7 +7,7 @@ This records exactly where the harness/ files recovered in this change came from
 The original July 21, 2026 review workflow — the actual script that ran all 214 per-book review agents plus the calibration verify pass — was located intact on the machine that originally ran it, outside this repository, at:
 
 ```
-C:/Users/seany/.claude/projects/C--Users-seany-Documents-AI-Production/c410275b-ebe1-4f1d-b82a-0cba3c10e712/workflows/scripts/superstonk-dd-review-wf_4d8e7c67-f83.js
+~/.claude/projects/<project>/workflows/scripts/superstonk-dd-review-wf_4d8e7c67-f83.js
 ```
 
 170 lines. It is a plain JavaScript workflow script (`meta`, then top-level `const` declarations and two prompt-builder functions, then the `pipeline()` call that dispatched the actual agents). Nothing about it was ambiguous or required interpretation — every constant and function referenced below was extracted by evaluating the source directly, not by reading and retyping it.
@@ -15,7 +15,7 @@ C:/Users/seany/.claude/projects/C--Users-seany-Documents-AI-Production/c410275b-
 Per-book raw agent transcripts from the actual run are preserved as a side effect of how the workflow runtime logs its work, in the same project folder:
 
 ```
-C:/Users/seany/.claude/projects/C--Users-seany-Documents-AI-Production/c410275b-ebe1-4f1d-b82a-0cba3c10e712/subagents/workflows/wf_4d8e7c67-f83/*.jsonl
+~/.claude/projects/<project>/subagents/workflows/wf_4d8e7c67-f83/*.jsonl
 ```
 
 ## What was recovered verbatim from the workflow script
