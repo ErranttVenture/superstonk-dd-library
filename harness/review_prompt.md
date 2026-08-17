@@ -43,7 +43,7 @@ STEP 2 — Using the Write tool, write your COMPLETE assessment object as JSON t
 STEP 3 — Return the same object via structured output.
 ```
 
-`${RUBRIC}` is populated by both anchor scales recovered in [`rubric.md`](rubric.md) — not duplicated here to avoid drift between the two copies. `${typeBlock}` and `${HINDSIGHT}` are expanded verbatim below.
+`${RUBRIC}` is populated by both anchor scales recovered in [`rubric.md`](rubric.md) — not duplicated here to avoid drift between the two copies. `${typeBlock}` is expanded verbatim below. `${HINDSIGHT}` was expanded from the v1 block below in the original run; a new review assembles it per [`hindsight.md`](hindsight.md) ("Assembling the block for a review") instead.
 
 ## Type-specific blocks (verbatim)
 

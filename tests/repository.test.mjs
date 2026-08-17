@@ -500,3 +500,37 @@ test('ships structurally valid concise issue forms with required fields', async 
     }
   }
 });
+
+test('routes forward reviews through the versioned hindsight machinery', async () => {
+  const hindsight = await readFile(new URL('../harness/hindsight.md', import.meta.url), 'utf8');
+  const harnessReadme = await readFile(new URL('../harness/README.md', import.meta.url), 'utf8');
+  const contributing = await readFile(new URL('../CONTRIBUTING.md', import.meta.url), 'utf8');
+  const calibration = await readFile(new URL('../harness/calibration.md', import.meta.url), 'utf8');
+  const reviewPrompt = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
+
+  assert.ok(
+    hindsight.includes('## Assembling the block for a review'),
+    'hindsight.md must document how to assemble the block'
+  );
+  assert.ok(hindsight.includes('hindsight_version'), 'hindsight.md must name the hindsight_version stamp');
+  assert.ok(
+    harnessReadme.includes('hindsight version'),
+    'harness/README.md must tell operators to record a hindsight version'
+  );
+  assert.ok(
+    !harnessReadme.includes('hindsight cutoff'),
+    'harness/README.md must not reference the retired hindsight-cutoff wording'
+  );
+  assert.ok(
+    !contributing.includes('hindsight cutoff'),
+    'CONTRIBUTING.md must not reference the retired hindsight-cutoff wording'
+  );
+  assert.ok(
+    calibration.includes('Assembling the block for a review'),
+    'calibration.md must point verify passes at the hindsight.md assembly section'
+  );
+  assert.ok(
+    reviewPrompt.includes('hindsight.md'),
+    'review_prompt.md must point at hindsight.md for assembling future reviews'
+  );
+});
