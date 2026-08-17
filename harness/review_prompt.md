@@ -2,6 +2,12 @@
 
 > **Recovered verbatim.** This is `reviewPrompt()` from the original review workflow script — the exact prompt every one of the 214 per-book Haiku agents received. See [`PROVENANCE.md`](PROVENANCE.md) for where it was recovered from. The prior version of this file was an inferred, model-neutral paraphrase; it dropped 9 of 15 hindsight facts (including every concession that a prediction was directionally right), invented hindsight numbers that don't match the original, and omitted the honesty-labeling half of the validity rubric entirely.
 
+> **Versioning note.** The hindsight facts block below is **v1** — the frozen
+> historical record of what the original 214 reviewers received. The current graded
+> ground truth for any future review is [`hindsight.md`](hindsight.md); challenges and
+> amendments are tracked in [`ERRATA.md`](ERRATA.md). Nothing in the verbatim blocks
+> of this file is ever edited.
+
 ## Placeholder substitution
 
 The original template hardcoded two scratchpad file paths that no longer exist, since the per-book input packets were not preserved:
