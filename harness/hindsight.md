@@ -25,6 +25,23 @@ to `output_schema.json`.)
 **Scope rule:** a bullet earns its place only if some claim in the corpus needs it to
 be graded fairly. This file is not a rolling macro commentary.
 
+## Assembling the block for a review
+
+`ERRATA.md` is the audit trail — it is never included in a reviewer's prompt. Reviewers
+receive only the assembled facts block. To run a v2-graded review, expand the
+`${HINDSIGHT}` placeholder in [`review_prompt.md`](review_prompt.md) with, in order:
+
+1. The heading line `VERIFIED HINDSIGHT FACTS (as of 2026-08-16 — treat as ground truth
+   when assessing claims/predictions):`
+2. The 15 v1 bullets, copied verbatim and unchanged from the "Hindsight facts block" in
+   [`review_prompt.md`](review_prompt.md).
+3. The bullets under "v2 amendments" below, appended verbatim, including their grading
+   guidance.
+
+Record `hindsight_version: v2` alongside the model, evaluation date, and prompt revision
+(see the harness [`README.md`](README.md), "Insert a review model", step 5). A review
+assembled any other way must not be recorded as v2-graded.
+
 ## v2 amendments
 
 - 2023 banking stress (amends the scope of the 2021-22 "no systemic collapse" bullet;
