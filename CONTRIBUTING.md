@@ -34,6 +34,6 @@ Use the [correction form](https://github.com/ErranttVenture/superstonk-dd-librar
 
 ## Re-running the review
 
-The [reconstructed harness](harness/README.md) supports one-book evaluation with another model using the same rubric and structured output contract. Record the model, evaluation date, hindsight cutoff, prompt revision, and any adjudication so results can be compared responsibly.
+The [recovered harness](harness/README.md) supports one-book evaluation with another model using the same rubric and structured output contract. Record the model, evaluation date, hindsight version (the current facts block is assembled from [harness/hindsight.md](harness/hindsight.md); new facts or corrections go through [harness/ERRATA.md](harness/ERRATA.md)), prompt revision, and any adjudication so results can be compared responsibly. To challenge a hindsight fact, use the correction form citing `harness/hindsight.md` as the location, with primary-source evidence; accepted or rejected, the outcome is recorded as an ERRATA entry.
 
 The published review data and reports use CC BY-SA 4.0. If you publish same-rubric re-ratings or an adapted dataset, share them back under the same license and include enough provenance to reproduce or audit the changes. Opening an issue or pull request with the resulting dataset is the preferred way to return that work to the community.

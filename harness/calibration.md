@@ -24,7 +24,7 @@ Every ninth reviewed book (`b.p % 9 === 0`) was independently re-rated using a s
 
 ### verifyPrompt() (verbatim)
 
-The same two path placeholders from [`review_prompt.md`](review_prompt.md) apply here, plus one new one for the verify-stage output: `${S}/verify/${pad}.json` → `{{VERIFY_OUTPUT_PATH}}`. `${HINDSIGHT}` and `${RUBRIC}` are the same constants expanded verbatim in [`review_prompt.md`](review_prompt.md) and [`rubric.md`](rubric.md) — not duplicated a third time here.
+The same two path placeholders from [`review_prompt.md`](review_prompt.md) apply here, plus one new one for the verify-stage output: `${S}/verify/${pad}.json` → `{{VERIFY_OUTPUT_PATH}}`. `${HINDSIGHT}` and `${RUBRIC}` are the same constants expanded verbatim in [`review_prompt.md`](review_prompt.md) and [`rubric.md`](rubric.md) — not duplicated a third time here. In the original run both prompts expanded the frozen v1 block. A new verify pass run against v2-graded reviews must instead expand `${HINDSIGHT}` with the same assembled block used for those reviews (see [`hindsight.md`](hindsight.md), "Assembling the block for a review") and record that hindsight version with the verify output — never mix versions between a review and its verification.
 
 ```
 Calibration check for a standardized 214-book review. Independently rate ONE book — do NOT look at any existing review files; form your own judgment.
