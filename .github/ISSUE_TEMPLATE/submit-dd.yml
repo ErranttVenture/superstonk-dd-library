@@ -1,0 +1,107 @@
+name: Submit a new DD
+description: Nominate due diligence the original review never covered.
+title: "[Submission]: "
+labels:
+  - submission
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two contracts run through this form. `parseSubmissionIssue` matches on the **labels** below, and the website submission form builds a prefilled link from the field **ids**. Renaming either is a breaking change.
+
+        Do not paste the full text of the work. Link to it.
+  - id: title
+    type: input
+    attributes:
+      label: Title
+      description: The title of the work as published.
+    validations:
+      required: true
+  - id: byline
+    type: input
+    attributes:
+      label: Author / byline
+      description: Who wrote it. Pseudonyms and handles are fine.
+    validations:
+      required: true
+  - id: url
+    type: input
+    attributes:
+      label: Source URL
+      description: A durable link to the work itself.
+    validations:
+      required: true
+  - id: archive_url
+    type: input
+    attributes:
+      label: Archive snapshot URL
+      description: A web.archive.org or archive.today snapshot, so the record survives deletion.
+    validations:
+      required: true
+  - id: published
+    type: input
+    attributes:
+      label: Publication date
+      description: ISO format, YYYY-MM-DD.
+    validations:
+      required: true
+  - id: platform
+    type: dropdown
+    attributes:
+      label: Platform
+      options:
+        - Reddit
+        - FlipHTML5
+        - Substack
+        - Hosted PDF
+        - Other
+    validations:
+      required: true
+  - id: length
+    type: input
+    attributes:
+      label: Length in pages
+      description: Leave blank for a post or any source without pages.
+  - id: compilation
+    type: checkboxes
+    attributes:
+      label: Compilation
+      options:
+        - label: This work compiles or republishes other people's writing.
+  - id: thesis
+    type: textarea
+    attributes:
+      label: One-line thesis
+      description: What does this work argue, in one sentence? At least 40 characters.
+    validations:
+      required: true
+  - id: text_available
+    type: dropdown
+    attributes:
+      label: Is the full text readable at the source URL?
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+  - id: related
+    type: input
+    attributes:
+      label: Related existing record
+      description: If this overlaps a record already in the library, name its number.
+  - id: attribution
+    type: dropdown
+    attributes:
+      label: Attribution
+      options:
+        - Credit my GitHub handle
+        - Submit anonymously
+    validations:
+      required: true
+  - id: acknowledgement
+    type: checkboxes
+    attributes:
+      label: Copyright acknowledgement
+      options:
+        - label: I have not pasted the full text of a copyrighted work into this issue.
+          required: true

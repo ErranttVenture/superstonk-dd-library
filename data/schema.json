@@ -17,7 +17,7 @@
     "pos": { "$ref": "#/$defs/pos" },
     "title": { "$ref": "#/$defs/string" },
     "byline": { "$ref": "#/$defs/string" },
-    "pages": { "$ref": "#/$defs/pages" },
+    "pages": { "$ref": "#/$defs/pagesOrNull" },
     "uploaded": { "$ref": "#/$defs/uploaded" },
     "url": { "$ref": "#/$defs/url" },
     "type": { "$ref": "#/$defs/recordType" },
@@ -38,7 +38,14 @@
     "topics": { "$ref": "#/$defs/topics" },
     "calibration": { "$ref": "#/$defs/calibration" },
     "insufficient_text": { "$ref": "#/$defs/boolean" },
-    "author_response": { "$ref": "#/$defs/string" }
+    "author_response": { "$ref": "#/$defs/string" },
+    "source_corpus": { "$ref": "#/$defs/sourceCorpus" },
+    "review_status": {
+      "enum": ["pending", "reviewed", "unreviewable"]
+    },
+    "submission": { "$ref": "#/$defs/submission" },
+    "review_provenance": { "$ref": "#/$defs/reviewProvenance" },
+    "hindsight_version": { "$ref": "#/$defs/hindsightVersion" }
   },
   "additionalProperties": false,
   "anyOf": [
@@ -56,7 +63,7 @@
         "text_available"
       ],
       "properties": {
-        "pos": { "$ref": "#/$defs/pos" },
+        "pos": { "$ref": "#/$defs/originalPos" },
         "title": { "$ref": "#/$defs/string" },
         "byline": { "$ref": "#/$defs/string" },
         "pages": { "$ref": "#/$defs/pages" },
@@ -95,7 +102,7 @@
         "topics"
       ],
       "properties": {
-        "pos": { "$ref": "#/$defs/pos" },
+        "pos": { "$ref": "#/$defs/originalPos" },
         "title": { "$ref": "#/$defs/string" },
         "byline": { "$ref": "#/$defs/string" },
         "pages": { "$ref": "#/$defs/pages" },
@@ -119,6 +126,104 @@
         "topics": { "$ref": "#/$defs/topics" },
         "calibration": { "$ref": "#/$defs/calibration" },
         "insufficient_text": { "$ref": "#/$defs/boolean" },
+        "hindsight_version": { "$ref": "#/$defs/hindsightVersion" },
+        "author_response": { "$ref": "#/$defs/string" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Community unrated record",
+      "type": "object",
+      "required": [
+        "pos",
+        "title",
+        "byline",
+        "pages",
+        "uploaded",
+        "url",
+        "type",
+        "text_available",
+        "source_corpus",
+        "review_status",
+        "submission"
+      ],
+      "properties": {
+        "pos": { "$ref": "#/$defs/communityPos" },
+        "title": { "$ref": "#/$defs/string" },
+        "byline": { "$ref": "#/$defs/string" },
+        "pages": { "$ref": "#/$defs/pagesOrNull" },
+        "uploaded": { "$ref": "#/$defs/uploaded" },
+        "url": { "$ref": "#/$defs/url" },
+        "type": { "$ref": "#/$defs/recordType" },
+        "text_available": { "$ref": "#/$defs/boolean" },
+        "source_corpus": { "$ref": "#/$defs/sourceCorpus" },
+        "review_status": { "$ref": "#/$defs/unratedStatus" },
+        "submission": { "$ref": "#/$defs/submission" },
+        "summary": { "$ref": "#/$defs/string" },
+        "author_response": { "$ref": "#/$defs/string" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Community reviewed record",
+      "type": "object",
+      "required": [
+        "pos",
+        "title",
+        "byline",
+        "pages",
+        "uploaded",
+        "url",
+        "type",
+        "text_available",
+        "source_corpus",
+        "review_status",
+        "submission",
+        "review_provenance",
+        "is_compilation",
+        "content_type",
+        "summary",
+        "key_claims",
+        "constituents",
+        "evidence_quality",
+        "speculation_level",
+        "validity_rating",
+        "rating_reconciled",
+        "validity_rationale",
+        "quality_variance",
+        "confidence",
+        "topics"
+      ],
+      "properties": {
+        "pos": { "$ref": "#/$defs/communityPos" },
+        "title": { "$ref": "#/$defs/string" },
+        "byline": { "$ref": "#/$defs/string" },
+        "pages": { "$ref": "#/$defs/pagesOrNull" },
+        "uploaded": { "$ref": "#/$defs/uploaded" },
+        "url": { "$ref": "#/$defs/url" },
+        "type": { "$ref": "#/$defs/recordType" },
+        "text_available": { "$ref": "#/$defs/boolean" },
+        "source_corpus": { "$ref": "#/$defs/sourceCorpus" },
+        "review_status": { "$ref": "#/$defs/reviewedStatus" },
+        "submission": { "$ref": "#/$defs/submission" },
+        "review_provenance": { "$ref": "#/$defs/reviewProvenance" },
+        "is_compilation": { "$ref": "#/$defs/boolean" },
+        "content_type": { "$ref": "#/$defs/contentType" },
+        "summary": { "$ref": "#/$defs/string" },
+        "key_claims": { "$ref": "#/$defs/keyClaims" },
+        "constituents": { "$ref": "#/$defs/constituents" },
+        "evidence_quality": { "$ref": "#/$defs/rating" },
+        "speculation_level": { "$ref": "#/$defs/speculationLevel" },
+        "validity_rating": { "$ref": "#/$defs/nullableRating" },
+        "validity_rating_original": { "$ref": "#/$defs/rating" },
+        "rating_reconciled": { "$ref": "#/$defs/boolean" },
+        "validity_rationale": { "$ref": "#/$defs/string" },
+        "quality_variance": { "$ref": "#/$defs/qualityVariance" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "topics": { "$ref": "#/$defs/topics" },
+        "calibration": { "$ref": "#/$defs/calibration" },
+        "insufficient_text": { "$ref": "#/$defs/boolean" },
+        "hindsight_version": { "$ref": "#/$defs/hindsightVersion" },
         "author_response": { "$ref": "#/$defs/string" }
       },
       "additionalProperties": false
@@ -127,8 +232,78 @@
   "$defs": {
     "pos": {
       "type": "integer",
+      "minimum": 1
+    },
+    "originalPos": {
+      "type": "integer",
       "minimum": 1,
       "maximum": 250
+    },
+    "communityPos": {
+      "type": "integer",
+      "minimum": 251
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "hindsightVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+$"
+    },
+    "pagesOrNull": {
+      "anyOf": [
+        { "$ref": "#/$defs/pages" },
+        { "type": "null" }
+      ]
+    },
+    "sourceCorpus": {
+      "const": "community"
+    },
+    "unratedStatus": {
+      "enum": ["pending", "unreviewable"]
+    },
+    "reviewedStatus": {
+      "const": "reviewed"
+    },
+    "platform": {
+      "enum": ["reddit", "fliphtml5", "substack", "pdf", "other"]
+    },
+    "submission": {
+      "type": "object",
+      "required": [
+        "submitted_on",
+        "submitted_by",
+        "issue",
+        "archive_url",
+        "platform"
+      ],
+      "properties": {
+        "submitted_on": { "$ref": "#/$defs/date" },
+        "submitted_by": { "$ref": "#/$defs/string" },
+        "issue": { "$ref": "#/$defs/url" },
+        "archive_url": { "$ref": "#/$defs/url" },
+        "platform": { "$ref": "#/$defs/platform" }
+      },
+      "additionalProperties": false
+    },
+    "reviewProvenance": {
+      "type": "object",
+      "required": [
+        "model",
+        "evaluated_on",
+        "hindsight_version",
+        "prompt_revision",
+        "reviewer"
+      ],
+      "properties": {
+        "model": { "$ref": "#/$defs/string" },
+        "evaluated_on": { "$ref": "#/$defs/date" },
+        "hindsight_version": { "$ref": "#/$defs/hindsightVersion" },
+        "prompt_revision": { "$ref": "#/$defs/string" },
+        "reviewer": { "$ref": "#/$defs/string" }
+      },
+      "additionalProperties": false
     },
     "string": {
       "type": "string"
@@ -140,10 +315,7 @@
       "type": "integer",
       "minimum": 1
     },
-    "uploaded": {
-      "type": "string",
-      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
-    },
+    "uploaded": { "$ref": "#/$defs/date" },
     "url": {
       "type": "string",
       "pattern": "^https?://"

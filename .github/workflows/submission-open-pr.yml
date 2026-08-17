@@ -1,0 +1,65 @@
+name: Open submission pull request
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-pull-request:
+    if: >
+      github.event.label.name == 'accepted' &&
+      contains(github.event.issue.labels.*.name, 'submission')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 20
+      - name: Require a maintainer to have applied the label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          permission=$(gh api "repos/${GITHUB_REPOSITORY}/collaborators/${ACTOR}/permission" --jq '.permission')
+          case "$permission" in
+            admin|write) echo "Accepted by $ACTOR ($permission)." ;;
+            *) echo "::error::$ACTOR lacks write access; refusing to open a pull request." ; exit 1 ;;
+          esac
+      - name: Write the issue body to a file
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: printf '%s' "$ISSUE_BODY" > "$RUNNER_TEMP/body.md"
+      - name: Append the pending record
+        env:
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
+          pos=$(node scripts/apply-submission.mjs "$RUNNER_TEMP/body.md" "$ISSUE_URL" "$ISSUE_AUTHOR")
+          echo "POS=$pos" >> "$GITHUB_ENV"
+      - name: Validate the result
+        run: npm test && npm run validate
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          branch="submission/${ISSUE_NUMBER}"
+          if git ls-remote --exit-code origin "refs/heads/$branch" > /dev/null 2>&1; then
+            echo "::notice::Branch $branch already exists on origin; a pull request for issue #${ISSUE_NUMBER} was likely already opened. Nothing further to do."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$branch"
+          git add data/master.json
+          git commit -m "data: add pending community record no. ${POS} (closes #${ISSUE_NUMBER})"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --title "Add pending community record no. ${POS}" \
+            --body "Adds an unrated community record from #${ISSUE_NUMBER}. Accepting this does not rate the work." \
+            --base main

@@ -20,12 +20,17 @@ against. It is versioned:
 **Version stamp rule:** every future review (new book, or re-review of an existing one)
 MUST record which hindsight version it was graded against. v1-graded and v2-graded
 scores are not directly comparable where an amendment is load-bearing for a book's
-claims; never mix them silently. (Follow-up: add an optional `hindsight_version` field
-to both `output_schema.json` and `data/schema.json` — pending in an in-flight branch.
-Until then the stamp lives in the run's own metadata or notes, never inside the review
-JSON or a canonical record: both schemas are `additionalProperties: false` and CI
-validation will reject it. The 214 original reviews are covered globally by the v1
-statement above; do not backfill per-record markers.)
+claims; never mix them silently.
+
+`data/schema.json` now carries the stamp: a canonical reviewed record may set an optional
+top-level `hindsight_version` (pattern `^v[0-9]+$`), and a community record's
+`review_provenance` block requires one. `output_schema.json` deliberately does **not** gain
+the field — it is recovered verbatim from the original per-book AI review schema, and adding
+to it would forfeit that provenance. A run's per-book AI output therefore still carries the
+version in the run's own metadata or notes; the canonical record is where it persists.
+
+The 214 original reviews are covered globally by the v1 statement above; do not backfill
+per-record markers.
 
 Accepted amendments never retroactively change recorded scores. A v1-graded record
 changes only through the existing dispute/adjudication path — where ERRATA entries are

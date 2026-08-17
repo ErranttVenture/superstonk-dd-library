@@ -56,6 +56,12 @@ Community feedback identified two explicit roadmap axes:
 
 These future dimensions should supplement the preserved validity assessment, not silently rewrite it.
 
+## Submit a new DD
+
+The library is not limited to the original bookcase. [Submit a new DD](https://github.com/ErranttVenture/superstonk-dd-library/issues/new?template=submit-dd.yml) — a Reddit post, a Substack essay, a FlipHTML5 publication, or a hosted PDF — and an automated comment will check it against the [published bar](CONTRIBUTING.md) within minutes.
+
+Accepted submissions enter the dataset at position 251 and above with `source_corpus: "community"` and `review_status: "pending"`. **Pending means unrated, not rated zero.** Acceptance says the work is in scope and durably linked; it says nothing about whether the work is any good. Rating is a separate step that records which model produced the rating, on what date, and against which hindsight version.
+
 ## Dispute a rating
 
 Disagreement is part of the audit. Read the [contribution and right-of-reply policy](CONTRIBUTING.md), then [open a rating dispute](https://github.com/ErranttVenture/superstonk-dd-library/issues/new?template=dispute-rating.yml) with the book, disputed assessment, primary-source evidence, and proposed change. Authors have an unconditional right of reply through the canonical `author_response` field whether or not a rating changes.
@@ -74,6 +80,6 @@ The original FlipHTML5 book text is excluded from this repository. Those publica
 
 Four immutable original artifacts—[`reports/REPORT.md`](reports/REPORT.md), [`reports/BOOKS.md`](reports/BOOKS.md), [`data/library_review.csv`](data/library_review.csv), and [`data/original-master.json`](data/original-master.json)—preserve the July 21, 2026 review with the August 13, 2026 conditional-claim adjudication incorporated. The baseline JSON is hash-locked and must never change.
 
-[`data/master.json`](data/master.json) is the evolving canonical current dataset for consumers, raw-data links, accepted disputes, corrections, and author replies. At initial publication it is byte-for-byte identical to `data/original-master.json`; future governed adjudications may change only `master.json` while the baseline continues to prove the launch state.
+[`data/master.json`](data/master.json) is the evolving canonical current dataset for consumers, raw-data links, accepted disputes, corrections, and author replies. Positions 1 through 250 are the July 21, 2026 review: automated validation locks their order 1–250 and refuses to let any of them carry `source_corpus`, but the governed dispute and correction paths above can still update a rating, rationale, or reply on a preserved record — each such change stays visible behind an `ADJUDICATED` note rather than silently overwriting the original. Positions 251 and above are community submissions accepted after launch, each carrying `source_corpus: "community"`, so the two blocks are never confused. `data/original-master.json` continues to prove the launch state on its own, byte-for-byte, independent of anything that happens to `master.json`.
 
 The July 21, 2026 review workflow script — the rubric, the review prompt, the per-book output schema, and the calibration/verify prompt — was located intact outside this repository and is recovered verbatim under [`harness/`](harness/README.md); see [`harness/PROVENANCE.md`](harness/PROVENANCE.md) for exactly where it came from and how it was extracted. What genuinely was not preserved is narrower: the per-book input packets and the raw verify-pass outputs. `extract_bookcase.mjs` and `extract_book_text.mjs`, which are unrelated to that script, remain labeled **RECONSTRUCTED**.
