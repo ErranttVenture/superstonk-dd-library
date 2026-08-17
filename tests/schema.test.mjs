@@ -38,11 +38,11 @@ const requiredReviewedFields = [
   'topics'
 ];
 
-test('all 250 canonical records satisfy the record schema', () => {
+test('all canonical records satisfy the record schema', () => {
   const result = validateMasterRecords(records, schema);
 
-  assert.equal(result.total, 250);
-  assert.equal(result.valid, 250);
+  assert.ok(result.total >= 250);
+  assert.equal(result.valid, result.total);
   assert.deepEqual(result.errors, []);
 });
 
@@ -59,9 +59,12 @@ test('repository validation CLI checks both current and original master datasets
 
   assert.equal(result.status, 0);
   assert.equal(result.stderr, '');
-  assert.match(result.stdout, /Schema validation: 250\/250 records valid/);
+  assert.ok(result.stdout.includes(
+    `Schema validation: ${records.length}/${records.length} records valid`
+  ));
   assert.match(result.stdout, /Original baseline schema validation: 250\/250 records valid/);
   assert.match(result.stdout, /Original baseline position sequence: 1–250 complete/);
+  assert.match(result.stdout, /Canonical dataset: 250 preserved \+ \d+ community records/);
 });
 
 test('record schema permits a string author_response on metadata and reviewed records', () => {
@@ -305,4 +308,156 @@ test('recovered output schema accepts a canonical review-stage payload', () => {
     'the real per-book schema never required rating_reconciled or constituents'
   );
   assert.deepEqual(validateAgainstSchema(outputSchema, review), []);
+});
+
+const communitySubmission = {
+  submitted_on: '2026-08-20',
+  submitted_by: 'octocat',
+  issue: 'https://github.com/ErranttVenture/superstonk-dd-library/issues/12',
+  archive_url: 'https://web.archive.org/web/20260820000000/https://example.test/dd',
+  platform: 'reddit'
+};
+const communityPending = {
+  pos: 251,
+  title: 'A submitted DD',
+  byline: 'u/example',
+  pages: null,
+  uploaded: '2026-08-01',
+  url: 'https://example.test/dd',
+  type: 'original',
+  text_available: true,
+  source_corpus: 'community',
+  review_status: 'pending',
+  submission: communitySubmission
+};
+const communityReviewed = {
+  ...communityPending,
+  review_status: 'reviewed',
+  ...Object.fromEntries(requiredReviewedFields.map((field) => [field, record[field]])),
+  review_provenance: {
+    model: 'claude-opus-5',
+    evaluated_on: '2026-08-25',
+    hindsight_version: 'v2',
+    prompt_revision: 'harness/review_prompt.md@1ec62ef',
+    reviewer: 'octocat'
+  }
+};
+
+test('review provenance stamps a hindsight version, not a retired cutoff date', () => {
+  const withCutoff = structuredClone(communityReviewed);
+  delete withCutoff.review_provenance.hindsight_version;
+  withCutoff.review_provenance.hindsight_cutoff = '2026-08-25';
+
+  assert.notDeepEqual(validateAgainstSchema(schema, withCutoff), []);
+
+  const withoutVersion = structuredClone(communityReviewed);
+  delete withoutVersion.review_provenance.hindsight_version;
+
+  assert.notDeepEqual(validateAgainstSchema(schema, withoutVersion), []);
+});
+
+test('review provenance rejects a hindsight version that is not vN', () => {
+  for (const value of ['2026-08-25', 'version2', 'v', 'V2', '2']) {
+    const candidate = structuredClone(communityReviewed);
+    candidate.review_provenance.hindsight_version = value;
+
+    assert.notDeepEqual(validateAgainstSchema(schema, candidate), [], value);
+  }
+
+  for (const value of ['v1', 'v2', 'v10']) {
+    const candidate = structuredClone(communityReviewed);
+    candidate.review_provenance.hindsight_version = value;
+
+    assert.deepEqual(validateAgainstSchema(schema, candidate), [], value);
+  }
+});
+
+test('reviewed records may carry an optional top-level hindsight_version stamp', () => {
+  assert.deepEqual(validateAgainstSchema(schema, { ...record, hindsight_version: 'v2' }), []);
+  assert.deepEqual(
+    validateAgainstSchema(schema, { ...communityReviewed, hindsight_version: 'v2' }),
+    []
+  );
+  assert.notDeepEqual(
+    validateAgainstSchema(schema, { ...record, hindsight_version: '2026-08-25' }),
+    []
+  );
+  assert.notDeepEqual(
+    validateAgainstSchema(schema, { ...metadataRecord, hindsight_version: 'v2' }),
+    []
+  );
+});
+
+test('record schema accepts community pending and reviewed records', () => {
+  assert.deepEqual(validateAgainstSchema(schema, communityPending), []);
+  assert.deepEqual(validateAgainstSchema(schema, communityReviewed), []);
+});
+
+test('record schema accepts an unreviewable community record with a summary', () => {
+  const candidate = {
+    ...communityPending,
+    review_status: 'unreviewable',
+    summary: 'Image-only submission with no readable text layer.'
+  };
+
+  assert.deepEqual(validateAgainstSchema(schema, candidate), []);
+});
+
+test('record schema rejects community fields on a preserved record', () => {
+  for (const extra of [
+    { source_corpus: 'community' },
+    { review_status: 'pending' },
+    { submission: communitySubmission }
+  ]) {
+    assert.notDeepEqual(validateAgainstSchema(schema, { ...metadataRecord, ...extra }), []);
+    assert.notDeepEqual(validateAgainstSchema(schema, { ...record, ...extra }), []);
+  }
+});
+
+test('record schema rejects a community record missing its community fields', () => {
+  for (const field of ['source_corpus', 'review_status', 'submission']) {
+    const candidate = structuredClone(communityPending);
+    delete candidate[field];
+
+    assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
+  }
+});
+
+test('record schema requires review_provenance only on community reviewed records', () => {
+  const withoutProvenance = structuredClone(communityReviewed);
+  delete withoutProvenance.review_provenance;
+
+  assert.notDeepEqual(validateAgainstSchema(schema, withoutProvenance), []);
+  assert.deepEqual(validateAgainstSchema(schema, communityPending), []);
+});
+
+test('record schema rejects a mismatched review_status', () => {
+  assert.notDeepEqual(
+    validateAgainstSchema(schema, { ...communityPending, review_status: 'reviewed' }),
+    []
+  );
+  assert.notDeepEqual(
+    validateAgainstSchema(schema, { ...communityReviewed, review_status: 'pending' }),
+    []
+  );
+});
+
+test('record schema rejects any source_corpus value other than community', () => {
+  assert.notDeepEqual(
+    validateAgainstSchema(schema, { ...communityPending, source_corpus: 'original_250' }),
+    []
+  );
+});
+
+test('record schema confines null pages and pos 251 to their own branches', () => {
+  assert.notDeepEqual(validateAgainstSchema(schema, { ...metadataRecord, pages: null }), []);
+  assert.notDeepEqual(validateAgainstSchema(schema, { ...communityPending, pos: 250 }), []);
+  assert.deepEqual(validateAgainstSchema(schema, { ...communityPending, pages: 14 }), []);
+});
+
+test('record schema rejects an unknown property inside submission', () => {
+  const candidate = structuredClone(communityPending);
+  candidate.submission.referrer = 'twitter';
+
+  assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
 });

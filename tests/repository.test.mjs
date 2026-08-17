@@ -9,6 +9,8 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+import { checkDatasetInvariants } from '../scripts/dataset-invariants.mjs';
+
 const originals = new Map([
   ['reports/REPORT.md', '53c777712e6ff985e1259da5ebe47aa05e499c81d5d0de9916eba9b17ff90cfa'],
   ['reports/BOOKS.md', '3b202e66b0e8587e84d63d9d1eb2cd8f525ffc1ed3d2589b3c38a33b4d56ffc0'],
@@ -190,16 +192,24 @@ test('preserves the immutable original artifacts and baseline record sequence', 
   );
 });
 
-test('keeps the evolving canonical master as a complete 250-record dataset', async () => {
+test('keeps the preserved 250 intact and any community block contiguous', async () => {
   const master = JSON.parse(
     await readFile(new URL('../data/master.json', import.meta.url), 'utf8')
   );
-  assert.ok(Array.isArray(master));
-  assert.equal(master.length, 250);
-  assert.deepEqual(
-    master.map((record) => record.pos),
-    Array.from({ length: 250 }, (_, index) => index + 1)
+  const baseline = JSON.parse(
+    await readFile(new URL('../data/original-master.json', import.meta.url), 'utf8')
   );
+
+  assert.ok(Array.isArray(master));
+  assert.ok(master.length >= 250);
+
+  const invariants = checkDatasetInvariants(master, baseline);
+  assert.deepEqual(invariants.errors, []);
+  assert.equal(invariants.preserved, 250);
+
+  for (const record of master.slice(250)) {
+    assert.equal(record.source_corpus, 'community');
+  }
 });
 
 test('reproduces the published calibration statistics from pre-adjudication ratings', async () => {
@@ -460,10 +470,57 @@ test('documents the governed dispute and right-of-reply workflow', async () => {
     'primary-source',
     'maintainer review',
     'No drive-by rating edits',
-    'CC BY-SA 4.0'
+    'CC BY-SA 4.0',
+    'Submit a new DD',
+    'pending',
+    'unrated',
+    'archive',
+    'market-structure',
+    'submit-dd.yml'
   ]) {
     assert.ok(contributing.includes(requiredText), `CONTRIBUTING.md must contain ${requiredText}`);
   }
+});
+
+test('documents the submission bar, lifecycle and unrated meaning', async () => {
+  const contributing = await readFile(new URL('../CONTRIBUTING.md', import.meta.url), 'utf8');
+  const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
+  const harness = await readFile(new URL('../harness/README.md', import.meta.url), 'utf8');
+
+  for (const checkId of [
+    'url_resolves',
+    'archive_present',
+    'no_duplicate',
+    'byline_present',
+    'published_valid',
+    'thesis_present',
+    'copyright_ack'
+  ]) {
+    assert.ok(contributing.includes(checkId), `CONTRIBUTING.md must publish the ${checkId} check`);
+  }
+
+  for (const requiredText of [
+    'Quality, plausibility',
+    'is not a gate',
+    'pos 251',
+    'rebase'
+  ]) {
+    assert.ok(contributing.includes(requiredText), `CONTRIBUTING.md must contain ${requiredText}`);
+  }
+
+  assert.ok(
+    readme.includes('Pending means unrated, not rated zero'),
+    'README.md must state that pending is not a failing rating'
+  );
+  assert.ok(readme.includes('Submit a new DD'), 'README.md must link the submission path');
+  assert.ok(
+    readme.includes('data/original-master.json'),
+    'README.md must keep pointing at the immutable baseline'
+  );
+  assert.ok(
+    harness.includes('review_provenance'),
+    'harness/README.md must require review provenance on community reviews'
+  );
 });
 
 test('assigns exact repository ownership', async () => {
@@ -474,7 +531,8 @@ test('assigns exact repository ownership', async () => {
 test('ships structurally valid concise issue forms with required fields', async () => {
   const forms = new Map([
     ['dispute-rating.yml', ['book', 'dispute', 'evidence', 'proposed_change']],
-    ['correction.yml', ['location', 'correction', 'evidence']]
+    ['correction.yml', ['location', 'correction', 'evidence']],
+    ['submit-dd.yml', ['title', 'byline', 'url', 'archive_url', 'published', 'platform', 'thesis', 'text_available', 'attribution']]
   ]);
 
   for (const [filename, requiredIds] of forms) {
@@ -499,6 +557,108 @@ test('ships structurally valid concise issue forms with required fields', async 
       );
     }
   }
+});
+
+test('submission form labels match the parser contract', async () => {
+  const form = await readFile(
+    new URL('../.github/ISSUE_TEMPLATE/submit-dd.yml', import.meta.url),
+    'utf8'
+  );
+
+  for (const label of [
+    'Title',
+    'Author / byline',
+    'Source URL',
+    'Archive snapshot URL',
+    'Publication date',
+    'Platform',
+    'Length in pages',
+    'Compilation',
+    'One-line thesis',
+    'Is the full text readable at the source URL?',
+    'Related existing record',
+    'Attribution',
+    'Copyright acknowledgement'
+  ]) {
+    assert.ok(
+      form.includes(`label: ${label}`) || form.includes(`label: "${label}"`),
+      `submit-dd.yml must keep the label "${label}" that parseSubmissionIssue matches on`
+    );
+  }
+});
+
+test('no issue-form option is a bare YAML 1.1 boolean', async () => {
+  // GitHub parses issue forms as YAML 1.1, where bare Yes/No/On/Off/Y/N are booleans, and its
+  // form validator rejects boolean options outright: the template then fails validation and
+  // disappears from the New Issue chooser. A form nobody can open takes every downstream
+  // workflow with it, so this is a total-failure mode hiding behind a missing pair of quotes.
+  const booleanish = /^\s*-\s*(?:y|n|yes|no|true|false|on|off)\s*$/i;
+
+  for (const filename of ['submit-dd.yml', 'dispute-rating.yml', 'correction.yml']) {
+    const form = (await readFile(
+      new URL(`../.github/ISSUE_TEMPLATE/${filename}`, import.meta.url),
+      'utf8'
+    )).replace(/\r\n/g, '\n');
+
+    for (const [index, line] of form.split('\n').entries()) {
+      assert.doesNotMatch(
+        line,
+        booleanish,
+        `${filename}:${index + 1} — "${line.trim()}" is a YAML 1.1 boolean; quote it`
+      );
+    }
+  }
+});
+
+test('submission workflows pin actions, scope permissions and avoid body interpolation', async () => {
+  const workflows = new Map([
+    ['submission-check.yml', 'issues: write'],
+    ['submission-open-pr.yml', 'contents: write']
+  ]);
+
+  for (const [filename, requiredPermission] of workflows) {
+    const workflow = (await readFile(
+      new URL(`../.github/workflows/${filename}`, import.meta.url),
+      'utf8'
+    )).replace(/\r\n/g, '\n');
+
+    assert.ok(workflow.includes(requiredPermission), `${filename} must declare ${requiredPermission}`);
+    assert.match(workflow, /uses: actions\/checkout@[0-9a-f]{40}/, `${filename} must pin checkout by SHA`);
+    assert.match(workflow, /uses: actions\/setup-node@[0-9a-f]{40}/, `${filename} must pin setup-node by SHA`);
+    assert.ok(
+      workflow.includes('ISSUE_BODY: ${{ github.event.issue.body }}'),
+      `${filename} must pass the issue body through an environment variable`
+    );
+    assert.doesNotMatch(
+      workflow,
+      /run:[^\n]*\$\{\{\s*github\.event\.issue\.body/,
+      `${filename} must never interpolate the issue body into a run step`
+    );
+  }
+
+  const openPr = (await readFile(
+    new URL('../.github/workflows/submission-open-pr.yml', import.meta.url),
+    'utf8'
+  )).replace(/\r\n/g, '\n');
+  assert.match(openPr, /collaborators\/\$\{ACTOR\}\/permission/);
+  assert.ok(openPr.includes("github.event.label.name == 'accepted'"));
+});
+
+test('the open-PR workflow checks for an existing submission branch before creating one', async () => {
+  // Normalized because Windows checks these YAML files out with CRLF, and the structural
+  // assertion below is line-oriented. Matches the convention used elsewhere in this file.
+  const openPr = (await readFile(
+    new URL('../.github/workflows/submission-open-pr.yml', import.meta.url),
+    'utf8'
+  )).replace(/\r\n/g, '\n');
+
+  const checkoutIndex = openPr.indexOf('git checkout -b "$branch"');
+  const lsRemoteIndex = openPr.indexOf('git ls-remote --exit-code origin "refs/heads/$branch"');
+
+  assert.ok(lsRemoteIndex >= 0, 'workflow must check for an existing remote branch');
+  assert.ok(checkoutIndex >= 0, 'workflow must still create the branch on the non-existing path');
+  assert.ok(lsRemoteIndex < checkoutIndex, 'the existing-branch check must run before branch creation');
+  assert.match(openPr, /if git ls-remote --exit-code origin "refs\/heads\/\$branch"[^\n]*; then\n\s+echo "::notice::[^\n]*"\n\s+exit 0\n\s+fi/);
 });
 
 test('routes forward reviews through the versioned hindsight machinery', async () => {

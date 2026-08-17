@@ -1,0 +1,49 @@
+name: Submission checks
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    if: contains(github.event.issue.labels.*.name, 'submission')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 20
+      - name: Write the issue body to a file
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: printf '%s' "$ISSUE_BODY" > "$RUNNER_TEMP/body.md"
+      - name: Run the mechanical checks
+        run: node scripts/check-submission.mjs "$RUNNER_TEMP/body.md" > "$RUNNER_TEMP/comment.md"
+      - name: Comment the checklist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/comment.md"
+      - name: Apply the status label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          status=$(sed -n 's/.*<!-- submission-status: \(.*\) -->.*/\1/p' "$RUNNER_TEMP/comment.md" | tail -1)
+          case "$status" in
+            pass) label='submission:passing' ;;
+            incomplete) label='submission:unverified' ;;
+            *) label='submission:failing' ;;
+          esac
+          gh issue edit "$ISSUE_NUMBER" \
+            --remove-label 'submission:passing' \
+            --remove-label 'submission:failing' \
+            --remove-label 'submission:unverified' || true
+          gh issue edit "$ISSUE_NUMBER" --add-label "$label"
