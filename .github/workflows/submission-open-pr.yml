@@ -15,19 +15,13 @@ jobs:
       contains(github.event.issue.labels.*.name, 'submission')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: submission-pr-${{ github.event.issue.number }}
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # SUBMISSION_PR_TOKEN (a fine-grained PAT) lets the pushed branch and the
-          # pull request trigger ci.yml; events created with the automatic
-          # GITHUB_TOKEN never start workflow runs.
-          token: ${{ secrets.SUBMISSION_PR_TOKEN || github.token }}
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 20
       - name: Require a maintainer to have applied the label
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           ACTOR: ${{ github.actor }}
         run: |
           permission=$(gh api "repos/${GITHUB_REPOSITORY}/collaborators/${ACTOR}/permission" --jq '.permission')
@@ -35,11 +29,44 @@ jobs:
             admin|write) echo "Accepted by $ACTOR ($permission)." ;;
             *) echo "::error::$ACTOR lacks write access; refusing to open a pull request." ; exit 1 ;;
           esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 20
+      - name: Inspect existing submission
+        id: submission
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          branch="submission/${ISSUE_NUMBER}"
+          # Qualify the head owner so a fork with the same branch name cannot match.
+          # Include closed/merged PRs: retries must not reopen a rejected submission.
+          pr=$(gh api --method GET "repos/${GITHUB_REPOSITORY}/pulls" \
+            -f head="${GITHUB_REPOSITORY_OWNER}:$branch" \
+            -f base=main -f state=all --jq '.[0].html_url // empty')
+          if [ -n "$pr" ]; then
+            echo "::notice::Submission already has a pull request: $pr"
+            echo "pr_exists=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Without --exit-code, no matching branch is an empty successful result;
+          # an authentication/network failure remains a failing command.
+          remote=$(git ls-remote --heads origin "refs/heads/$branch")
+          if [ -n "$remote" ]; then
+            echo "branch_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch_exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Write the issue body to a file
+        if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: printf '%s' "$ISSUE_BODY" > "$RUNNER_TEMP/body.md"
       - name: Append the pending record
+        if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'
         env:
           ISSUE_URL: ${{ github.event.issue.html_url }}
           ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
@@ -47,24 +74,27 @@ jobs:
           pos=$(node scripts/apply-submission.mjs "$RUNNER_TEMP/body.md" "$ISSUE_URL" "$ISSUE_AUTHOR")
           echo "POS=$pos" >> "$GITHUB_ENV"
       - name: Validate the result
+        if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'
         run: npm test && npm run validate
       - name: Open the pull request
+        if: steps.submission.outputs.pr_exists != 'true'
         env:
-          GH_TOKEN: ${{ secrets.SUBMISSION_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          BRANCH_EXISTS: ${{ steps.submission.outputs.branch_exists }}
         run: |
+          gh auth setup-git --hostname github.com
           branch="submission/${ISSUE_NUMBER}"
-          if git ls-remote --exit-code origin "refs/heads/$branch" > /dev/null 2>&1; then
-            echo "::notice::Branch $branch already exists on origin; a pull request for issue #${ISSUE_NUMBER} was likely already opened. Nothing further to do."
-            exit 0
+          if [ "$BRANCH_EXISTS" != true ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git checkout -b "$branch"
+            git add data/master.json
+            git commit -m "data: add pending community record no. ${POS} (closes #${ISSUE_NUMBER})"
+            git push --set-upstream origin "$branch"
           fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git checkout -b "$branch"
-          git add data/master.json
-          git commit -m "data: add pending community record no. ${POS} (closes #${ISSUE_NUMBER})"
-          git push --set-upstream origin "$branch"
           gh pr create \
-            --title "Add pending community record no. ${POS}" \
-            --body "Adds an unrated community record from #${ISSUE_NUMBER}. Accepting this does not rate the work." \
+            --head "$branch" \
+            --title "Add pending community submission #${ISSUE_NUMBER}" \
+            --body "Automated submission PR for #${ISSUE_NUMBER}. Review the diff: accepting a pending record does not rate or endorse the work. A maintainer must review and sign the generated commit and start CI as described in CONTRIBUTING.md. Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
             --base main
