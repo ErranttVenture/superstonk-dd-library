@@ -644,21 +644,83 @@ test('submission workflows pin actions, scope permissions and avoid body interpo
   assert.ok(openPr.includes("github.event.label.name == 'accepted'"));
 });
 
-test('the open-PR workflow checks for an existing submission branch before creating one', async () => {
-  // Normalized because Windows checks these YAML files out with CRLF, and the structural
-  // assertion below is line-oriented. Matches the convention used elsewhere in this file.
+test('submission publishing uses only the job token after authorization without persisting checkout credentials', async () => {
   const openPr = (await readFile(
     new URL('../.github/workflows/submission-open-pr.yml', import.meta.url),
     'utf8'
   )).replace(/\r\n/g, '\n');
 
-  const checkoutIndex = openPr.indexOf('git checkout -b "$branch"');
-  const lsRemoteIndex = openPr.indexOf('git ls-remote --exit-code origin "refs/heads/$branch"');
+  assert.doesNotMatch(openPr, /SUBMISSION_PR_TOKEN|secrets\./);
+  assert.doesNotMatch(openPr, /^\s+token:/m, 'checkout must use its default job token');
+  const guardIndex = openPr.indexOf('- name: Require a maintainer to have applied the label');
+  const checkoutIndex = openPr.indexOf('- uses: actions/checkout@');
+  const inspectIndex = openPr.indexOf('- name: Inspect existing submission');
+  const appendIndex = openPr.indexOf('- name: Append the pending record');
+  const validateIndex = openPr.indexOf('- name: Validate the result');
+  const publishIndex = openPr.indexOf('- name: Open the pull request');
+  for (const index of [guardIndex, checkoutIndex, inspectIndex, appendIndex, validateIndex, publishIndex]) {
+    assert.ok(index >= 0, 'the expected authorization, preparation and publishing steps must exist');
+  }
+  assert.ok(guardIndex < checkoutIndex && checkoutIndex < inspectIndex);
+  assert.ok(inspectIndex < appendIndex && appendIndex < validateIndex && validateIndex < publishIndex);
+  assert.match(openPr.slice(checkoutIndex, inspectIndex), /persist-credentials: false/);
+  assert.doesNotMatch(openPr.slice(appendIndex, publishIndex), /GH_TOKEN|github\.token/);
+  const publish = openPr.slice(publishIndex);
+  assert.ok(publish.includes('GH_TOKEN: ${{ github.token }}'));
+  assert.ok(publish.indexOf('gh auth setup-git --hostname github.com') >= 0);
+  assert.ok(publish.indexOf('gh auth setup-git --hostname github.com') < publish.indexOf('git push'));
+  assert.doesNotMatch(publish, /git push[^\n]*--force/);
+});
 
-  assert.ok(lsRemoteIndex >= 0, 'workflow must check for an existing remote branch');
-  assert.ok(checkoutIndex >= 0, 'workflow must still create the branch on the non-existing path');
-  assert.ok(lsRemoteIndex < checkoutIndex, 'the existing-branch check must run before branch creation');
-  assert.match(openPr, /if git ls-remote --exit-code origin "refs\/heads\/\$branch"[^\n]*; then\n\s+echo "::notice::[^\n]*"\n\s+exit 0\n\s+fi/);
+test('submission retries distinguish existing PRs from branches left by failed PR creation', async () => {
+  const openPr = (await readFile(
+    new URL('../.github/workflows/submission-open-pr.yml', import.meta.url),
+    'utf8'
+  )).replace(/\r\n/g, '\n');
+
+  assert.ok(openPr.includes('group: submission-pr-${{ github.event.issue.number }}'));
+  assert.match(openPr, /cancel-in-progress: false/);
+  const inspect = openPr.slice(openPr.indexOf('- name: Inspect existing submission'), openPr.indexOf('- name: Write the issue body'));
+  assert.match(inspect, /gh api --method GET/);
+  assert.ok(inspect.includes('-f head="${GITHUB_REPOSITORY_OWNER}:$branch"'));
+  assert.ok(inspect.includes('-f base=main -f state=all'));
+  assert.match(inspect, /pr=\$\(gh api[\s\S]*?\)\n/);
+  assert.ok(inspect.includes('echo "pr_exists=true" >> "$GITHUB_OUTPUT"'));
+  assert.ok(inspect.includes('remote=$(git ls-remote --heads origin "refs/heads/$branch")'));
+  assert.doesNotMatch(inspect, /\|\| true|2>\s*\/dev\/null|if (?:git|gh) /, 'lookup failures must fail the step');
+
+  for (const step of ['Write the issue body to a file', 'Append the pending record', 'Validate the result']) {
+    assert.ok(openPr.includes(`- name: ${step}\n        if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'`));
+  }
+  const publish = openPr.slice(openPr.indexOf('- name: Open the pull request'));
+  assert.match(publish, /if: steps\.submission\.outputs\.pr_exists != 'true'\n/);
+  assert.match(publish, /if \[ "\$BRANCH_EXISTS" != true \]; then\n[\s\S]*?git push[^\n]*\n\s+fi\n\s+gh pr create/);
+  assert.ok(publish.includes('--head "$branch"'));
+  assert.ok(publish.includes('${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}'));
+  assert.match(publish, /Automated/);
+  assert.match(publish, /sign/);
+});
+
+test('CI and submission event filters keep publication from recursively starting submissions', async () => {
+  const readWorkflow = async (name) => (await readFile(
+    new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8'
+  )).replace(/\r\n/g, '\n');
+  const ci = await readWorkflow('ci.yml');
+  assert.match(ci, /\non:\n  pull_request:\n  push:\n    branches:\n      - main\n\npermissions:/);
+  assert.match(ci, /persist-credentials: false/);
+  assert.match(await readWorkflow('submission-check.yml'), /\non:\n  issues:\n    types: \[opened, edited\]\n\npermissions:/);
+  assert.match(await readWorkflow('submission-open-pr.yml'), /\non:\n  issues:\n    types: \[labeled\]\n\npermissions:/);
+});
+
+test('maintainer instructions cover job-token PR creation, manual CI, signing and partial retries', async () => {
+  const contributing = await readFile(new URL('../CONTRIBUTING.md', import.meta.url), 'utf8');
+  assert.match(contributing, /Allow GitHub Actions to create and approve pull requests/);
+  assert.match(contributing, /Approve workflows to run/);
+  assert.match(contributing, /close and reopen/i);
+  assert.match(contributing, /git commit --amend --no-edit --reset-author -S/);
+  assert.match(contributing, /git push --force-with-lease/);
+  assert.match(contributing, /branch exists but no pull request/i);
+  assert.doesNotMatch(contributing, /missing \(or its token has expired\)|never start workflow runs/);
 });
 
 test('routes forward reviews through the versioned hindsight machinery', async () => {
