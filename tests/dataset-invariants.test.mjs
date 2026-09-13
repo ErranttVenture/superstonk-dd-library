@@ -1,5 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { runNodeCli } from './cli-test-helpers.mjs';
 
 import { checkDatasetInvariants } from '../scripts/dataset-invariants.mjs';
 
@@ -113,4 +117,63 @@ test('accepts the real dataset as it stands today', async () => {
   );
 
   assert.deepEqual(checkDatasetInvariants(realMaster, realBaseline).errors, []);
+});
+
+test('manually edited source and archive URLs must be HTTP(S) without credentials', () => {
+  for (const value of ['https://reader:password@example.test/dd', 'https://reader@example.test/dd',
+    'https://:password@example.test/dd', 'https://', 'ftp://example.test/dd', 'javascript:alert(1)']) {
+    for (const field of ['source', 'archive']) {
+      const record = { ...community(251), url: 'https://example.test/dd', submission: { archive_url: null } };
+      if (field === 'source') record.url = value;
+      else record.submission.archive_url = value;
+      const result = checkDatasetInvariants([...baseline, record], baseline);
+      assert.equal(result.ok, false, `${field}: ${value}`);
+      assert.match(result.errors.join('\n'), /HTTP\(S\).*without credentials/);
+      assert.doesNotMatch(result.errors.join('\n'), /reader|password/);
+    }
+  }
+});
+
+test('repository invariants reject uppercase tracking duplicates of original records', () => {
+  const originals = baseline.map((record) => ({ ...record, url: `https://example.test/Book${record.pos}` }));
+  const result = checkDatasetInvariants([...originals,
+    { ...community(251), url: `${originals[0].url}?UTM_source=review` }], originals);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /duplicate normalized url at pos 251/);
+});
+
+test('required repository validation CLI rejects manually edited credential links and tracking duplicates', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dd-validation-'));
+  await cp(new URL('../scripts/', import.meta.url), join(root, 'scripts'), { recursive: true });
+  await mkdir(join(root, 'data'));
+  for (const file of ['schema.json', 'original-master.json']) {
+    await cp(new URL(`../data/${file}`, import.meta.url), join(root, 'data', file));
+  }
+  const originals = JSON.parse(await readFile(new URL('../data/master.json', import.meta.url), 'utf8'));
+  const accepted = {
+    pos: 251, title: 'Manual edit fixture', byline: 'QA author', pages: null,
+    uploaded: '2026-08-01', url: 'https://example.test/dd', type: 'original', text_available: true,
+    source_corpus: 'community', review_status: 'pending', submission: {
+      submitted_on: '2026-08-01', submitted_by: 'qa',
+      issue: 'https://github.com/ErranttVenture/superstonk-dd-library/issues/123',
+      archive_url: 'https://archive.ph/abc123', platform: 'other'
+    }
+  };
+  const cases = [
+    { field: 'source', value: 'https://reader:password@example.test/dd', expected: /HTTP\(S\).*without credentials/ },
+    { field: 'archive', value: 'https://reader:password@archive.ph/abc123', expected: /HTTP\(S\).*without credentials/ },
+    { field: 'source', value: 'https://', expected: /HTTP\(S\).*without credentials/ },
+    { field: 'archive', value: 'https://', expected: /HTTP\(S\).*without credentials/ },
+    { field: 'source', value: `${originals[0].url}?UTM_source=review`, expected: /duplicate normalized url/ }
+  ];
+  for (const { field, value, expected } of cases) {
+    const record = structuredClone(accepted);
+    if (field === 'source') record.url = value;
+    else record.submission.archive_url = value;
+    await writeFile(join(root, 'data/master.json'), JSON.stringify([...originals, record]));
+    const result = await runNodeCli(join(root, 'scripts/validate-repository.mjs'));
+    assert.equal(result.status, 1, `${field}: ${value}`);
+    assert.match(result.stderr, expected);
+    assert.doesNotMatch(result.stderr, /reader|password/);
+  }
 });

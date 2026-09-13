@@ -62,6 +62,10 @@ The library is not limited to the original bookcase. [Submit a new DD](https://g
 
 Accepted submissions enter the dataset at position 251 and above with `source_corpus: "community"` and `review_status: "pending"`. **Pending means unrated, not rated zero.** Acceptance says the work is in scope and durably linked; it says nothing about whether the work is any good. Rating is a separate step that records which model produced the rating, on what date, and against which hindsight version.
 
+Submit an original source URL with either an archive snapshot or full Markdown you wrote or have permission to preserve and publicly display with attribution. Authorized copies remain available when Reddit or another source is blocked or deleted; they are stored in `submissions/<issue-number>/dd.md` with author credit and a verified SHA-256. Remote images and attachments are not copied. Copyright remains with the rights holder, and these texts are outside `LICENSE-DATA` and the MIT code license.
+
+The publication flow is accepted → PR → maintainer review, signing, CI and merge → automatic website build. The separate CI publication job requests the configured justthebros build after canonical data changes pass validation; a request is not a completed deployment. Check Cloudflare build results and the website provenance. [Contributing](CONTRIBUTING.md) covers withdrawal, preserved text, and the one-time hook setup.
+
 ## Dispute a rating
 
 Disagreement is part of the audit. Read the [contribution and right-of-reply policy](CONTRIBUTING.md), then [open a rating dispute](https://github.com/ErranttVenture/superstonk-dd-library/issues/new?template=dispute-rating.yml) with the book, disputed assessment, primary-source evidence, and proposed change. Authors have an unconditional right of reply through the canonical `author_response` field whether or not a rating changes.

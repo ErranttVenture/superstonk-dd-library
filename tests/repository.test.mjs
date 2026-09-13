@@ -532,7 +532,7 @@ test('ships structurally valid concise issue forms with required fields', async 
   const forms = new Map([
     ['dispute-rating.yml', ['book', 'dispute', 'evidence', 'proposed_change']],
     ['correction.yml', ['location', 'correction', 'evidence']],
-    ['submit-dd.yml', ['title', 'byline', 'url', 'archive_url', 'published', 'platform', 'thesis', 'text_available', 'attribution']]
+    ['submit-dd.yml', ['title', 'byline', 'url', 'published', 'platform', 'thesis', 'text_available', 'attribution']]
   ]);
 
   for (const [filename, requiredIds] of forms) {
@@ -557,6 +557,33 @@ test('ships structurally valid concise issue forms with required fields', async 
       );
     }
   }
+});
+
+test('submission form puts optional full text last after permission and permits a blank archive', async () => {
+  const form = (await readFile(new URL('../.github/ISSUE_TEMPLATE/submit-dd.yml', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  const fields = form.split(/\n  - id: /).slice(1);
+  assert.ok(fields.at(-1).startsWith('full_text\n'));
+  assert.ok(fields.at(-2).startsWith('full_text_permission\n'));
+  assert.match(fields.at(-2), /author or have permission.*preserve and publicly display.*attribution/);
+  assert.doesNotMatch(fields.find((field) => field.startsWith('archive_url\n')), /required: true/);
+  assert.match(fields.at(-1), /label: Full text \(Markdown\)/);
+});
+
+test('publication waits for validation and isolates eligible data triggers from unrelated pushes', async () => {
+  const ci = await readFile(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  assert.match(ci, /publication-changes:[\s\S]*needs: validate/);
+  assert.match(ci, /fetch-depth: 0/);
+  assert.match(ci, /needs: \[validate, publication-changes\]/);
+  assert.match(ci, /needs.publication-changes.outputs.publish == 'true'/);
+  assert.match(ci, /github.repository == 'ErranttVenture\/superstonk-dd-library'/);
+  assert.match(ci, /cancel-in-progress: false/);
+  assert.match(ci, /JUSTTHEBROS_DEPLOY_HOOK_URL/);
+  assert.match(ci, /Publication skipped.*configure JUSTTHEBROS_DEPLOY_HOOK_URL/);
+  assert.doesNotMatch(ci, /contents: write|pull_request_target/);
+  const acceptance = await readFile(new URL('../.github/workflows/submission-open-pr.yml', import.meta.url), 'utf8');
+  assert.match(acceptance, /github.event.issue.state == 'open'/);
+  assert.match(acceptance, /\.state == "open"/);
+  assert.match(acceptance, /git add -- "submissions\/\$\{ISSUE_NUMBER\}\/dd.md"/);
 });
 
 test('submission form labels match the parser contract', async () => {

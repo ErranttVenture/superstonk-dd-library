@@ -49,19 +49,25 @@ const ATTRIBUTIONS = new Map([
   ['Submit anonymously', 'anonymous']
 ]);
 
-const KNOWN_LABELS = new Set(FIELDS.keys());
+const PERMISSION_LABEL = 'Full text permission';
+const FULL_TEXT_LABEL = 'Full text (Markdown)';
+const KNOWN_LABELS = new Set([...FIELDS.keys(), PERMISSION_LABEL, FULL_TEXT_LABEL]);
 
 function splitSections(body) {
   const sections = new Map();
+  const errors = [];
   let heading = null;
   let lines = [];
 
   for (const rawLine of body.replace(/\r\n/g, '\n').split('\n')) {
     const match = /^###\s+(.*)$/.exec(rawLine);
     const label = match ? match[1].trim() : null;
-    if (match && KNOWN_LABELS.has(label)) {
+    if (heading !== FULL_TEXT_LABEL && match && KNOWN_LABELS.has(label)) {
       if (heading !== null) {
         sections.set(heading, lines.join('\n').trim());
+      }
+      if (sections.has(label)) {
+        errors.push({ field: FIELDS.get(label)?.field ?? label, message: `Duplicate ${label} heading; keep each metadata field once.` });
       }
       heading = label;
       lines = [];
@@ -70,15 +76,26 @@ function splitSections(body) {
     }
   }
   if (heading !== null) {
-    sections.set(heading, lines.join('\n').trim());
+    // GitHub inserts one blank separator after the heading. Everything after it is
+    // submitted Markdown, including indentation, trailing newlines and form headings.
+    sections.set(heading, heading === FULL_TEXT_LABEL
+      ? lines.join('\n').replace(/^\n/, '') : lines.join('\n').trim());
   }
-  return sections;
+  return { sections, errors };
 }
 
 export function parseSubmissionIssue(body) {
-  const sections = splitSections(body ?? '');
+  const { sections, errors } = splitSections(body ?? '');
   const payload = {};
-  const errors = [];
+  const fullText = sections.get(FULL_TEXT_LABEL);
+  const hasText = Boolean(fullText?.trim() && fullText.trim() !== NO_RESPONSE);
+  if (fullText !== undefined) payload.full_text = hasText ? fullText : null;
+  if (sections.has(PERMISSION_LABEL) || hasText) {
+    payload.full_text_permission = /^-\s*\[[xX]\]\s+I am the author or have permission to preserve and publicly display this text with attribution\.$/m.test(sections.get(PERMISSION_LABEL) ?? '');
+  }
+  if (hasText && !payload.full_text_permission) {
+    errors.push({ field: 'full_text_permission', message: 'Full text requires author or permission confirmation before the full text field.' });
+  }
 
   for (const [label, { field, kind, required }] of FIELDS) {
     const raw = sections.get(label) ?? '';
@@ -98,7 +115,7 @@ export function parseSubmissionIssue(body) {
     }
 
     if (value === '') {
-      if (required) {
+      if (required && !(field === 'archive_url' && hasText)) {
         errors.push({ field, message: `${label} is required.` });
       } else {
         payload[field] = null;
@@ -156,6 +173,16 @@ const MINIMUM_THESIS_LENGTH = 40;
 const RESOLVE_TIMEOUT_MS = 10_000;
 const DEFINITIVE_MISSING_STATUSES = new Set([404, 410]);
 
+export function isPublicHttpUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
 export function normalizeUrl(value) {
   let parsed;
   try {
@@ -170,7 +197,8 @@ export function normalizeUrl(value) {
   parsed.pathname = parsed.pathname.replace(/\/+$/, '');
 
   for (const key of [...parsed.searchParams.keys()]) {
-    if (key.startsWith('utm_') || TRACKING_PARAMETERS.has(key)) {
+    const normalizedKey = key.toLowerCase();
+    if (normalizedKey.startsWith('utm_') || TRACKING_PARAMETERS.has(normalizedKey)) {
       parsed.searchParams.delete(key);
     }
   }
@@ -209,19 +237,20 @@ function fold(value) {
 export async function checkSubmission(payload, { resolveUrl: resolve, dataset, now = Date.now() }) {
   const checks = [];
   const add = (id, status, message) => checks.push({ id, status, message });
+  const hasText = Boolean(payload.full_text?.trim());
+  const preserved = hasText && payload.full_text_permission === true;
+  if (hasText) add('full_text_permission', preserved ? 'pass' : 'fail',
+    preserved ? 'Permission to preserve and publicly display with attribution confirmed.' : 'Confirm author or permission before submitting full text.');
+  add('title_present', payload.title?.trim() ? 'pass' : 'fail', payload.title?.trim() ? 'Title supplied.' : 'Title is required.');
 
-  let sourceUrl = null;
-  try {
-    sourceUrl = new URL(payload.url);
-  } catch {
-    sourceUrl = null;
-  }
-  if (sourceUrl === null || (sourceUrl.protocol !== 'http:' && sourceUrl.protocol !== 'https:')) {
+  if (!isPublicHttpUrl(payload.url)) {
     add(
       'url_resolves',
       'fail',
-      'Source URL must be a valid http:// or https:// URL.'
+      'Source URL must be a valid public HTTP(S) URL without credentials.'
     );
+  } else if (preserved) {
+    add('url_resolves', 'pass', 'Valid source URL retained; authorized copy preserves text even if the source is blocked or deleted.');
   } else {
     const sourceState = await resolve(payload.url);
     add(
@@ -235,18 +264,26 @@ export async function checkSubmission(payload, { resolveUrl: resolve, dataset, n
     );
   }
 
-  let archiveHost = null;
+  let archive = null;
   try {
-    archiveHost = new URL(payload.archive_url).hostname.toLowerCase();
+    archive = new URL(payload.archive_url);
   } catch {
-    archiveHost = null;
+    archive = null;
   }
-  if (archiveHost === null || !ARCHIVAL_HOSTS.has(archiveHost)) {
+  const validArchive = archive && isPublicHttpUrl(payload.archive_url) && ARCHIVAL_HOSTS.has(archive.hostname) &&
+    (archive.hostname === 'web.archive.org'
+      ? /^\/web\/[0-9]+(?:[a-z_]+)?\/.+/.test(archive.pathname)
+      : /^\/[A-Za-z0-9][^/]*\/?$/.test(archive.pathname));
+  if (!payload.archive_url?.trim() && preserved) {
+    add('archive_present', 'pass', 'Authorized full text supplied instead of an external archive.');
+  } else if (!validArchive) {
     add(
       'archive_present',
       'fail',
-      `Archive snapshot must be hosted at ${[...ARCHIVAL_HOSTS].join(', ')}.`
+      `Supply a snapshot URL at ${[...ARCHIVAL_HOSTS].join(', ')}, not a homepage; or leave it blank and supply authorized full text.`
     );
+  } else if (preserved) {
+    add('archive_present', 'pass', 'Snapshot URL retained; authorized copy is available if the archive blocks requests.');
   } else {
     const archiveState = await resolve(payload.archive_url);
     add(
@@ -327,7 +364,7 @@ export async function checkSubmission(payload, { resolveUrl: resolve, dataset, n
   return { status, checks };
 }
 
-export function buildPendingRecord(payload, { nextPos, submittedOn, issue, author }) {
+export function buildPendingRecord(payload, { nextPos, submittedOn, issue, author, preservedText }) {
   return {
     pos: nextPos,
     title: payload.title.trim(),
@@ -343,7 +380,8 @@ export function buildPendingRecord(payload, { nextPos, submittedOn, issue, autho
       submitted_on: submittedOn,
       submitted_by: payload.attribution === 'anonymous' ? 'anonymous' : author,
       issue,
-      archive_url: payload.archive_url.trim(),
+      archive_url: payload.archive_url?.trim() || null,
+      ...(preservedText ? { preserved_text: preservedText } : {}),
       platform: payload.platform
     }
   };
