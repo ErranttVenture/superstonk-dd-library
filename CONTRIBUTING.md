@@ -17,22 +17,28 @@ Evidence capable of overturning an assessment must meet a primary-source standar
 
 The original review covered one FlipHTML5 bookcase as it stood on July 21, 2026. Use the [submission form](https://github.com/ErranttVenture/superstonk-dd-library/issues/new?template=submit-dd.yml) to nominate due diligence it never saw: a Reddit post, a Substack essay, a FlipHTML5 publication, a hosted PDF, or an independent researcher's page. Any work with a durable public URL is eligible.
 
-Do not paste the full text of the work anywhere in the issue or the repository. Link to it. This is the same rule that keeps the original FlipHTML5 book text out of this repository.
+Provide a valid original HTTP(S) source URL and either an external archive snapshot or an authorized full Markdown copy. For full text, confirm that you are the author or have permission to preserve and publicly display it with attribution, then paste it in the final **Full text (Markdown)** field. That permission grants preservation and public display only; it does not grant a new license for the work. Keep the full-text field last: headings inside it are preserved as content. Duplicate recognized metadata headings before it are rejected. Legacy link-only forms with the old copyright acknowledgement remain supported.
+
+Accepted copies live in `submissions/<issue-number>/dd.md`, outside `LICENSE-DATA` and the code's MIT license. They include an attribution/source/issue/permission preamble followed by the submitted Markdown unchanged, apart from normalized line endings. Anonymous submission hides the submitter's handle, never the author's byline. Metadata records `submission.preserved_text.path` and the SHA-256 of the exact stored bytes; `submission.archive_url` may be `null` only when a preserved copy exists. Repository validation verifies the path matches its canonical GitHub issue, the file exists, and the hash matches. The original FlipHTML5 books remain excluded.
+
+Preservation is limited to the submitted text. We do not download remote images or execute raw HTML. External image and source links can still disappear, and an authorized text copy cannot recover a missing image, attachment, or omitted passage. Keep a complete copy of the text you want preserved and retain your source links.
 
 ### What is checked
 
 An automated comment runs these checks on every submission and re-runs them whenever you edit the issue. Before that: `Length in pages` may be left blank, which means the work is not paginated, but any value you do give must be a whole number of 1 or more — anything else means the issue can't be read, and it is rejected with an edit request before any of the checks below ever run.
 
-- `url_resolves` — the source URL resolves.
-- `archive_present` — an `archive_url` snapshot at `web.archive.org`, `archive.today`, `archive.ph`, or `archive.is` resolves, so the record survives deletion.
+- `url_resolves` — a valid original HTTP(S) source URL is always required. With authorized text, source blocking or deletion does not prevent preservation; otherwise the URL is checked for resolution.
+- `archive_present` — a snapshot at `web.archive.org`, `archive.today`, `archive.ph`, or `archive.is`, or an authorized text copy. An optional supplied archive must still be a valid snapshot URL, not a homepage; correct it or leave it blank when supplying text. Authorized text also avoids dependency on archive resolver availability.
 - `no_duplicate` — the normalized URL is not already in `data/master.json`. Normalization folds scheme, host case, `www.`, trailing slashes, and the tracking parameters `utm_*`, `ref`, `ref_source`, `share_id`, `si`, and `fbclid`. Path and query-value casing are deliberately left alone — some sources (a Reddit permalink, a video ID) are case-sensitive, and folding them would risk a false match against an unrelated URL.
 - `byline_present` — an author is named. Pseudonyms and handles are fine.
 - `published_valid` — the publication date is a real past date in `YYYY-MM-DD` form.
 - `thesis_present` — a one-line thesis of at least forty characters.
 - `copyright_ack` — the acknowledgement is ticked.
+- `full_text_permission` — whenever text is supplied, the separate author/permission confirmation must be ticked, even if an archive and the old acknowledgement are present.
+- `title_present` — the title is nonempty.
 - `title_byline_near_match` — the title and byline are checked against existing records; a match doesn't block the submission, it's flagged as a warning so a maintainer can confirm the work is distinct.
 
-This warns rather than blocks because compilations and reposts legitimately share titles. A link that cannot be reached at check time — a timeout, a host that blocks automated requests, anything short of a definitive "this page is gone" response — is reported as unverified rather than failed; only an explicit 404 or 410 marks a link dead, and a maintainer may accept anyway.
+The near-match check warns because compilations and reposts legitimately share titles. Without authorized text, a timeout or blocked resolver is unverified and may be accepted by a maintainer; an explicit 404 or 410 blocks acceptance until corrected. With authorized text, a valid source URL is retained even when deleted or blocked, so the copy can be accepted without either remote resolver succeeding.
 
 Quality, plausibility, credibility, and whether anyone finds the thesis absurd **is not a gate**. That judgment belongs to the rating, in public, against the [rubric](harness/rubric.md). Filtering at intake would move it somewhere unaccountable.
 
@@ -41,6 +47,8 @@ Maintainers apply exactly one discretionary test: is this market-structure or du
 ### What acceptance means
 
 A maintainer applies the `accepted` label, which opens a pull request adding a record at `pos 251` or above with `source_corpus: "community"` and `review_status: "pending"`.
+
+The publication path is **accepted → PR → maintainer review, signing, CI and merge → automatic website build**. Acceptance creates a pending record and any authorized copy; it does not merge or deploy them. The website displays pending content as unrated. Required `validate` must pass before the separate publication job can request a build.
 
 **A pending record is unrated. It is not rated zero, and acceptance is not endorsement.** Rating it is a separate governed step: a later pull request runs the [harness](harness/README.md) against the work, records `review_provenance`, and sets `review_status` to `reviewed` or, where the text cannot support a fair judgment, `unreviewable`. Once a rating exists, challenge it through the dispute path above. The unconditional author right of reply applies to community records exactly as it does to the original 250.
 
@@ -94,6 +102,20 @@ If PR creation failed because the repository setting was disabled, enable it and
 ### First end-to-end check
 
 After deployment and maintainer setup, submit one legitimate new publication, observe the checklist and status labels, and apply `accepted`. Verify one PR adds one pending, unrated community record while preserving the original 250 and the immutable baseline. Review and sign its commit, start CI through the PR page if needed, and verify required `validate` passes on the current head and branch protection permits merging. Retry the submission workflow and confirm it leaves the existing PR and branch unchanged. Local tests do not establish this end-to-end behavior.
+
+### Withdraw a submission
+
+Remove `accepted`, close the issue as **Not planned**, and cancel any queued or running submission workflows. Close an unmerged generated PR as well. The acceptance job rechecks live issue state after queuing and just before publication, but cancellation is still needed for a run already past its last check. Withdrawing an issue does not undo an existing merge: use a correction issue and reviewed removal PR for accepted content already on `main`.
+
+### One-time website publication setup
+
+Merge the companion website importer/reader change first so it understands `preserved_text`, verifies the hash, and safely displays the copy. In Cloudflare, select Worker **justthebros**, then **Settings → Builds → Deploy Hooks**, and create a hook for branch **main**. Store the generated URL as the upstream repository Actions secret **JUSTTHEBROS_DEPLOY_HOOK_URL**. The URL itself is a credential; do not commit it. See the official [Workers Deploy Hooks documentation](https://developers.cloudflare.com/workers/ci-cd/builds/deploy-hooks/).
+
+CI uses the full push `before..sha` diff. After required `validate` succeeds, only canonical `main` pushes changing `data/master.json` or `submissions/` are eligible. PRs, forks and unrelated edits skip publication. Missing configuration produces an actionable warning and job summary without breaking `validate`. The `publish` job is independently rerunnable after a transient hook failure or after adding the missing secret.
+
+Only eligible pushes enter publication concurrency, with cancellation disabled. A newer pending data request can replace an older pending request because each hook builds website `main` and imports the latest upstream data. Unrelated pushes never enter that queue. Cloudflare also deduplicates hooks while a build is queued or initializing; repeated requests are safe. A hook acceptance is **not proof of a production deployment**. Check the justthebros build history for the named deploy hook, successful build/deployment, then inspect the website's provenance for the expected upstream commit and preserved-copy hash.
+
+The acceptance CLI writes the copy before atomically replacing the dataset and rolls back its own copy on a caught write failure. It refuses existing issue directories and stale dataset reads. A killed local process can leave an orphan copy or `master.json.lock`; inspect the files and confirm no acceptance process is running before cleaning those up and retrying. CI uses fresh checkouts. Do not remove an existing accepted copy just to make a retry pass.
 
 ## Review and accepted changes
 

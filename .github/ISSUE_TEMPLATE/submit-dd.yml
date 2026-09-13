@@ -9,7 +9,7 @@ body:
       value: |
         Two contracts run through this form. `parseSubmissionIssue` matches on the **labels** below, and the website submission form builds a prefilled link from the field **ids**. Renaming either is a breaking change.
 
-        Do not paste the full text of the work. Link to it.
+        Provide the original source URL and either an archive snapshot or an authorized Markdown copy in the final field. Only submit full text you wrote or have permission to preserve and publicly display with attribution.
   - id: title
     type: input
     attributes:
@@ -35,9 +35,9 @@ body:
     type: input
     attributes:
       label: Archive snapshot URL
-      description: A web.archive.org or archive.today snapshot, so the record survives deletion.
+      description: A web.archive.org or archive.today snapshot (not a homepage). Optional when you supply authorized full text below.
     validations:
-      required: true
+      required: false
   - id: published
     type: input
     attributes:
@@ -103,5 +103,16 @@ body:
     attributes:
       label: Copyright acknowledgement
       options:
-        - label: I have not pasted the full text of a copyrighted work into this issue.
+        - label: I understand the original work keeps its copyright, and I will supply full text only with the separate permission confirmation below.
           required: true
+  - id: full_text_permission
+    type: checkboxes
+    attributes:
+      label: Full text permission
+      options:
+        - label: I am the author or have permission to preserve and publicly display this text with attribution.
+  - id: full_text
+    type: textarea
+    attributes:
+      label: Full text (Markdown)
+      description: Optional authorized copy. Keep this field last. Markdown and source links are preserved; remote images are not downloaded and raw HTML is not executed. Permission covers preservation and public display with attribution only, not a new license for the work.

@@ -12,6 +12,7 @@ jobs:
   open-pull-request:
     if: >
       github.event.label.name == 'accepted' &&
+      github.event.issue.state == 'open' &&
       contains(github.event.issue.labels.*.name, 'submission')
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -41,6 +42,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
+          # Recheck live state after queuing: an old label event is not current consent.
+          eligible=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" \
+            --jq '.state == "open" and any(.labels[]; .name == "accepted") and any(.labels[]; .name == "submission")')
+          if [ "$eligible" != true ]; then
+            echo "::error::Submission was closed or acceptance withdrawn; no PR will be created."
+            exit 1
+          fi
           branch="submission/${ISSUE_NUMBER}"
           # Qualify the head owner so a fork with the same branch name cannot match.
           # Include closed/merged PRs: retries must not reopen a rejected submission.
@@ -83,6 +91,12 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           BRANCH_EXISTS: ${{ steps.submission.outputs.branch_exists }}
         run: |
+          eligible=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" \
+            --jq '.state == "open" and any(.labels[]; .name == "accepted") and any(.labels[]; .name == "submission")')
+          if [ "$eligible" != true ]; then
+            echo "::error::Submission was closed or acceptance withdrawn; refusing publication."
+            exit 1
+          fi
           gh auth setup-git --hostname github.com
           branch="submission/${ISSUE_NUMBER}"
           if [ "$BRANCH_EXISTS" != true ]; then
@@ -90,6 +104,9 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git checkout -b "$branch"
             git add data/master.json
+            if [ -f "submissions/${ISSUE_NUMBER}/dd.md" ]; then
+              git add -- "submissions/${ISSUE_NUMBER}/dd.md"
+            fi
             git commit -m "data: add pending community record no. ${POS} (closes #${ISSUE_NUMBER})"
             git push --set-upstream origin "$branch"
           fi

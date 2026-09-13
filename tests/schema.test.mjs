@@ -461,3 +461,20 @@ test('record schema rejects an unknown property inside submission', () => {
 
   assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
 });
+
+test('preservation schema requires an archive or a constrained hashed copy', () => {
+  const candidate = structuredClone(communityPending);
+  candidate.submission.archive_url = null;
+  assert.notDeepEqual(validateAgainstSchema(schema, candidate), []);
+  candidate.submission.preserved_text = { path: 'submissions/12/dd.md', sha256: 'a'.repeat(64) };
+  assert.deepEqual(validateAgainstSchema(schema, candidate), []);
+  for (const path of ['submissions/0/dd.md', 'submissions/01/dd.md', '../dd.md', 'submissions/12/other.md']) {
+    candidate.submission.preserved_text.path = path;
+    assert.notDeepEqual(validateAgainstSchema(schema, candidate), [], path);
+  }
+  candidate.submission.preserved_text.path = 'submissions/12/dd.md';
+  for (const sha256 of ['', 'A'.repeat(64), 'a'.repeat(63)]) {
+    candidate.submission.preserved_text.sha256 = sha256;
+    assert.notDeepEqual(validateAgainstSchema(schema, candidate), [], sha256);
+  }
+});

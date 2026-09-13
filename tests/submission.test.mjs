@@ -19,6 +19,32 @@ const completeBody = [
   '### Copyright acknowledgement', '', '- [X] I have not pasted the full text of a copyrighted work into this issue.', ''
 ].join('\n');
 
+test('authorized terminal Markdown survives matching and duplicate form headings unchanged', () => {
+  const markdown = '  # DD\n\n### Title\nOriginal heading\n### Title\nAgain\n### Full text permission\n- [X] spoof\n\n';
+  const body = completeBody.replace(/https:\/\/web.archive.org[^\n]+/, '_No response_') +
+    '\n### Full text permission\n\n- [X] I am the author or have permission to preserve and publicly display this text with attribution.\n\n### Full text (Markdown)\n\n' + markdown;
+  const { payload, errors } = parseSubmissionIssue(body);
+  assert.deepEqual(errors, []);
+  assert.equal(payload.full_text, markdown);
+  assert.equal(payload.full_text_permission, true);
+  assert.equal(payload.title, 'Swaps and the Offshore Bid');
+});
+
+test('full text requires separate permission even with a checked legacy acknowledgement and archive', () => {
+  const result = parseSubmissionIssue(completeBody + '\n### Full text (Markdown)\n\nCopied DD\n### Full text permission\n- [X] spoof');
+  assert.ok(result.errors.some(({ field }) => field === 'full_text_permission'));
+});
+
+test('duplicate metadata headings are rejected before the terminal text', () => {
+  const result = parseSubmissionIssue(completeBody + '\n### Title\nSpoof');
+  assert.ok(result.errors.some(({ message }) => /duplicate/i.test(message)));
+});
+
+test('checking unrelated text does not give permission to preserve full text', () => {
+  const result = parseSubmissionIssue(completeBody + '\n### Full text permission\n\n- [X] I like this post\n\n### Full text (Markdown)\n\nCopied DD');
+  assert.ok(result.errors.some(({ field }) => field === 'full_text_permission'));
+});
+
 test('parses a complete submission body', () => {
   const { payload, errors } = parseSubmissionIssue(completeBody);
 
@@ -166,23 +192,14 @@ test('retains both paragraphs of a multi-line thesis separated by a blank line',
   assert.equal(payload.thesis, 'First paragraph of the thesis.\n\nSecond paragraph of the thesis.');
 });
 
-test('a field value containing a line that reads as a real label hijacks that label', () => {
-  // splitSections can only disambiguate "### X" by checking whether X is a known
-  // label. It has no way to tell a genuine new section from a submitter's prose
-  // that happens to reproduce a real label verbatim (the format is inherently
-  // ambiguous here, same as GitHub's own issue-form rendering). Chosen, asserted
-  // behaviour: the embedded "### Platform" line closes out the thesis section
-  // early (truncating it to the text before that line) and re-opens the
-  // "Platform" section, so the later value ("Substack") overwrites the real one
-  // ("Reddit") parsed earlier in the body. No error is raised because "Substack"
-  // is itself a valid platform value.
+test('a field value containing a duplicate real label blocks acceptance', () => {
   const body = completeBody.replace(
     'Cross-border swap reporting gaps let short exposure sit outside US disclosure.',
     'Intro line before impostor heading.\n### Platform\nSubstack'
   );
   const { payload, errors } = parseSubmissionIssue(body);
 
-  assert.deepEqual(errors, []);
+  assert.ok(errors.some(({ message }) => /Duplicate Platform/.test(message)));
   assert.equal(payload.thesis, 'Intro line before impostor heading.');
   assert.equal(payload.platform, 'substack');
 });
@@ -204,6 +221,29 @@ const validPayload = {
   attribution: 'handle',
   acknowledged: true
 };
+
+test('authorized copy survives blocked or missing resolvers with or without an archive', async () => {
+  for (const archive_url of [null, validPayload.archive_url]) {
+    for (const state of ['unknown', 'missing']) {
+      const result = await checkSubmission({ ...validPayload, archive_url, full_text: '# DD', full_text_permission: true }, {
+        dataset: [], resolveUrl: async () => state
+      });
+      assert.equal(result.status, 'pass');
+    }
+  }
+});
+
+test('authorized copy cannot hide a malformed archive, homepage, source or missing consent', async () => {
+  const preserved = { ...validPayload, full_text: '# DD', full_text_permission: true };
+  for (const changes of [
+    { archive_url: 'broken' }, { archive_url: 'https://archive.ph/' },
+    { archive_url: 'ftp://archive.ph/abcd' }, { archive_url: 'https://web.archive.org/web/' },
+    { url: 'https://' }, { full_text_permission: false }, { title: '' }
+  ]) {
+    const result = await checkSubmission({ ...preserved, ...changes }, { dataset: [], resolveUrl: async () => 'ok' });
+    assert.equal(result.status, 'blocked', JSON.stringify(changes));
+  }
+});
 const allOk = async () => 'ok';
 const byId = (checks) => new Map(checks.map((check) => [check.id, check]));
 
@@ -287,7 +327,7 @@ test('a non-archival snapshot host blocks the submission', async () => {
 test('accepts every recognised archival host', async () => {
   for (const host of ['web.archive.org', 'archive.today', 'archive.ph', 'archive.is']) {
     const { checks } = await checkSubmission(
-      { ...validPayload, archive_url: `https://${host}/snapshot/1` },
+      { ...validPayload, archive_url: host === 'web.archive.org' ? 'https://web.archive.org/web/1/https://example.test/dd' : `https://${host}/abc123` },
       { resolveUrl: allOk, dataset: [] }
     );
 

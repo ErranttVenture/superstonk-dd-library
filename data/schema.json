@@ -282,8 +282,22 @@
         "submitted_on": { "$ref": "#/$defs/date" },
         "submitted_by": { "$ref": "#/$defs/string" },
         "issue": { "$ref": "#/$defs/url" },
-        "archive_url": { "$ref": "#/$defs/url" },
+        "archive_url": { "anyOf": [{ "$ref": "#/$defs/url" }, { "type": "null" }] },
+        "preserved_text": { "$ref": "#/$defs/preservedText" },
         "platform": { "$ref": "#/$defs/platform" }
+      },
+      "anyOf": [
+        { "required": ["archive_url"], "properties": { "archive_url": { "$ref": "#/$defs/url" } } },
+        { "required": ["preserved_text"] }
+      ],
+      "additionalProperties": false
+    },
+    "preservedText": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^submissions/[1-9][0-9]*/dd\\.md$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
       },
       "additionalProperties": false
     },
