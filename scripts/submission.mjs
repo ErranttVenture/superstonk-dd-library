@@ -173,6 +173,16 @@ const MINIMUM_THESIS_LENGTH = 40;
 const RESOLVE_TIMEOUT_MS = 10_000;
 const DEFINITIVE_MISSING_STATUSES = new Set([404, 410]);
 
+export function isPublicHttpUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
 export function normalizeUrl(value) {
   let parsed;
   try {
@@ -187,7 +197,8 @@ export function normalizeUrl(value) {
   parsed.pathname = parsed.pathname.replace(/\/+$/, '');
 
   for (const key of [...parsed.searchParams.keys()]) {
-    if (key.startsWith('utm_') || TRACKING_PARAMETERS.has(key)) {
+    const normalizedKey = key.toLowerCase();
+    if (normalizedKey.startsWith('utm_') || TRACKING_PARAMETERS.has(normalizedKey)) {
       parsed.searchParams.delete(key);
     }
   }
@@ -232,17 +243,11 @@ export async function checkSubmission(payload, { resolveUrl: resolve, dataset, n
     preserved ? 'Permission to preserve and publicly display with attribution confirmed.' : 'Confirm author or permission before submitting full text.');
   add('title_present', payload.title?.trim() ? 'pass' : 'fail', payload.title?.trim() ? 'Title supplied.' : 'Title is required.');
 
-  let sourceUrl = null;
-  try {
-    sourceUrl = new URL(payload.url);
-  } catch {
-    sourceUrl = null;
-  }
-  if (sourceUrl === null || (sourceUrl.protocol !== 'http:' && sourceUrl.protocol !== 'https:')) {
+  if (!isPublicHttpUrl(payload.url)) {
     add(
       'url_resolves',
       'fail',
-      'Source URL must be a valid http:// or https:// URL.'
+      'Source URL must be a valid public HTTP(S) URL without credentials.'
     );
   } else if (preserved) {
     add('url_resolves', 'pass', 'Valid source URL retained; authorized copy preserves text even if the source is blocked or deleted.');
@@ -265,8 +270,7 @@ export async function checkSubmission(payload, { resolveUrl: resolve, dataset, n
   } catch {
     archive = null;
   }
-  const validArchive = archive && ['http:', 'https:'].includes(archive.protocol) &&
-    !archive.username && !archive.password && ARCHIVAL_HOSTS.has(archive.hostname) &&
+  const validArchive = archive && isPublicHttpUrl(payload.archive_url) && ARCHIVAL_HOSTS.has(archive.hostname) &&
     (archive.hostname === 'web.archive.org'
       ? /^\/web\/[0-9]+(?:[a-z_]+)?\/.+/.test(archive.pathname)
       : /^\/[A-Za-z0-9][^/]*\/?$/.test(archive.pathname));

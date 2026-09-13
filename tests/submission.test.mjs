@@ -244,6 +244,44 @@ test('authorized copy cannot hide a malformed archive, homepage, source or missi
     assert.equal(result.status, 'blocked', JSON.stringify(changes));
   }
 });
+
+test('credential-bearing source and archive URLs fail before resolving with or without authorized text', async () => {
+  for (const protection of [{}, { full_text: '# Authorized DD', full_text_permission: true }]) {
+    for (const changes of [
+      { url: 'https://reader:password@example.test/dd' },
+      { url: 'https://reader@example.test/dd' },
+      { url: 'https://:password@example.test/dd' },
+      { archive_url: 'https://reader:password@archive.ph/abc123' }
+    ]) {
+      const resolved = [];
+      const result = await checkSubmission({ ...validPayload, ...protection, ...changes }, {
+        dataset: [], resolveUrl: async (url) => { resolved.push(url); return 'ok'; }
+      });
+      assert.equal(result.status, 'blocked', JSON.stringify(changes));
+      assert.equal(resolved.includes(Object.values(changes)[0]), false);
+    }
+  }
+});
+
+test('uppercase tracking keys cannot disguise an original source duplicate', async () => {
+  const url = 'https://online.fliphtml5.com/lvrgy/ezim/';
+  const result = await checkSubmission({ ...validPayload, url: `${url}?UTM_source=review` }, {
+    dataset: [{ pos: 1, url, title: 'Original', byline: 'Original author' }], resolveUrl: async () => 'ok'
+  });
+  assert.equal(result.status, 'blocked');
+  assert.equal(result.checks.find(({ id }) => id === 'no_duplicate').status, 'fail');
+});
+
+test('normalization strips mixed-case tracking keys while retaining path and nontracking query case', () => {
+  const base = 'https://example.test/DD?ID=AbC&sort=Up';
+  for (const key of ['UTM_source', 'uTm_campaign', 'REF', 'Ref_Source', 'SHARE_ID', 'SI', 'FBCLID']) {
+    assert.equal(normalizeUrl(`${base}&${key}=Review`), normalizeUrl(base), key);
+  }
+  for (const distinct of ['https://example.test/dd?ID=AbC&sort=Up',
+    'https://example.test/DD?ID=abc&sort=Up', 'https://example.test/DD?id=AbC&sort=Up']) {
+    assert.notEqual(normalizeUrl(distinct), normalizeUrl(base));
+  }
+});
 const allOk = async () => 'ok';
 const byId = (checks) => new Map(checks.map((check) => [check.id, check]));
 

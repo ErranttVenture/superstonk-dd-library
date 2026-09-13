@@ -1,4 +1,4 @@
-import { normalizeUrl } from './submission.mjs';
+import { isPublicHttpUrl, normalizeUrl } from './submission.mjs';
 
 const PRESERVED_COUNT = 250;
 
@@ -44,7 +44,16 @@ export function checkDatasetInvariants(master, baseline) {
 
   const seenUrls = new Map();
   for (const record of master) {
+    const archiveUrl = record.submission?.archive_url;
+    if (archiveUrl != null && !isPublicHttpUrl(archiveUrl)) {
+      errors.push(`archive URL at pos ${record.pos} must be a public HTTP(S) URL without credentials`);
+    }
     if (typeof record.url !== 'string') {
+      // Requiredness and type are enforced by the record schema.
+      continue;
+    }
+    if (!isPublicHttpUrl(record.url)) {
+      errors.push(`source URL at pos ${record.pos} must be a public HTTP(S) URL without credentials`);
       continue;
     }
     const normalized = normalizeUrl(record.url);
