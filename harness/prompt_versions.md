@@ -250,12 +250,15 @@ delta **T − C**. Activation requires all four conditions:
 
 Report, without gating, **C vs July**, **T vs July** (validity and evidence quality),
 and the counts and proportions of each `key_claims` assessment for each arm. Compute
-every report-only figure from retained matched books only, so each arm contributes
-exactly three validated runs per book and both arms share one denominator. Valid
-responses from excluded books are reported separately, listed per book and arm, and
-never pooled into these figures. Identify the preserved July rating fields used in
-those comparisons; do not silently mix pre-adjudication ratings with the preserved
-adjudicated values described in [`calibration.md`](calibration.md).
+every report-only figure from retained matched books only, so both arms cover the
+same retained books and run counts: exactly three validated runs per book. Reviews
+can list different numbers of claims, so each arm's `key_claims` proportions use
+that arm's total assessed claims as the denominator; report those totals beside the
+proportions. Valid responses from excluded books are reported separately, listed per
+book and arm, and never pooled into these figures. Identify the preserved July
+rating fields used in those comparisons; do not silently mix pre-adjudication
+ratings with the preserved adjudicated values described in
+[`calibration.md`](calibration.md).
 
 If the gate fails, revise p2 at most **two** times, changing only framing, packet
 wording or time-rule wording. Never change rubric anchors, RULES semantics or

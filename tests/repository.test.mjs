@@ -852,6 +852,10 @@ test('p2 calibration fixes packet delivery, hindsight dating and failure exclusi
   assert.match(versions, /retained\s+matched\s+books\s+only/);
   assert.match(versions, /excluded\s+books\s+are\s+reported\s+separately/);
   assert.doesNotMatch(versions, /across\s+all\s+valid\s+runs/);
+  // Reviews list 3-8 claims each, so arms share books and run counts but not a claim denominator.
+  assert.match(versions, /same\s+retained\s+books\s+and\s+run\s+counts/);
+  assert.match(versions, /that\s+arm's\s+total\s+assessed\s+claims/);
+  assert.doesNotMatch(versions, /share\s+one\s+denominator/);
   assert.match(versions, /current hindsight version/);
   assert.doesNotMatch(versions, /two v2 fact bullets|15 unchanged v1 bullets/);
   assert.match(versions, /never a file or commit reference/);
