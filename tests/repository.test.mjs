@@ -728,6 +728,24 @@ test('submission retries distinguish existing PRs from branches left by failed P
   assert.match(publish, /sign/);
 });
 
+test('submission acceptance tests the unmodified checkout and only validates data after appending', async () => {
+  const openPr = (await readFile(
+    new URL('../.github/workflows/submission-open-pr.yml', import.meta.url),
+    'utf8'
+  )).replace(/\r\n/g, '\n');
+  const inspectIndex = openPr.indexOf('- name: Inspect existing submission');
+  const testIndex = openPr.indexOf('- name: Test the unmodified checkout');
+  const appendIndex = openPr.indexOf('- name: Append the pending record');
+  const validateIndex = openPr.indexOf('- name: Validate the result');
+
+  assert.ok(testIndex >= 0, 'the suite must run as its own step');
+  assert.ok(inspectIndex < testIndex && testIndex < appendIndex);
+  assert.ok(openPr.includes("- name: Test the unmodified checkout\n        if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'\n        run: npm test\n"));
+  // The suite copies data/master.json; running it after the append lets fixtures collide with the new record.
+  assert.doesNotMatch(openPr.slice(appendIndex), /npm test/);
+  assert.match(openPr.slice(validateIndex), /run: npm run validate\n/);
+});
+
 test('CI and submission event filters keep publication from recursively starting submissions', async () => {
   const readWorkflow = async (name) => (await readFile(
     new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8'
