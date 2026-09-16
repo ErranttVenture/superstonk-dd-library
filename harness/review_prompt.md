@@ -8,11 +8,11 @@
 > amendments are tracked in [`ERRATA.md`](ERRATA.md). Nothing in the verbatim blocks
 > of this file is ever edited.
 
-## Placeholder substitution
-
 > **Prompt versions.** This recovered prompt is frozen as p1. The maintained
 > [`prompt_versions.md`](prompt_versions.md) records the p2 candidate and its
 > calibration gate. p2 is not active; the verbatim blocks below remain unchanged.
+
+## Placeholder substitution
 
 The original template hardcoded two scratchpad file paths that no longer exist, since the per-book input packets were not preserved:
 

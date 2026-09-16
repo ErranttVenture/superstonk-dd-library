@@ -34,22 +34,29 @@ anchor text in [`rubric.md`](rubric.md); do not duplicate or edit the anchors he
 
 ```
 You are one reviewer for the DD Library, a public, continuously updated catalog of "due diligence" (DD) research on market structure, GameStop (GME), and related topics. It includes the original SuperStonk Library (mostly r/Superstonk posts from 2020-2023) and newer works submitted by the community. You review EXACTLY ONE work. Every work in the library is rated with this same rubric — follow it exactly so results are comparable across works and years.
+
 STEP 1 — Read the file: {{BOOK_PACKET_PATH}}
 It contains a metadata header (title, byline, platform, publication date, page count or "n/a", evaluation date, text coverage note) followed by the work's text labeled by page number or by section. The TEXT COVERAGE line tells you if you have full text or a sample — factor that into 'confidence'.
+
 ${typeBlock}
+
 ${HINDSIGHT}
+
 ${RUBRIC}
+
 TIME RULES:
 - The hindsight facts are current as of their heading. The work was published on the PUBLISHED date in the packet header.
 - A prediction whose deadline or trigger has not arrived by the hindsight date, or a claim about events after that date, is cannot_assess. It counts neither for nor against validity_rating.
 - An if/then claim whose trigger never occurred is cannot_assess, not does_not_hold.
 - If most load-bearing claims are cannot_assess, rate validity_rating on the factual claims, the accuracy of the market mechanics described, and whether speculation is labeled, and lower 'confidence'.
+
 RULES:
 - Judge only what is in the packet text. Never invent content you did not see.
 - key_claims: 3-8 of the work's most load-bearing claims. State each AS a claim ("Claims that..."). Classify kind (verifiable_fact / speculation / prediction) and assess against the hindsight facts (holds_up / partially_holds / does_not_hold / cannot_assess). Use notes to cite page numbers or section headings.
 - summary: neutral, descriptive, 80-150 words. Describe what the work argues; do not editorialize there — your judgment belongs in ratings and rationale.
 - validity_rating and evidence_quality: integers per the anchors. Do not grade on a curve; use the anchors literally.
 - pos: set to ${p}.
+
 Return your COMPLETE assessment object as JSON matching the output schema, and nothing else.
 ```
 
@@ -64,11 +71,11 @@ ${TIME_RULES}
 Rate validity_rating and evidence_quality per the anchors, with a 2-3 sentence rationale. Set pos=${p}. Return the JSON object only, matching the verify schema.
 ```
 
-`${TIME_RULES}` expands to the TIME RULES block above, word for word. The verify pass uses VERIFY_SCHEMA from calibration.md, unchanged.
+`${TIME_RULES}` expands to the TIME RULES block above, word for word. The verify pass uses `VERIFY_SCHEMA` from [`calibration.md`](calibration.md), unchanged.
 
 ## p2 type blocks
 
-Use p1's three blocks from review_prompt.md with exactly one edit: replace the word "book" with "work". Make no other change.
+Use p1's three blocks from [`review_prompt.md`](review_prompt.md) with exactly one edit: replace the word "book" with "work". Make no other change.
 
 Substitute exactly one block for `${typeBlock}`, using the work's pre-classification.
 
@@ -104,9 +111,9 @@ TEXT COVERAGE: <full text | sample: pages A-B of N>
 <text>
 ```
 
-Original records: the text is the page text from harness/extract_book_text.mjs, with each page preceded by [page N].
+Original records: the text is the page text from `harness/extract_book_text.mjs`, with each page preceded by `[page N]`.
 
-Community records with a preserved copy: the text is everything after the first line consisting only of --- in submissions/<issue>/dd.md. Keep the Markdown headings; they serve as section labels.
+Community records with a preserved copy: the text is everything after the first line consisting only of `---` in `submissions/<issue>/dd.md`. Keep the Markdown headings; they serve as section labels.
 
 Text limit: use the full text up to 400,000 characters. Past that, include whole pages up to the limit and mark the coverage as a sample.
 
@@ -118,21 +125,33 @@ These instructions define candidate assembly for calibration and, **after
 activation**, new community DDs and dispute re-ratings. They do not activate p2.
 Model invocation remains outside the repository, per [`README.md`](README.md).
 
+Check hindsight dating first. If the work's PUBLISHED date is later than the
+hindsight block's "as of" date, do not review it yet. Publish a new hindsight
+version through [`hindsight.md`](hindsight.md) and [`ERRATA.md`](ERRATA.md):
+re-date the heading only after confirming the existing facts still hold, and add
+amendments where the work's claims need them. Then assemble with that version.
+For the calibration gate, treat v1's "as of mid-2026" as 2026-07-21, the July run
+date; every calibration book predates it.
+
 1. Build the packet using the contract above and keep it outside the repository.
-   Use the preserved community copy when it exists. Replace `{{BOOK_PACKET_PATH}}`
-   with the packet's actual path; the external model runtime must make that file's
-   complete selected contents available to the reviewer.
+   Use the preserved community copy when it exists. Deliver the packet and prompt
+   together in one user message with two text blocks, in this order: the line
+   `FILE: packets/NNN.txt` followed by the complete packet, then the assembled
+   prompt. Replace `{{BOOK_PACKET_PATH}}` with that same `packets/NNN.txt` label,
+   where `NNN` is the three-digit position. Provide no tools, other than the single
+   forced output tool if that is how the API enforces structured output. Enforce the
+   output schema through that structured-output mechanism and record which mechanism
+   was used.
 2. Expand `${typeBlock}` with exactly one p2 block. Set `${p}` to `record.pos`, a
    plain integer, not a zero-padded filename. The verify prompt has no type block.
 3. Expand `${RUBRIC}` with the complete verbatim anchor block from
    [`rubric.md`](rubric.md), including both validity and evidence quality.
-4. For the p2 calibration gate, expand `${HINDSIGHT}` with **v1**, the entire frozen
-   hindsight block in [`review_prompt.md`](review_prompt.md), including its heading.
-   Both calibration arms use v1 so that prompt context is the only treatment.
-   After activation, current p2 reviews use **v2**, assembled exactly as instructed
-   in [`hindsight.md`, "Assembling the block for a review"](hindsight.md#assembling-the-block-for-a-review):
-   the new heading, the 15 unchanged v1 bullets, then the two v2 fact bullets without
-   their maintainer meta-labels. Do not include `ERRATA.md` or change any facts.
+4. Expand `${HINDSIGHT}` with the current hindsight version, assembled exactly as
+   [`hindsight.md`, "Assembling the block for a review"](hindsight.md#assembling-the-block-for-a-review)
+   instructs. Do not include `ERRATA.md` or change any facts. The calibration gate is
+   the one exception: both arms use the frozen **v1** block in
+   [`review_prompt.md`](review_prompt.md), including its heading, so that prompt
+   context is the only treatment.
 5. For a verify pass, expand `${TIME_RULES}` with `TIME RULES:` and its four bullets
    from the review prompt, word for word. Use the same hindsight version as the
    review being verified. Use the unchanged `VERIFY_SCHEMA` in
@@ -144,10 +163,12 @@ Model invocation remains outside the repository, per [`README.md`](README.md).
    recovered output schema gains provenance fields.
 7. Stamp every future canonical review with `review_provenance`: `model`,
    `evaluated_on`, `hindsight_version`, `prompt_revision` and `reviewer`. Set
-   `prompt_revision: p2` for p2, or `p1` for deliberate historical reproduction.
-   Use `hindsight_version: v2` for current reviews after activation and `v1` in
-   calibration run metadata. Store version stamps alongside raw model output in
-   run metadata, not inside the frozen output object. For a future re-rating of a
+   `prompt_revision` to the prompt version: `p2`, or `p1` for deliberate historical
+   reproduction, and never a file or commit reference; `data/schema.json` enforces
+   `^p[0-9]+$`. Set `hindsight_version` to the version the review was assembled with:
+   the current hindsight version for current reviews, and `v1` in calibration run
+   metadata. Store version stamps alongside raw model output in run metadata, not
+   inside the frozen output object. For a future re-rating of a
    preserved record, also set top-level `hindsight_version`; when both hindsight
    fields are present, they must match. Do not backfill the original records or
    write calibration results into the dataset.
@@ -163,13 +184,20 @@ run, leave p2 **CANDIDATE**, open a draft PR, and make no routing changes.
 - Select the records in `data/master.json` that carry a `calibration` object:
   **9, 18, 27, 36, 45, 54, 63, 72, 81, 90, 99, 108, 117, 126, 135, 144, 153,
   162, 171, 180, 189, 198**. Do not substitute other records. If extraction fails,
-  report each failure and proceed only with at least 18 of these books.
+  report each failure and exclude that book.
 - Extract each book once. Both arms receive the same selected page text, coverage,
-  type classification, frozen rubric and hindsight **v1**.
+  type classification, frozen rubric and hindsight **v1**, delivered identically as
+  in step 1 of "Assembling a p2 review", with the same structured-output mechanism
+  and no other tools.
 - **Control (C):** assemble p1 verbatim from `review_prompt.md`. Reconstruct its
   packet header with `TITLE`, `BYLINE`, `OFFICIAL PAGE COUNT`, `UPLOAD DATE` and
   `TEXT COVERAGE`, followed by page-labeled text. **This header is a reconstruction:
   the July packets were not preserved.** Record that limitation in `run.json`.
+  Substitute `{{REVIEW_OUTPUT_PATH}}` with `reviews/NNN.json` and leave p1's STEP 2
+  and STEP 3 verbatim. With no Write tool available, the model cannot execute that
+  step; record it in `run.json` as a control-only limitation. Removing that step is
+  one of p2's intended context changes, so its effect belongs to the measured T − C
+  delta.
 - **Candidate (T):** assemble the exact p2 review prompt above with the p2 packet
   contract. Record the extraction date, evaluation date and per-book coverage.
 - Use **`claude-haiku-4-5-20251001`**, identical parameters for every call and the
@@ -178,12 +206,14 @@ run, leave p2 **CANDIDATE**, open a draft PR, and make no routing changes.
   arms and retries. No parameter values have been used in the unrun gate below.
 - Force structured output with `output_schema.json`, then validate every response
   with `validateAgainstSchema`. Retry an invalid response once; if still invalid,
-  record a failure. Record retries, failures and actual API call counts. Do not
-  replace an invalid output with an invented or manually repaired assessment.
+  record the failure and exclude that book from both arms. Record retries, failures,
+  exclusions and actual API call counts. Do not replace an invalid output with an
+  invented or manually repaired assessment.
 - Run **3 reviews per book per arm**: **132 planned calls** for 22 books, excluding
   retries. Compute each book's median `validity_rating` and median
-  `evidence_quality` separately within each arm. Only completed, validated triplets
-  support those medians; unresolved response failures leave the gate incomplete.
+  `evidence_quality` separately within each arm. A book is matched only when both
+  arms have three validated runs. Extraction and response exclusions share one
+  floor: the gate needs at least 18 matched books.
 
 ### Storage and reproducibility
 
@@ -192,8 +222,10 @@ Commit only model JSON and run metadata under `harness/calibration-runs/p2/`:
 - `control/NNN-rK.json` and `candidate/NNN-rK.json`, with three-digit positions and
   run numbers 1–3;
 - `run.json`: model ID, `max_tokens`, API-default temperature, other parameters,
-  run dates, hindsight v1, prompt versions, packet formats, extraction date,
-  per-book coverage, failures, retries and API request IDs where available.
+  structured-output mechanism, run dates, hindsight v1, prompt versions, packet
+  formats and delivery, extraction date, per-book coverage, failures, retries,
+  exclusions, the control-only Write-step limitation and API request IDs where
+  available.
 
 Do not commit packets, extracted text, credentials or model invocation code.
 The model-neutral `harness/assemble_review.mjs` is deferred in this candidate-only

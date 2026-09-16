@@ -338,7 +338,7 @@ const communityReviewed = {
     model: 'claude-opus-5',
     evaluated_on: '2026-08-25',
     hindsight_version: 'v2',
-    prompt_revision: 'harness/review_prompt.md@1ec62ef',
+    prompt_revision: 'p2',
     reviewer: 'octocat'
   }
 };
@@ -367,6 +367,22 @@ test('review provenance rejects a hindsight version that is not vN', () => {
   for (const value of ['v1', 'v2', 'v10']) {
     const candidate = structuredClone(communityReviewed);
     candidate.review_provenance.hindsight_version = value;
+
+    assert.deepEqual(validateAgainstSchema(schema, candidate), [], value);
+  }
+});
+
+test('review provenance stamps a prompt version, not a file reference', () => {
+  for (const value of ['harness/review_prompt.md@1ec62ef', 'P2', 'p', '2', 'v2']) {
+    const candidate = structuredClone(communityReviewed);
+    candidate.review_provenance.prompt_revision = value;
+
+    assert.notDeepEqual(validateAgainstSchema(schema, candidate), [], value);
+  }
+
+  for (const value of ['p1', 'p2', 'p10']) {
+    const candidate = structuredClone(communityReviewed);
+    candidate.review_provenance.prompt_revision = value;
 
     assert.deepEqual(validateAgainstSchema(schema, candidate), [], value);
   }

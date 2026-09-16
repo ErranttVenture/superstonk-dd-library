@@ -251,6 +251,10 @@
       "type": "string",
       "pattern": "^v[0-9]+$"
     },
+    "promptRevision": {
+      "type": "string",
+      "pattern": "^p[0-9]+$"
+    },
     "pagesOrNull": {
       "anyOf": [
         { "$ref": "#/$defs/pages" },
@@ -314,7 +318,7 @@
         "model": { "$ref": "#/$defs/string" },
         "evaluated_on": { "$ref": "#/$defs/date" },
         "hindsight_version": { "$ref": "#/$defs/hindsightVersion" },
-        "prompt_revision": { "$ref": "#/$defs/string" },
+        "prompt_revision": { "$ref": "#/$defs/promptRevision" },
         "reviewer": { "$ref": "#/$defs/string" }
       },
       "additionalProperties": false
