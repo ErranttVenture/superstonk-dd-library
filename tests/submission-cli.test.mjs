@@ -16,6 +16,11 @@ const FAKE_RESOLVE_ENV = { SUBMISSION_FAKE_RESOLVE: '1' };
 
 const masterUrl = new URL('../data/master.json', import.meta.url);
 
+// Apply tests run against a copy of the tracked dataset, which gains a real community record for
+// every merged submission. A fixture reusing a real issue number is refused as already accepted,
+// so fixtures use issue numbers this repository will never reach.
+const FIXTURE_ISSUE_FLOOR = 900000;
+
 // Snapshotted once, at module load, before any test in this file has had a chance to run.
 // The "never written" assertion below compares against these bytes rather than a record
 // count, so it stays meaningful as the tracked dataset grows past 250 records.
@@ -45,6 +50,16 @@ function completeBody(url, archiveUrl) {
     '### Copyright acknowledgement', '', '- [X] I have not pasted the full text of a copyrighted work into this issue.', ''
   ].join('\n');
 }
+
+test('fixture issue numbers cannot collide with a real accepted submission', async () => {
+  const source = await readFile(new URL(import.meta.url), 'utf8');
+  const numbers = [...source.matchAll(/ErranttVenture\/superstonk-dd-library\/issues\/(\d+)/g)]
+    .map(([, number]) => Number(number))
+    .filter((number) => number > 0);
+
+  assert.ok(numbers.length > 0, 'expected fixture issue URLs in this file');
+  assert.deepEqual(numbers.filter((number) => number < FIXTURE_ISSUE_FLOOR), []);
+});
 
 test('the check CLI reports parse failures as a blocked checklist', async () => {
   const path = await bodyFile('### Title\n\nOnly a title\n');
@@ -132,7 +147,7 @@ test('the apply CLI refuses an empty canonical dataset rather than losing the or
   const path = await bodyFile(completeBody('https://example.test/first-community-record', 'https://web.archive.org/web/1/x'));
   const result = await runNodeCli('scripts/apply-submission.mjs', [
     path,
-    'https://github.com/ErranttVenture/superstonk-dd-library/issues/20',
+    'https://github.com/ErranttVenture/superstonk-dd-library/issues/900020',
     'octocat'
   ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_SUBMITTED_ON: '2026-08-20', SUBMISSION_MASTER_PATH: scratch } });
 
@@ -151,7 +166,7 @@ test('the apply CLI appends a pending record and preserves formatting', async ()
   const path = await bodyFile(completeBody('https://example.test/dd', 'https://web.archive.org/web/1/x'));
   const result = await runNodeCli('scripts/apply-submission.mjs', [
     path,
-    'https://github.com/ErranttVenture/superstonk-dd-library/issues/12',
+    'https://github.com/ErranttVenture/superstonk-dd-library/issues/900012',
     'octocat'
   ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_SUBMITTED_ON: '2026-08-20', SUBMISSION_MASTER_PATH: scratch } });
 
@@ -178,7 +193,7 @@ test('the apply CLI refuses a blocked submission and leaves the dataset alone', 
   const path = await bodyFile('### Title\n\nOnly a title\n');
   const result = await runNodeCli('scripts/apply-submission.mjs', [
     path,
-    'https://github.com/ErranttVenture/superstonk-dd-library/issues/13',
+    'https://github.com/ErranttVenture/superstonk-dd-library/issues/900013',
     'octocat'
   ], { env: { SUBMISSION_MASTER_PATH: scratch } });
 
@@ -195,7 +210,7 @@ test('the apply CLI blocks a well-formed submission that fails a mechanical chec
   const path = await bodyFile(completeBody(duplicateUrl, 'https://web.archive.org/web/1/x'));
   const result = await runNodeCli('scripts/apply-submission.mjs', [
     path,
-    'https://github.com/ErranttVenture/superstonk-dd-library/issues/16',
+    'https://github.com/ErranttVenture/superstonk-dd-library/issues/900016',
     'octocat'
   ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_MASTER_PATH: scratch } });
 
@@ -209,7 +224,7 @@ test('the apply CLI leaves no temporary file behind after a successful write', a
   const path = await bodyFile(completeBody('https://example.test/leftover-check', 'https://web.archive.org/web/1/x'));
   const result = await runNodeCli('scripts/apply-submission.mjs', [
     path,
-    'https://github.com/ErranttVenture/superstonk-dd-library/issues/15',
+    'https://github.com/ErranttVenture/superstonk-dd-library/issues/900015',
     'octocat'
   ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_SUBMITTED_ON: '2026-08-20', SUBMISSION_MASTER_PATH: scratch } });
 
@@ -235,20 +250,20 @@ test('apply preserves exact attributed Markdown and rejects duplicate acceptance
     .replace('Credit my GitHub handle', 'Submit anonymously') +
     '\n### Full text permission\n\n- [X] I am the author or have permission to preserve and publicly display this text with attribution.\n\n### Full text (Markdown)\n\n' + markdown);
   const env = { SUBMISSION_MASTER_PATH: scratch, SUBMISSION_ROOT: dirname(scratch) };
-  const args = [path, 'https://github.com/ErranttVenture/superstonk-dd-library/issues/12', 'octocat'];
+  const args = [path, 'https://github.com/ErranttVenture/superstonk-dd-library/issues/900012', 'octocat'];
   const result = await runNodeCli('scripts/apply-submission.mjs', args, { env });
   assert.equal(result.status, 0, result.stderr);
   const before = await readFile(scratch);
   const record = JSON.parse(before).at(-1);
   assert.equal(record.submission.archive_url, null);
   assert.equal(record.submission.submitted_by, 'anonymous');
-  assert.equal(record.submission.preserved_text.path, 'submissions/12/dd.md');
+  assert.equal(record.submission.preserved_text.path, 'submissions/900012/dd.md');
   const copy = await readFile(join(dirname(scratch), record.submission.preserved_text.path));
   assert.equal(createHash('sha256').update(copy).digest('hex'), record.submission.preserved_text.sha256);
   assert.ok(copy.toString().endsWith(markdown));
   assert.match(copy.toString(), /u\/example/);
   assert.match(copy.toString(), /Permission declaration/);
-  assert.match(copy.toString(), /issues\/12/);
+  assert.match(copy.toString(), /issues\/900012/);
   const retry = await runNodeCli('scripts/apply-submission.mjs', args, { env });
   assert.equal(retry.status, 1);
   assert.deepEqual(await readFile(scratch), before);
@@ -259,7 +274,7 @@ test('apply rejects noncanonical issue URLs before writing', async () => {
   const scratch = await scratchMaster();
   const before = await readFile(scratch);
   const path = await bodyFile(completeBody('https://example.test/dd', 'https://web.archive.org/web/1/x'));
-  for (const issue of ['https://github.com/other/repo/issues/12', 'https://github.com/ErranttVenture/superstonk-dd-library/issues/0', 'https://github.com/ErranttVenture/superstonk-dd-library/issues/12?x=1']) {
+  for (const issue of ['https://github.com/other/repo/issues/12', 'https://github.com/ErranttVenture/superstonk-dd-library/issues/0', 'https://github.com/ErranttVenture/superstonk-dd-library/issues/900012?x=1']) {
     const result = await runNodeCli('scripts/apply-submission.mjs', [path, issue, 'octocat'], {
       env: { ...FAKE_RESOLVE_ENV, SUBMISSION_MASTER_PATH: scratch }
     });

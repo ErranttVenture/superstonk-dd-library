@@ -68,6 +68,10 @@ jobs:
           else
             echo "branch_exists=false" >> "$GITHUB_OUTPUT"
           fi
+      # Test before appending: the suite copies data/master.json, so the new record must not be in it.
+      - name: Test the unmodified checkout
+        if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'
+        run: npm test
       - name: Write the issue body to a file
         if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'
         env:
@@ -83,7 +87,7 @@ jobs:
           echo "POS=$pos" >> "$GITHUB_ENV"
       - name: Validate the result
         if: steps.submission.outputs.pr_exists != 'true' && steps.submission.outputs.branch_exists != 'true'
-        run: npm test && npm run validate
+        run: npm run validate
       - name: Open the pull request
         if: steps.submission.outputs.pr_exists != 'true'
         env:
