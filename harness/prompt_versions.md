@@ -249,10 +249,13 @@ delta **T − C**. Activation requires all four conditions:
 | Mean evidence-quality delta | Within ±0.30, inclusive |
 
 Report, without gating, **C vs July**, **T vs July** (validity and evidence quality),
-and the counts and proportions of each `key_claims` assessment for each arm across
-all valid runs. Identify the preserved July rating fields used in those comparisons;
-do not silently mix pre-adjudication ratings with the preserved adjudicated values
-described in [`calibration.md`](calibration.md).
+and the counts and proportions of each `key_claims` assessment for each arm. Compute
+every report-only figure from retained matched books only, so each arm contributes
+exactly three validated runs per book and both arms share one denominator. Valid
+responses from excluded books are reported separately, listed per book and arm, and
+never pooled into these figures. Identify the preserved July rating fields used in
+those comparisons; do not silently mix pre-adjudication ratings with the preserved
+adjudicated values described in [`calibration.md`](calibration.md).
 
 If the gate fails, revise p2 at most **two** times, changing only framing, packet
 wording or time-rule wording. Never change rubric anchors, RULES semantics or

@@ -848,6 +848,10 @@ test('p2 calibration fixes packet delivery, hindsight dating and failure exclusi
   assert.match(versions, /"as of mid-2026" as\s+2026-07-21/);
   assert.match(versions, /exclude that book from both arms/);
   assert.doesNotMatch(versions, /leave the gate incomplete/);
+  // Report-only figures share the gate's denominator: an excluded book's surviving runs never skew one arm.
+  assert.match(versions, /retained\s+matched\s+books\s+only/);
+  assert.match(versions, /excluded\s+books\s+are\s+reported\s+separately/);
+  assert.doesNotMatch(versions, /across\s+all\s+valid\s+runs/);
   assert.match(versions, /current hindsight version/);
   assert.doesNotMatch(versions, /two v2 fact bullets|15 unchanged v1 bullets/);
   assert.match(versions, /never a file or commit reference/);
