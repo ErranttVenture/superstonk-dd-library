@@ -15964,5 +15964,28 @@
    "trusts and estates",
    "GME speculation"
   ]
+ },
+ {
+  "pos": 251,
+  "title": "Market Makers can sell shares that don't exist, legally.",
+  "byline": "Doarect",
+  "pages": null,
+  "uploaded": "2026-07-11",
+  "url": "https://www.justthebros.co/blog/market-maker-locate-exemption/",
+  "type": "original",
+  "text_available": true,
+  "source_corpus": "community",
+  "review_status": "pending",
+  "submission": {
+   "submitted_on": "2026-09-16",
+   "submitted_by": "ErranttVenture",
+   "issue": "https://github.com/ErranttVenture/superstonk-dd-library/issues/12",
+   "archive_url": null,
+   "preserved_text": {
+    "path": "submissions/12/dd.md",
+    "sha256": "159f5341fc7337d59cf07d83a642271ffa56c639815ee5b6c967be165e8d9abc"
+   },
+   "platform": "other"
+  }
  }
 ]
