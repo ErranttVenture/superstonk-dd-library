@@ -311,7 +311,8 @@ test('labels every harness file with either a reconstruction or a verbatim-recov
     ['output_schema.json', 'recovered'],
     ['calibration.md', 'recovered'],
     ['ERRATA.md', 'maintained'],
-    ['hindsight.md', 'maintained']
+    ['hindsight.md', 'maintained'],
+    ['prompt_versions.md', 'maintained']
   ]);
 
   const entries = await readdir(harnessDirectory, { withFileTypes: true });
@@ -800,4 +801,37 @@ test('routes forward reviews through the versioned hindsight machinery', async (
     reviewPrompt.includes('hindsight.md'),
     'review_prompt.md must point at hindsight.md for assembling future reviews'
   );
+});
+
+test('p2 removes historical corpus framing and runtime steps while preserving p1', async () => {
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+  const p1 = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
+
+  assert.ok(versions.startsWith('**Provenance: MAINTAINED.**'));
+  assert.doesNotMatch(versions, /214-book|FlipHTML5 bookcase|Using the Write tool/);
+  assert.match(p1, /214-book/);
+  assert.match(p1, /FlipHTML5 bookcase/);
+  assert.match(p1, /Using the Write tool/);
+  assert.match(versions, /Return your COMPLETE assessment object as JSON matching the output schema, and nothing else\./);
+});
+
+test('p2 preserves all three type blocks with only book changed to work', async () => {
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+  const p1 = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
+  const typeBlocks = (text) => [...text.replace(/\r\n/g, '\n').matchAll(/```\n(This (?:book|work)[\s\S]*?)\n```/g)]
+    .map((match) => match[1]);
+  const originalBlocks = typeBlocks(p1);
+
+  assert.equal(originalBlocks.length, 3);
+  assert.deepEqual(typeBlocks(versions), originalBlocks.map((block) => block.replace(/\bbook\b/g, 'work')));
+});
+
+test('p2 stays a candidate with a disclosed unrun calibration gate', async () => {
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+
+  assert.match(versions, /\| p1 \| FROZEN \|/);
+  assert.match(versions, /\| p2 \| CANDIDATE \|/);
+  assert.match(versions, /\*\*Verdict: NOT RUN — p2 remains CANDIDATE\.\*\*/);
+  assert.match(versions, /API calls: \*\*0\*\*/);
+  assert.match(versions, /\[Activation record\]\(#activation-record\)/);
 });

@@ -4,6 +4,10 @@
 
 ## Calibration sample
 
+> **Prompt versions.** The verify prompt below is frozen as part of p1. See
+> [`prompt_versions.md`](prompt_versions.md) for the separate p2 candidate and its
+> activation gate. p2 calibration has not run; the July record below is unchanged.
+
 Every ninth reviewed book was independently re-rated by a stronger model, producing a 22-book sample. Agreement was **12/22 exact** and **20/22 within ±1** validity point. Mean drift was **+0.27**: the stronger model rated slightly higher on average.
 
 These statistics compare `calibration.validity` with `validity_rating_original` where an adjudication changed the low-cost model's rating, and with `validity_rating` otherwise. The three preserved pre-adjudication ratings are #9 = 2, #54 = 3, and #180 = 2. This produces 12 exact matches, 20 differences within one point, and a total stronger-minus-original delta of 6 across 22 records (`6 / 22 = 0.2727…`, reported as +0.27). `validity_rating` remains the current post-adjudication value.

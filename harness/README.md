@@ -19,6 +19,7 @@ This directory documents and supports a reproducible, model-neutral version of t
 - `output_schema.json` — **recovered verbatim** (`SCHEMA`, converted to JSON Schema with property names, order, and the required-fields list unchanged).
 - `calibration.md` — **hybrid.** The calibration statistics and adjudication record are drawn directly from the immutable `reports/REPORT.md`, not reconstructed guesses, and carry over unchanged. `verifyPrompt()` and `VERIFY_SCHEMA`, the prompt and schema that produced that calibration sample, are now **recovered verbatim** alongside them.
 - `hindsight.md` — **maintained.** The current versioned ground truth; new reviews assemble their facts block from it. Not a recovered artifact.
+- [`prompt_versions.md`](prompt_versions.md) — **maintained.** Frozen p1 references and the full p2 candidate, packet contract and calibration gate. p2 remains CANDIDATE; calibration and activation are pending, so current review routing is unchanged.
 - `ERRATA.md` — **maintained.** The audit trail of challenges to the facts block; never sent to a reviewer.
 - `extract_bookcase.mjs` — still reconstructs bookcase inventory extraction. Not part of the recovered review workflow script; no source has surfaced for it.
 - `extract_book_text.mjs` — still reconstructs single-book and bounded-inventory page-text extraction. Same as above.

@@ -10,6 +10,10 @@
 
 ## Placeholder substitution
 
+> **Prompt versions.** This recovered prompt is frozen as p1. The maintained
+> [`prompt_versions.md`](prompt_versions.md) records the p2 candidate and its
+> calibration gate. p2 is not active; the verbatim blocks below remain unchanged.
+
 The original template hardcoded two scratchpad file paths that no longer exist, since the per-book input packets were not preserved:
 
 - `${S}/packets/${pad}.txt` (the input packet the agent reads) → `{{BOOK_PACKET_PATH}}`
