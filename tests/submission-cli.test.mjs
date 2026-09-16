@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile, copyFile, readdir } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile, copyFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
 import { runNodeCli } from './cli-test-helpers.mjs';
 
@@ -15,6 +16,7 @@ import { runNodeCli } from './cli-test-helpers.mjs';
 const FAKE_RESOLVE_ENV = { SUBMISSION_FAKE_RESOLVE: '1' };
 
 const masterUrl = new URL('../data/master.json', import.meta.url);
+const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
 
 // Apply tests run against a copy of the tracked dataset, which gains a real community record for
 // every merged submission. A fixture reusing a real issue number is refused as already accepted,
@@ -128,10 +130,18 @@ test('SUBMISSION_FAKE_RESOLVE reports an unroutable source URL as resolved, prov
   assert.match(result.stdout, /Source URL resolves/);
 });
 
-async function scratchMaster() {
+// Apply validates every preserved copy the dataset references under SUBMISSION_ROOT, so a scratch
+// dataset carries those Markdown files to the same relative paths beside its JSON.
+async function scratchMaster({ master = masterUrl, root = repositoryRoot } = {}) {
   const directory = await mkdtemp(join(tmpdir(), 'submission-master-'));
   const path = join(directory, 'master.json');
-  await copyFile(masterUrl, path);
+  await copyFile(master, path);
+  for (const record of JSON.parse(await readFile(path, 'utf8'))) {
+    const copy = record.submission?.preserved_text?.path;
+    if (!copy) continue;
+    await mkdir(dirname(join(directory, copy)), { recursive: true });
+    await copyFile(join(root, copy), join(directory, copy));
+  }
   return path;
 }
 
@@ -219,8 +229,22 @@ test('the apply CLI blocks a well-formed submission that fails a mechanical chec
   assert.equal(await readFile(scratch, 'utf8'), before);
 });
 
+async function listFiles(directory, prefix = '') {
+  const files = [];
+  for (const entry of await readdir(join(directory, prefix), { withFileTypes: true })) {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+    files.push(...(entry.isDirectory() ? await listFiles(directory, relative) : [relative]));
+  }
+  return files.sort();
+}
+
 test('the apply CLI leaves no temporary file behind after a successful write', async () => {
   const scratch = await scratchMaster();
+  // Only the dataset and the preserved copies it references belong in the scratch root.
+  const expected = ['master.json', ...JSON.parse(await readFile(scratch, 'utf8'))
+    .map((record) => record.submission?.preserved_text?.path)
+    .filter(Boolean)].sort();
+  assert.deepEqual(await listFiles(dirname(scratch)), expected);
   const path = await bodyFile(completeBody('https://example.test/leftover-check', 'https://web.archive.org/web/1/x'));
   const result = await runNodeCli('scripts/apply-submission.mjs', [
     path,
@@ -229,9 +253,7 @@ test('the apply CLI leaves no temporary file behind after a successful write', a
   ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_SUBMITTED_ON: '2026-08-20', SUBMISSION_MASTER_PATH: scratch } });
 
   assert.equal(result.status, 0);
-
-  const entries = await readdir(dirname(scratch));
-  assert.deepEqual(entries, ['master.json']);
+  assert.deepEqual(await listFiles(dirname(scratch)), expected);
 });
 
 test('the tracked dataset is never written by these tests', async () => {
@@ -243,12 +265,16 @@ test('the tracked dataset is never written by these tests', async () => {
   );
 });
 
+function preservedBody(url, markdown) {
+  return completeBody(url, '_No response_')
+    .replace('Credit my GitHub handle', 'Submit anonymously') +
+    '\n### Full text permission\n\n- [X] I am the author or have permission to preserve and publicly display this text with attribution.\n\n### Full text (Markdown)\n\n' + markdown;
+}
+
 test('apply preserves exact attributed Markdown and rejects duplicate acceptance without overwriting', async () => {
   const scratch = await scratchMaster();
   const markdown = '# DD\n\n### Title\nUnchanged body\n\n';
-  const path = await bodyFile(completeBody('https://example.test/preserved', '_No response_')
-    .replace('Credit my GitHub handle', 'Submit anonymously') +
-    '\n### Full text permission\n\n- [X] I am the author or have permission to preserve and publicly display this text with attribution.\n\n### Full text (Markdown)\n\n' + markdown);
+  const path = await bodyFile(preservedBody('https://example.test/preserved', markdown));
   const env = { SUBMISSION_MASTER_PATH: scratch, SUBMISSION_ROOT: dirname(scratch) };
   const args = [path, 'https://github.com/ErranttVenture/superstonk-dd-library/issues/900012', 'octocat'];
   const result = await runNodeCli('scripts/apply-submission.mjs', args, { env });
@@ -268,6 +294,37 @@ test('apply preserves exact attributed Markdown and rejects duplicate acceptance
   assert.equal(retry.status, 1);
   assert.deepEqual(await readFile(scratch), before);
   assert.deepEqual(await readFile(join(dirname(scratch), record.submission.preserved_text.path)), copy);
+});
+
+test('apply accepts a preserved submission into a dataset that already holds a preserved community record', async () => {
+  // Source dataset: a genuine accepted community record plus its preserved Markdown copy.
+  const source = await scratchMaster();
+  const existingIssue = 'https://github.com/ErranttVenture/superstonk-dd-library/issues/900030';
+  const seeded = await runNodeCli('scripts/apply-submission.mjs', [
+    await bodyFile(preservedBody('https://example.test/existing-preserved', '# Existing DD\n')),
+    existingIssue,
+    'octocat'
+  ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_MASTER_PATH: source, SUBMISSION_ROOT: dirname(source) } });
+  assert.equal(seeded.status, 0, seeded.stderr);
+  const existing = JSON.parse(await readFile(source, 'utf8')).at(-1);
+  assert.equal(existing.submission.issue, existingIssue);
+  const existingCopy = await readFile(join(dirname(source), existing.submission.preserved_text.path));
+
+  const scratch = await scratchMaster({ master: source, root: dirname(source) });
+  const result = await runNodeCli('scripts/apply-submission.mjs', [
+    await bodyFile(preservedBody('https://example.test/later-preserved', '# Later DD\n')
+      .replace('A Submitted DD', 'A Later Submitted DD')),
+    'https://github.com/ErranttVenture/superstonk-dd-library/issues/900031',
+    'octocat'
+  ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_MASTER_PATH: scratch, SUBMISSION_ROOT: dirname(scratch) } });
+
+  assert.equal(result.status, 0, result.stderr);
+  const records = JSON.parse(await readFile(scratch, 'utf8'));
+  assert.deepEqual(records.at(-2), existing);
+  assert.equal(records.at(-1).pos, existing.pos + 1);
+  const carried = await readFile(join(dirname(scratch), existing.submission.preserved_text.path));
+  assert.ok(carried.equals(existingCopy), 'the existing preserved copy must be carried over byte for byte');
+  assert.equal(createHash('sha256').update(carried).digest('hex'), existing.submission.preserved_text.sha256);
 });
 
 test('apply rejects noncanonical issue URLs before writing', async () => {
