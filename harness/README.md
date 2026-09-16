@@ -19,6 +19,7 @@ This directory documents and supports a reproducible, model-neutral version of t
 - `output_schema.json` — **recovered verbatim** (`SCHEMA`, converted to JSON Schema with property names, order, and the required-fields list unchanged).
 - `calibration.md` — **hybrid.** The calibration statistics and adjudication record are drawn directly from the immutable `reports/REPORT.md`, not reconstructed guesses, and carry over unchanged. `verifyPrompt()` and `VERIFY_SCHEMA`, the prompt and schema that produced that calibration sample, are now **recovered verbatim** alongside them.
 - `hindsight.md` — **maintained.** The current versioned ground truth; new reviews assemble their facts block from it. Not a recovered artifact.
+- [`prompt_versions.md`](prompt_versions.md) — **maintained.** Frozen p1 references and the full p2 candidate, packet contract and calibration gate. p2 remains CANDIDATE; calibration and activation are pending, so current review routing is unchanged.
 - `ERRATA.md` — **maintained.** The audit trail of challenges to the facts block; never sent to a reviewer.
 - `extract_bookcase.mjs` — still reconstructs bookcase inventory extraction. Not part of the recovered review workflow script; no source has surfaced for it.
 - `extract_book_text.mjs` — still reconstructs single-book and bounded-inventory page-text extraction. Same as above.
@@ -78,6 +79,6 @@ On 2026-08-15, `node harness/extract_bookcase.mjs https://fliphtml5.com/bookcase
 
 Community records at position 251 and above enter the dataset with `review_status: "pending"` and no rating. Promoting one to `reviewed` uses the same rubric, packet, and output contract as the original run, with two differences.
 
-Text capture is manual for any source that is not a FlipHTML5 publication. `extract_book_text.mjs` understands FlipHTML5 only. For a Reddit post, a Substack essay, or a hosted PDF, capture the text by hand, keep it outside this repository, and record how and when it was captured.
+Text comes from the preserved copy when one exists. If the record has `submission.preserved_text`, use the text after the first `---` line of that hash-verified file. Otherwise capture it by hand: `extract_book_text.mjs` understands FlipHTML5 only, so for a Reddit post, a Substack essay, or a hosted PDF, capture the text manually, keep it outside this repository, and record how and when it was captured.
 
-Every community review must populate `review_provenance` with `model`, `evaluated_on`, `hindsight_version`, `prompt_revision`, and `reviewer`. Unlike the original run, community reviews accumulate across models and dates, and a rating without that block cannot be reproduced or fairly compared. Where the captured text cannot support a fair judgment, set `review_status` to `unreviewable` and record why in `summary` rather than forcing a rating.
+Every community review must populate `review_provenance` with `model`, `evaluated_on`, `hindsight_version`, `prompt_revision` (a prompt version such as `p1`, never a file or commit reference), and `reviewer`. Unlike the original run, community reviews accumulate across models and dates, and a rating without that block cannot be reproduced or fairly compared. Where the captured text cannot support a fair judgment, set `review_status` to `unreviewable` and record why in `summary` rather than forcing a rating.

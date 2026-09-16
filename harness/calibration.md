@@ -20,6 +20,10 @@ These figures document the original report's checks. They do not establish new c
 
 ## Independent verify pass — prompt and schema (recovered verbatim)
 
+> **Prompt versions.** The verify prompt below is frozen as part of p1. See
+> [`prompt_versions.md`](prompt_versions.md) for the separate p2 candidate and its
+> activation gate. p2 calibration has not run; the July record above is unchanged.
+
 Every ninth reviewed book (`b.p % 9 === 0`) was independently re-rated using a separate prompt, `verifyPrompt()`, run by the session's stronger model rather than the low-cost per-book reviewer. The reviewer was explicitly told not to consult the existing review, to avoid anchoring on it. This is what produced the 22-book calibration sample described above.
 
 ### verifyPrompt() (verbatim)

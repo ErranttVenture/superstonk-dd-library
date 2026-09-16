@@ -311,7 +311,8 @@ test('labels every harness file with either a reconstruction or a verbatim-recov
     ['output_schema.json', 'recovered'],
     ['calibration.md', 'recovered'],
     ['ERRATA.md', 'maintained'],
-    ['hindsight.md', 'maintained']
+    ['hindsight.md', 'maintained'],
+    ['prompt_versions.md', 'maintained']
   ]);
 
   const entries = await readdir(harnessDirectory, { withFileTypes: true });
@@ -800,4 +801,102 @@ test('routes forward reviews through the versioned hindsight machinery', async (
     reviewPrompt.includes('hindsight.md'),
     'review_prompt.md must point at hindsight.md for assembling future reviews'
   );
+});
+
+function fencedBlock(text, opening) {
+  return [...text.replace(/\r\n/g, '\n').matchAll(/```\n([\s\S]*?)\n```/g)]
+    .map((match) => match[1])
+    .find((block) => block.startsWith(opening));
+}
+
+test('p2 removes historical corpus framing and runtime steps while preserving p1', async () => {
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+  const p1 = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
+  const review = fencedBlock(versions, 'You are one reviewer for the DD Library');
+  const verify = fencedBlock(versions, 'Calibration check for the DD Library');
+
+  assert.ok(versions.startsWith('**Provenance: MAINTAINED.**'));
+  assert.ok(review && verify, 'prompt_versions.md must carry the p2 review and verify prompts');
+  for (const block of [review, verify]) {
+    assert.doesNotMatch(block, /214-book|FlipHTML5 bookcase|Using the Write tool/);
+  }
+  assert.match(p1, /214-book/);
+  assert.match(p1, /FlipHTML5 bookcase/);
+  assert.match(p1, /Using the Write tool/);
+  assert.match(review, /Return your COMPLETE assessment object as JSON matching the output schema, and nothing else\.$/);
+});
+
+test('p2 review prompt is pinned to the recorded candidate text', async () => {
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+  const review = fencedBlock(versions, 'You are one reviewer for the DD Library');
+
+  // Sections stay separated by blank lines, as in p1, so expanded placeholders never run together.
+  for (const marker of ['STEP 1 —', '${typeBlock}', '${HINDSIGHT}', '${RUBRIC}', 'TIME RULES:', 'RULES:', 'Return your COMPLETE']) {
+    assert.ok(review.includes(`\n\n${marker}`), `p2 must separate ${marker} from the preceding section with a blank line`);
+  }
+  // Any change to the candidate is a logged revision round in prompt_versions.md; update this digest only with one.
+  assert.equal(createHash('sha256').update(review).digest('hex'), '994dd322e89c203b9931073b4de72b01124b637e0ec575ed528a3f4d82ef36cf');
+});
+
+test('p2 calibration fixes packet delivery, hindsight dating and failure exclusion', async () => {
+  const versions = (await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+
+  assert.match(versions, /FILE: packets\/NNN\.txt/);
+  assert.match(versions, /Provide no tools/);
+  assert.match(versions, /control-only limitation/);
+  assert.match(versions, /PUBLISHED date is later than the\s+hindsight block's "as of" date/);
+  assert.match(versions, /"as of mid-2026" as\s+2026-07-21/);
+  assert.match(versions, /exclude that book from both arms/);
+  assert.doesNotMatch(versions, /leave the gate incomplete/);
+  // Report-only figures share the gate's denominator: an excluded book's surviving runs never skew one arm.
+  assert.match(versions, /retained\s+matched\s+books\s+only/);
+  assert.match(versions, /excluded\s+books\s+are\s+reported\s+separately/);
+  assert.doesNotMatch(versions, /across\s+all\s+valid\s+runs/);
+  // Reviews list 3-8 claims each, so arms share books and run counts but not a claim denominator.
+  assert.match(versions, /same\s+retained\s+books\s+and\s+run\s+counts/);
+  assert.match(versions, /that\s+arm's\s+total\s+assessed\s+claims/);
+  assert.doesNotMatch(versions, /share\s+one\s+denominator/);
+  assert.match(versions, /current hindsight version/);
+  assert.doesNotMatch(versions, /two v2 fact bullets|15 unchanged v1 bullets/);
+  assert.match(versions, /never a file or commit reference/);
+  const issuePaths = versions.match(/submissions\/<issue>\/dd\.md/g) ?? [];
+  const codeIssuePaths = versions.match(/`submissions\/<issue>\/dd\.md`/g) ?? [];
+  assert.ok(issuePaths.length > 0);
+  assert.equal(codeIssuePaths.length, issuePaths.length, 'an <issue> placeholder outside a code span is stripped when GitHub renders');
+});
+
+test('p1 pointer notes sit beside what they describe and community reviews use preserved copies', async () => {
+  const p1 = (await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  const calibration = (await readFile(new URL('../harness/calibration.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  const readme = (await readFile(new URL('../harness/README.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+
+  const p1Note = p1.indexOf('> **Prompt versions.**');
+  assert.ok(p1Note >= 0 && p1Note < p1.indexOf('## Placeholder substitution'), 'the p1 note belongs with the versioning note');
+  const calibrationNote = calibration.indexOf('> **Prompt versions.**');
+  assert.ok(calibrationNote > calibration.indexOf('## Independent verify pass'), 'the calibration note belongs with the verify prompt');
+
+  const community = readme.slice(readme.indexOf('## Reviewing a community submission'));
+  assert.match(community, /submission\.preserved_text/);
+  assert.doesNotMatch(community, /Text capture is manual for any source that is not a FlipHTML5 publication\./);
+});
+
+test('p2 preserves all three type blocks with only book changed to work', async () => {
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+  const p1 = await readFile(new URL('../harness/review_prompt.md', import.meta.url), 'utf8');
+  const typeBlocks = (text) => [...text.replace(/\r\n/g, '\n').matchAll(/```\n(This (?:book|work)[\s\S]*?)\n```/g)]
+    .map((match) => match[1]);
+  const originalBlocks = typeBlocks(p1);
+
+  assert.equal(originalBlocks.length, 3);
+  assert.deepEqual(typeBlocks(versions), originalBlocks.map((block) => block.replace(/\bbook\b/g, 'work')));
+});
+
+test('p2 stays a candidate with a disclosed unrun calibration gate', async () => {
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+
+  assert.match(versions, /\| p1 \| FROZEN \|/);
+  assert.match(versions, /\| p2 \| CANDIDATE \|/);
+  assert.match(versions, /\*\*Verdict: NOT RUN — p2 remains CANDIDATE\.\*\*/);
+  assert.match(versions, /API calls: \*\*0\*\*/);
+  assert.match(versions, /\[Activation record\]\(#activation-record\)/);
 });
