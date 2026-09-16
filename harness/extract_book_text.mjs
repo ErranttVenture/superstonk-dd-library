@@ -6,7 +6,8 @@ const MARKER_CLASS = 'flip-basic-num';
 const DEFAULT_CONCURRENCY = 4;
 const USAGE = [
   'Usage: node harness/extract_book_text.mjs <url>',
-  '       node harness/extract_book_text.mjs --inventory <path> [--concurrency <1-8>]'
+  '       node harness/extract_book_text.mjs --inventory <path> [--concurrency <1-8>]',
+  '       node harness/extract_book_text.mjs --html <saved-page-file>'
 ].join('\n');
 const BLOCK_ENDINGS = /<\/(?:address|article|aside|blockquote|dd|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|table|tbody|td|tfoot|th|thead|tr|ul)\s*>/gi;
 const NAMED_ENTITIES = {
@@ -114,12 +115,14 @@ function findMarkers(html) {
     }
 
     const pageText = textFromHtml(html.slice(openElements.lastIndex, closingMatch.index));
-    if (!/^\d+$/.test(pageText)) {
+    // Book pages now label markers "P:01"; earlier pages used bare numbers.
+    const pageNumber = /^(?:P:)?(\d+)$/.exec(pageText)?.[1];
+    if (pageNumber === undefined) {
       throw new Error(`Invalid page marker: ${pageText || 'empty'}`);
     }
 
     markers.push({
-      page: Number.parseInt(pageText, 10),
+      page: Number.parseInt(pageNumber, 10),
       after: closing.lastIndex,
       start: match.index
     });
@@ -260,6 +263,9 @@ function parseArguments(arguments_) {
   if (arguments_.length === 1 && !arguments_[0].startsWith('--')) {
     return { mode: 'single', url: arguments_[0] };
   }
+  if (arguments_.length === 2 && arguments_[0] === '--html') {
+    return { mode: 'html', path: arguments_[1] };
+  }
   if (arguments_.length === 2 && arguments_[0] === '--inventory') {
     return { mode: 'inventory', path: arguments_[1], concurrency: DEFAULT_CONCURRENCY };
   }
@@ -297,6 +303,11 @@ async function readInventory(path) {
 async function main() {
   try {
     const command = parseArguments(process.argv.slice(2));
+    if (command.mode === 'html') {
+      const page = { path: command.path, ...extractPageText(await readFile(command.path, 'utf8')) };
+      process.stdout.write(`${JSON.stringify(page, null, 2)}\n`);
+      return;
+    }
     if (command.mode === 'single') {
       process.stdout.write(`${JSON.stringify(await fetchBookText(command.url), null, 2)}\n`);
       return;

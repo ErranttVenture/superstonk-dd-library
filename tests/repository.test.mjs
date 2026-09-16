@@ -312,7 +312,8 @@ test('labels every harness file with either a reconstruction or a verbatim-recov
     ['calibration.md', 'recovered'],
     ['ERRATA.md', 'maintained'],
     ['hindsight.md', 'maintained'],
-    ['prompt_versions.md', 'maintained']
+    ['prompt_versions.md', 'maintained'],
+    ['assemble_review.mjs', 'maintained']
   ]);
 
   const entries = await readdir(harnessDirectory, { withFileTypes: true });
@@ -838,15 +839,27 @@ test('p2 review prompt is pinned to the recorded candidate text', async () => {
   assert.equal(createHash('sha256').update(review).digest('hex'), '994dd322e89c203b9931073b4de72b01124b637e0ec575ed528a3f4d82ef36cf');
 });
 
+test('p2 calibration records its amended protocol and runtime before any run', async () => {
+  const versions = (await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+
+  assert.match(versions, /### Protocol amendment \(2026-09-16, recorded before any run\)/);
+  assert.match(versions, /\*\*9, 18, 36, 45, 54, 63, 72, 81, 99, 108\*\*/);
+  assert.match(versions, /`model: 'haiku'`/);
+  assert.match(versions, /StructuredOutput\s+tool/);
+  assert.match(versions, /Read\s+tool/);
+  assert.match(versions, /at least 9 matched books/);
+  assert.match(versions, /\| Books with validity difference at most 1 \| At least 90% of matched books \(9 of 10\) \|/);
+  assert.match(versions, /\| Books with validity difference at least 2 \| At most 1,/);
+  assert.match(versions, /lines of at most 500 characters/);
+  assert.doesNotMatch(versions, /real Anthropic API response|FILE: packets\/NNN\.txt|132 planned calls|Provide no tools/);
+});
+
 test('p2 calibration fixes packet delivery, hindsight dating and failure exclusion', async () => {
   const versions = (await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 
-  assert.match(versions, /FILE: packets\/NNN\.txt/);
-  assert.match(versions, /Provide no tools/);
-  assert.match(versions, /control-only limitation/);
   assert.match(versions, /PUBLISHED date is later than the\s+hindsight block's "as of" date/);
   assert.match(versions, /"as of mid-2026" as\s+2026-07-21/);
-  assert.match(versions, /exclude that book from both arms/);
+  assert.match(versions, /exclude\s+that\s+book\s+from\s+both\s+arms/);
   assert.doesNotMatch(versions, /leave the gate incomplete/);
   // Report-only figures share the gate's denominator: an excluded book's surviving runs never skew one arm.
   assert.match(versions, /retained\s+matched\s+books\s+only/);

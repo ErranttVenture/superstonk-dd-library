@@ -20,9 +20,10 @@ This directory documents and supports a reproducible, model-neutral version of t
 - `calibration.md` — **hybrid.** The calibration statistics and adjudication record are drawn directly from the immutable `reports/REPORT.md`, not reconstructed guesses, and carry over unchanged. `verifyPrompt()` and `VERIFY_SCHEMA`, the prompt and schema that produced that calibration sample, are now **recovered verbatim** alongside them.
 - `hindsight.md` — **maintained.** The current versioned ground truth; new reviews assemble their facts block from it. Not a recovered artifact.
 - [`prompt_versions.md`](prompt_versions.md) — **maintained.** Frozen p1 references and the full p2 candidate, packet contract and calibration gate. p2 remains CANDIDATE; calibration and activation are pending, so current review routing is unchanged.
+- [`assemble_review.mjs`](assemble_review.mjs) — **maintained.** Model-neutral assembly of review packets and p1/p2 prompts from the recovered sources and `prompt_versions.md`; never invokes a model.
 - `ERRATA.md` — **maintained.** The audit trail of challenges to the facts block; never sent to a reviewer.
 - `extract_bookcase.mjs` — still reconstructs bookcase inventory extraction. Not part of the recovered review workflow script; no source has surfaced for it.
-- `extract_book_text.mjs` — still reconstructs single-book and bounded-inventory page-text extraction. Same as above.
+- `extract_book_text.mjs` — still reconstructs single-book and bounded-inventory page-text extraction. Same as above. As of September 2026, `fliphtml5.com` book pages sit behind a Cloudflare bot challenge and the `online.fliphtml5.com` reader has no text layer, so live fetches return no text; `--html <file>` parses a book page saved from a browser, and markers in the current `P:NN` format are accepted.
 - This `README.md` and [`PROVENANCE.md`](PROVENANCE.md) are ordinary operating documentation, written against the recovered and still-reconstructed components above.
 
 ## Node 18+ commands

@@ -117,6 +117,8 @@ Community records with a preserved copy: the text is everything after the first 
 
 Text limit: use the full text up to 400,000 characters. Past that, include whole pages up to the limit and mark the coverage as a sample.
 
+Line width: wrap text at spaces into lines of at most 500 characters, so the reviewer's Read tool never truncates a line. Wrapping changes only line breaks; a single token longer than 500 characters is split. [`assemble_review.mjs`](assemble_review.mjs) builds packets to this contract.
+
 Never commit packets. They contain third-party text.
 
 ## Assembling a p2 review
@@ -133,15 +135,12 @@ amendments where the work's claims need them. Then assemble with that version.
 For the calibration gate, treat v1's "as of mid-2026" as 2026-07-21, the July run
 date; every calibration book predates it.
 
-1. Build the packet using the contract above and keep it outside the repository.
-   Use the preserved community copy when it exists. Deliver the packet and prompt
-   together in one user message with two text blocks, in this order: the line
-   `FILE: packets/NNN.txt` followed by the complete packet, then the assembled
-   prompt. Replace `{{BOOK_PACKET_PATH}}` with that same `packets/NNN.txt` label,
-   where `NNN` is the three-digit position. Provide no tools, other than the single
-   forced output tool if that is how the API enforces structured output. Enforce the
-   output schema through that structured-output mechanism and record which mechanism
-   was used.
+1. Build the packet using the contract above and keep it outside the repository, at
+   an absolute path. Use the preserved community copy when it exists. Replace
+   `{{BOOK_PACKET_PATH}}` with that absolute path and run the assembled prompt in the
+   calibrated runtime described under "Runtime" below, where the reviewer reads the
+   packet with its Read tool, as the July reviewers did.
+   [`assemble_review.mjs`](assemble_review.mjs) assembles prompts and packets.
 2. Expand `${typeBlock}` with exactly one p2 block. Set `${p}` to `record.pos`, a
    plain integer, not a zero-padded filename. The verify prompt has no type block.
 3. Expand `${RUBRIC}` with the complete verbatim anchor block from
@@ -176,44 +175,64 @@ date; every calibration book predates it.
 ## Calibration gate
 
 Never fabricate, simulate or hand-write model outputs. Every stored model output
-must come from a real Anthropic API response. If that API is unavailable, skip the
-run, leave p2 **CANDIDATE**, open a draft PR, and make no routing changes.
+must come from a real model response in the calibrated runtime. If that runtime is
+unavailable, skip the run, leave p2 **CANDIDATE**, open a draft PR, and make no
+routing changes.
+
+### Runtime
+
+p2 is calibrated, and therefore run, in one runtime: a Claude Code workflow subagent
+created with `agent()` and `model: 'haiku'` (Claude Haiku 4.5). The assembled prompt is
+the subagent's task. The subagent reads the packet at its absolute path with its Read
+tool, as the July reviewers did, and returns its assessment through the StructuredOutput
+tool, which enforces `output_schema.json`. It inherits the session's default reasoning
+effort. Temperature and `max_tokens` cannot be set and API request IDs are not
+exposed, so run metadata records them as unavailable. The subagent also has the
+runtime's other tools: a post-run transcript audit records each run's tool calls,
+whether it read the whole packet and the model its transcript reports, and flags any
+tool use beyond reading the packet and, for the control, its Write step. A review run
+in another runtime is not p2-calibrated.
+
+### Protocol amendment (2026-09-16, recorded before any run)
+
+The 22-book protocol could not run as designed. `fliphtml5.com` book pages sit behind
+a Cloudflare bot challenge, the `online.fliphtml5.com` reader serves page images
+without a text layer, and page markers changed format to `P:NN`. A maintainer saved
+the book pages from a browser; `extractPageText` (which now accepts `P:NN`) parses
+them. The saved pages omit each book's first two pages and last one to three pages,
+seven books carry only one-line page previews, and #117 was not saved. The gate
+therefore runs on the 10 books with substantive text:
+
+**9, 18, 36, 45, 54, 63, 72, 81, 99, 108**
+
+Excluded before the run: #27, #90, #126, #135, #144, #153 and #162 (page previews
+only), #117 (not saved), and #171, #180, #189 and #198 (not saved). Every packet's
+TEXT COVERAGE is a sample. This is a weaker gate than the 22-book design; a pass is
+recorded as a 10-book calibration on partial text.
 
 ### Sample, inputs and calls
 
-- Select the records in `data/master.json` that carry a `calibration` object:
-  **9, 18, 27, 36, 45, 54, 63, 72, 81, 90, 99, 108, 117, 126, 135, 144, 153,
-  162, 171, 180, 189, 198**. Do not substitute other records. If extraction fails,
-  report each failure and exclude that book.
-- Extract each book once. Both arms receive the same selected page text, coverage,
-  type classification, frozen rubric and hindsight **v1**, delivered identically as
-  in step 1 of "Assembling a p2 review", with the same structured-output mechanism
-  and no other tools.
-- **Control (C):** assemble p1 verbatim from `review_prompt.md`. Reconstruct its
-  packet header with `TITLE`, `BYLINE`, `OFFICIAL PAGE COUNT`, `UPLOAD DATE` and
-  `TEXT COVERAGE`, followed by page-labeled text. **This header is a reconstruction:
-  the July packets were not preserved.** Record that limitation in `run.json`.
-  Substitute `{{REVIEW_OUTPUT_PATH}}` with `reviews/NNN.json` and leave p1's STEP 2
-  and STEP 3 verbatim. With no Write tool available, the model cannot execute that
-  step; record it in `run.json` as a control-only limitation. Removing that step is
-  one of p2's intended context changes, so its effect belongs to the measured T − C
-  delta.
+- Use the 10 books above. Do not substitute other records. Parse each saved page
+  once. Both arms receive the same parsed page text, coverage, type classification,
+  frozen rubric and hindsight **v1**, in the runtime above.
+- **Control (C):** assemble p1 verbatim from `review_prompt.md`. Its packet header
+  (`TITLE`, `BYLINE`, `OFFICIAL PAGE COUNT`, `UPLOAD DATE`, `TEXT COVERAGE`) is
+  reconstructed from p1's description, because the July packets were not preserved;
+  record that limitation in `run.json`. Substitute `{{REVIEW_OUTPUT_PATH}}` with an
+  absolute path outside the repository and leave p1's STEP 2 and STEP 3 verbatim.
+  The subagent's Write tool can execute that step, as in July; record whether each
+  control run wrote the file. Removing that step is one of p2's intended context
+  changes, so its effect belongs to the measured T − C delta.
 - **Candidate (T):** assemble the exact p2 review prompt above with the p2 packet
   contract. Record the extraction date, evaluation date and per-book coverage.
-- Use **`claude-haiku-4-5-20251001`**, identical parameters for every call and the
-  **API default temperature** (omit the temperature parameter; record that choice).
-  Select and record one `max_tokens` value before running and retain it across both
-  arms and retries. No parameter values have been used in the unrun gate below.
-- Force structured output with `output_schema.json`, then validate every response
-  with `validateAgainstSchema`. Retry an invalid response once; if still invalid,
-  record the failure and exclude that book from both arms. Record retries, failures,
-  exclusions and actual API call counts. Do not replace an invalid output with an
-  invented or manually repaired assessment.
-- Run **3 reviews per book per arm**: **132 planned calls** for 22 books, excluding
+- Validate every StructuredOutput response with `validateAgainstSchema`. Retry a
+  failed or invalid run once; if still invalid, record the failure and exclude that
+  book from both arms. Record retries, failures, exclusions and run counts. Do not
+  replace an invalid output with an invented or manually repaired assessment.
+- Run **3 reviews per book per arm**: **60 planned runs** for 10 books, excluding
   retries. Compute each book's median `validity_rating` and median
   `evidence_quality` separately within each arm. A book is matched only when both
-  arms have three validated runs. Extraction and response exclusions share one
-  floor: the gate needs at least 18 matched books.
+  arms have three validated runs. The gate needs at least 9 matched books.
 
 ### Storage and reproducibility
 
@@ -221,31 +240,29 @@ Commit only model JSON and run metadata under `harness/calibration-runs/p2/`:
 
 - `control/NNN-rK.json` and `candidate/NNN-rK.json`, with three-digit positions and
   run numbers 1–3;
-- `run.json`: model ID, `max_tokens`, API-default temperature, other parameters,
-  structured-output mechanism, run dates, hindsight v1, prompt versions, packet
-  formats and delivery, extraction date, per-book coverage, failures, retries,
-  exclusions, the control-only Write-step limitation and API request IDs where
-  available.
+- `run.json`: runtime, the model each transcript reports, effort, the StructuredOutput
+  mechanism, unavailable parameters, run dates, hindsight v1, prompt versions, packet
+  formats and delivery, the text source and extraction date, per-book coverage, prompt
+  and packet SHA-256 digests, failures, retries, exclusions, control Write-step
+  outcomes and the transcript audit.
 
 Do not commit packets, extracted text, credentials or model invocation code.
-The model-neutral `harness/assemble_review.mjs` is deferred in this candidate-only
-PR. Prepare it for the calibration run so that calibration and later reviews use
-the same assembly; unknown prompt or hindsight versions must throw. Its required
-interfaces are `buildPacket(record, text, { contract, evaluatedOn })` and
-`assemblePrompt({ promptVersion, hindsightVersion, record, packetPath, kind })`,
-with a CLI that prints the assembled prompt for a position. Keep production routing
-gated on successful calibration.
+Calibration and later reviews assemble prompts and packets with
+[`assemble_review.mjs`](assemble_review.mjs). Keep production routing gated on
+successful calibration.
 
 ### Pass criteria
 
 All comparisons below use matched books and per-arm, per-book medians, with signed
-delta **T − C**. Activation requires all four conditions:
+delta **T − C**. Activation requires all four conditions, amended for the 10-book
+sample (the 22-book design required at least 20 of 22 within one point and at most
+two books two or more points apart):
 
 | Measure | Required result |
 |---|---|
 | Mean validity delta | Within ±0.30, inclusive |
-| Books with validity difference at most 1 | At least 20 of 22; at least 91% if fewer books ran |
-| Books with validity difference at least 2 | At most 2, each with a written adjudication citing packet pages in the activation record |
+| Books with validity difference at most 1 | At least 90% of matched books (9 of 10) |
+| Books with validity difference at least 2 | At most 1, with a written adjudication citing packet pages in the activation record |
 | Mean evidence-quality delta | Within ±0.30, inclusive |
 
 Report, without gating, **C vs July**, **T vs July** (validity and evidence quality),
