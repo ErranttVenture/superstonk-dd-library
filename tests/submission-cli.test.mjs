@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, copyFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { runNodeCli } from './cli-test-helpers.mjs';
 
@@ -126,7 +127,7 @@ async function emptyScratchMaster() {
   return path;
 }
 
-test('the apply CLI assigns pos 251, not 1, to the first record of an empty dataset', async () => {
+test('the apply CLI refuses an empty canonical dataset rather than losing the original 250', async () => {
   const scratch = await emptyScratchMaster();
   const path = await bodyFile(completeBody('https://example.test/first-community-record', 'https://web.archive.org/web/1/x'));
   const result = await runNodeCli('scripts/apply-submission.mjs', [
@@ -135,12 +136,11 @@ test('the apply CLI assigns pos 251, not 1, to the first record of an empty data
     'octocat'
   ], { env: { ...FAKE_RESOLVE_ENV, SUBMISSION_SUBMITTED_ON: '2026-08-20', SUBMISSION_MASTER_PATH: scratch } });
 
-  assert.equal(result.status, 0);
-  assert.match(result.stdout, /^251$/m);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /validation failed/);
 
   const records = JSON.parse(await readFile(scratch, 'utf8'));
-  assert.equal(records.length, 1);
-  assert.equal(records[0].pos, 251);
+  assert.equal(records.length, 0);
 });
 
 test('the apply CLI appends a pending record and preserves formatting', async () => {
@@ -226,4 +226,45 @@ test('the tracked dataset is never written by these tests', async () => {
     currentBytes.equals(trackedMasterBytesAtLoad),
     'data/master.json bytes changed since module load; some test wrote through the tracked path instead of a scratch copy'
   );
+});
+
+test('apply preserves exact attributed Markdown and rejects duplicate acceptance without overwriting', async () => {
+  const scratch = await scratchMaster();
+  const markdown = '# DD\n\n### Title\nUnchanged body\n\n';
+  const path = await bodyFile(completeBody('https://example.test/preserved', '_No response_')
+    .replace('Credit my GitHub handle', 'Submit anonymously') +
+    '\n### Full text permission\n\n- [X] I am the author or have permission to preserve and publicly display this text with attribution.\n\n### Full text (Markdown)\n\n' + markdown);
+  const env = { SUBMISSION_MASTER_PATH: scratch, SUBMISSION_ROOT: dirname(scratch) };
+  const args = [path, 'https://github.com/ErranttVenture/superstonk-dd-library/issues/12', 'octocat'];
+  const result = await runNodeCli('scripts/apply-submission.mjs', args, { env });
+  assert.equal(result.status, 0, result.stderr);
+  const before = await readFile(scratch);
+  const record = JSON.parse(before).at(-1);
+  assert.equal(record.submission.archive_url, null);
+  assert.equal(record.submission.submitted_by, 'anonymous');
+  assert.equal(record.submission.preserved_text.path, 'submissions/12/dd.md');
+  const copy = await readFile(join(dirname(scratch), record.submission.preserved_text.path));
+  assert.equal(createHash('sha256').update(copy).digest('hex'), record.submission.preserved_text.sha256);
+  assert.ok(copy.toString().endsWith(markdown));
+  assert.match(copy.toString(), /u\/example/);
+  assert.match(copy.toString(), /Permission declaration/);
+  assert.match(copy.toString(), /issues\/12/);
+  const retry = await runNodeCli('scripts/apply-submission.mjs', args, { env });
+  assert.equal(retry.status, 1);
+  assert.deepEqual(await readFile(scratch), before);
+  assert.deepEqual(await readFile(join(dirname(scratch), record.submission.preserved_text.path)), copy);
+});
+
+test('apply rejects noncanonical issue URLs before writing', async () => {
+  const scratch = await scratchMaster();
+  const before = await readFile(scratch);
+  const path = await bodyFile(completeBody('https://example.test/dd', 'https://web.archive.org/web/1/x'));
+  for (const issue of ['https://github.com/other/repo/issues/12', 'https://github.com/ErranttVenture/superstonk-dd-library/issues/0', 'https://github.com/ErranttVenture/superstonk-dd-library/issues/12?x=1']) {
+    const result = await runNodeCli('scripts/apply-submission.mjs', [path, issue, 'octocat'], {
+      env: { ...FAKE_RESOLVE_ENV, SUBMISSION_MASTER_PATH: scratch }
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /canonical issue URL/);
+    assert.deepEqual(await readFile(scratch), before);
+  }
 });

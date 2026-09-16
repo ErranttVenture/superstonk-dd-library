@@ -49,3 +49,58 @@ jobs:
         run: |
           echo "test result: ${{ needs.test.result }}"
           [ "${{ needs.test.result }}" = "success" ] || exit 1
+
+  publication-changes:
+    needs: validate
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      github.repository == 'ErranttVenture/superstonk-dd-library'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      publish: ${{ steps.changes.outputs.publish }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 20
+      - name: Inspect the complete push diff
+        id: changes
+        run: node scripts/publication.mjs changes
+
+  publish:
+    name: Publish website data
+    needs: [validate, publication-changes]
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      github.repository == 'ErranttVenture/superstonk-dd-library' &&
+      needs.publication-changes.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      # Only eligible data pushes enter this group. Pending newer data may replace
+      # pending older data: every hook builds the website's main and imports latest data.
+      group: justthebros-data-publication
+      cancel-in-progress: false
+    env:
+      JUSTTHEBROS_DEPLOY_HOOK_URL: ${{ secrets.JUSTTHEBROS_DEPLOY_HOOK_URL }}
+    steps:
+      - name: Explain missing publication configuration
+        if: env.JUSTTHEBROS_DEPLOY_HOOK_URL == ''
+        run: |
+          echo "::warning::Publication skipped. Create the justthebros main deploy hook and set JUSTTHEBROS_DEPLOY_HOOK_URL in this repository."
+          echo "Publication skipped: configure JUSTTHEBROS_DEPLOY_HOOK_URL, then rerun this job. Required validate is unaffected." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.JUSTTHEBROS_DEPLOY_HOOK_URL != ''
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: env.JUSTTHEBROS_DEPLOY_HOOK_URL != ''
+        with:
+          node-version: 20
+      - name: Request the website build
+        if: env.JUSTTHEBROS_DEPLOY_HOOK_URL != ''
+        run: node scripts/publication.mjs hook

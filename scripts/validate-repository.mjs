@@ -1,4 +1,6 @@
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { validatePreservedFiles } from './preservation.mjs';
 
 import { validateMasterRecords } from './schema-validator.mjs';
 import { checkDatasetInvariants } from './dataset-invariants.mjs';
@@ -45,6 +47,10 @@ if (invariants.ok) {
   );
 }
 
-if (invalid || !baselineSequenceComplete || !invariants.ok) {
+const preservationErrors = await validatePreservedFiles(master, fileURLToPath(new URL('../', import.meta.url)));
+for (const error of preservationErrors) console.error(error);
+console.log(`Preserved text validation: ${preservationErrors.length ? 'failed' : 'passed'}`);
+
+if (invalid || !baselineSequenceComplete || !invariants.ok || preservationErrors.length) {
   process.exitCode = 1;
 }
