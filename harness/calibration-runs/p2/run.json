@@ -1,0 +1,3210 @@
+{
+  "gate": {
+    "matched_books": 10,
+    "floor_met": true,
+    "mean_validity_delta": 0,
+    "mean_evidence_delta": 0.2,
+    "validity_within_one": "10/10",
+    "validity_two_or_more": [],
+    "criteria": {
+      "mean_validity_within_0_30": true,
+      "at_least_90_percent_within_one": true,
+      "at_most_one_two_point_difference": true,
+      "mean_evidence_within_0_30": true
+    },
+    "passed_numerically": true
+  },
+  "protocol": "harness/prompt_versions.md, 'Protocol amendment (2026-09-16, recorded before any run)', committed in cd6b59c and pushed 2026-09-16T22:46:05Z before any review ran",
+  "run_date": "2026-09-16",
+  "sample": [
+    9,
+    18,
+    36,
+    45,
+    54,
+    63,
+    72,
+    81,
+    99,
+    108
+  ],
+  "runs_per_book_per_arm": 3,
+  "hindsight_version": "v1",
+  "runtime": {
+    "kind": "Claude Code workflow subagent",
+    "call": "agent(prompt, { model: 'haiku', schema })",
+    "workflow_run_id": "wf_47a3c97b-b71",
+    "model_alias": "haiku",
+    "effort": "not set; inherited session default",
+    "temperature": "unavailable: not settable in this runtime",
+    "max_tokens": "unavailable: not settable in this runtime",
+    "api_request_ids": "unavailable: not exposed by this runtime",
+    "structured_output": "StructuredOutput tool. Its schema is output_schema.json without the $schema, $id, $comment and title annotation keywords; every response is re-validated against the full output_schema.json with validateAgainstSchema.",
+    "retry_policy": "one retry of a run that returns no structured output",
+    "tools": "the runtime's full tool set was available; the transcript audit records every tool call",
+    "injected_context": "Each subagent received the runtime's standard context: the workflow subagent system prompt, an environment snapshot, the date, a skill listing, deferred tool and MCP instructions, and the maintainer's auto-memory index, which mentions the DD library, the July review and p2's candidate status. The context was identical for both arms. The pre-registered runtime description did not mention it."
+  },
+  "prompts": {
+    "control": "p1: harness/review_prompt.md verbatim, with the original type block, hindsight v1 and rubric.md",
+    "candidate": "p2: harness/prompt_versions.md, with the p2 type block, hindsight v1 and rubric.md",
+    "assembler": "harness/assemble_review.mjs at cd6b59c",
+    "delivery": "The assembled prompt is the subagent's task. The workflow script rebuilt each prompt and checked its FNV-1a digest before starting any agent; the audit compares each transcript's prompt with the assembled prompt's SHA-256.",
+    "control_output_path": "absolute scratch path outside the repository, one per run"
+  },
+  "packets": {
+    "text_source": "fliphtml5.com book pages saved from a browser by the maintainer on 2026-09-16 (file times 18:30-18:32 EDT). Direct fetches return a Cloudflare bot challenge, and the online.fliphtml5.com reader has no text layer.",
+    "parser": "extractPageText from harness/extract_book_text.mjs at cd6b59c, which accepts P:NN markers",
+    "coverage": "a sample for every book: the saved pages omit the first two pages and the last one to three pages",
+    "control_header": "reconstructed from p1's description (TITLE, BYLINE, OFFICIAL PAGE COUNT, UPLOAD DATE, TEXT COVERAGE); the July packets were not preserved",
+    "candidate_header": "p2 packet contract",
+    "line_width": 500,
+    "evaluated_on": "2026-09-16",
+    "delivery": "absolute scratch path read with the Read tool",
+    "committed": false
+  },
+  "books": [
+    {
+      "pos": 9,
+      "id": "zzmw",
+      "type": "original",
+      "saved_at": "2026-09-16T22:30:35.832Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "text_chars": 20880,
+      "coverage": "sample: pages 3-12 of 14",
+      "packet_lines": {
+        "control": 71,
+        "candidate": 73
+      },
+      "packet_sha256": {
+        "control": "609f3a21528b2b565c82275580533deeb3279127538a6789cf62650d40068b2f",
+        "candidate": "24fef4bfaa140a473be6769ab3587690f27660b00bf77ee5bf77460186655e6c"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 18,
+      "id": "ntdt",
+      "type": "original",
+      "saved_at": "2026-09-16T22:30:43.801Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "text_chars": 11808,
+      "coverage": "sample: pages 3-18 of 20",
+      "packet_lines": {
+        "control": 69,
+        "candidate": 71
+      },
+      "packet_sha256": {
+        "control": "4849897ad09f5385da7754d62ca14a4313b36a03769be95ba87f751df17f9e36",
+        "candidate": "47985d62c8514211281b3b6ddea301fba3e837288891d8d8b8a4e89cc95a1483"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 36,
+      "id": "kwxx",
+      "type": "original",
+      "saved_at": "2026-09-16T22:30:53.993Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "text_chars": 7888,
+      "coverage": "sample: pages 3-9 of 10",
+      "packet_lines": {
+        "control": 39,
+        "candidate": 41
+      },
+      "packet_sha256": {
+        "control": "9bd421cd4e869d2c342d7b7f1ed19eaed9b3ad71a66abc703279e3fe45f248d7",
+        "candidate": "fbbdaaee00f2330acc203d1adf4ad4b30a7061e3e420fbab8fa29d5dcec31c81"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 45,
+      "id": "unvp",
+      "type": "original",
+      "saved_at": "2026-09-16T22:30:58.730Z",
+      "text_pages": [
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "text_chars": 26470,
+      "coverage": "sample: pages 1-19 of 20",
+      "packet_lines": {
+        "control": 102,
+        "candidate": 104
+      },
+      "packet_sha256": {
+        "control": "56260faa4e544afaba1eae206159f22f6455b886115c708a44f96105c2f1de7a",
+        "candidate": "625e18e0e7eb8bf0a5c32706f9ccda9699b652aa046bbdc0754fb7bc47846fbd"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 54,
+      "id": "glgr",
+      "type": "compilation",
+      "saved_at": "2026-09-16T22:31:04.069Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "text_chars": 4446,
+      "coverage": "sample: pages 3-8 of 10",
+      "packet_lines": {
+        "control": 29,
+        "candidate": 31
+      },
+      "packet_sha256": {
+        "control": "476faf20309eebaac88e99bce8294c41edbad18a6a7153243e9b1bda73e4af83",
+        "candidate": "c37e197b83745b659eec61a1e70f2f0dcaa81c40717575c1cba159d775dbdef9"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 63,
+      "id": "jxbx",
+      "type": "original",
+      "saved_at": "2026-09-16T22:31:13.115Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "text_chars": 14835,
+      "coverage": "sample: pages 3-6 of 8",
+      "packet_lines": {
+        "control": 45,
+        "candidate": 47
+      },
+      "packet_sha256": {
+        "control": "316c7ae79cd4bd6805836cfc260973b5b9a0a4a2f470439f8dd95ebdbff9610f",
+        "candidate": "c649837f3cfc38b75a55d010a681810c9c469eb0162e96cce9086754b88e2c3b"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 72,
+      "id": "hfui",
+      "type": "original",
+      "saved_at": "2026-09-16T22:31:17.765Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "text_chars": 17125,
+      "coverage": "sample: pages 3-18 of 20",
+      "packet_lines": {
+        "control": 79,
+        "candidate": 81
+      },
+      "packet_sha256": {
+        "control": "ce9aec1436b134cb9f0498d4def71f62abb61d6d0d833daf848013d0d582118e",
+        "candidate": "863fa48b45884cb09f9dcaa11c81ac20879ba314e98bd563181bf1024cb4ec1e"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 81,
+      "id": "aomo",
+      "type": "original",
+      "saved_at": "2026-09-16T22:31:22.049Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41
+      ],
+      "text_chars": 33291,
+      "coverage": "sample: pages 3-41 of 42",
+      "packet_lines": {
+        "control": 168,
+        "candidate": 170
+      },
+      "packet_sha256": {
+        "control": "5e01f48aeeb59b7b02b773e62cb57820c44f7ce6fbf058f29f4dc6139253d647",
+        "candidate": "33387a0a637517a18c49703ac78476f35a4800cd03be2cdbda10790443cf1ee7"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 99,
+      "id": "pmqj",
+      "type": "original",
+      "saved_at": "2026-09-16T22:31:35.896Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56
+      ],
+      "text_chars": 95119,
+      "coverage": "sample: pages 3-56 of 58",
+      "packet_lines": {
+        "control": 327,
+        "candidate": 329
+      },
+      "packet_sha256": {
+        "control": "5ed5b94dae0d511666194732b49da68a1bfa1159e9f74b71fcf8b3feb00d2219",
+        "candidate": "e69327fe363e6217af0aeba0f37e5cb75a2b1cd4f396e131948778119a77ac9b"
+      },
+      "long_tokens_split": 0
+    },
+    {
+      "pos": 108,
+      "id": "bblk",
+      "type": "original",
+      "saved_at": "2026-09-16T22:31:40.313Z",
+      "text_pages": [
+        3,
+        4,
+        5,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        35,
+        36,
+        37,
+        38,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        59,
+        60,
+        61
+      ],
+      "text_chars": 40251,
+      "coverage": "sample: pages 3-61 of 62",
+      "packet_lines": {
+        "control": 219,
+        "candidate": 221
+      },
+      "packet_sha256": {
+        "control": "8cfff756f56f9ad3d57a064f466682b641a72fbf88f18fe5be4560628f8619a8",
+        "candidate": "11f3c9ed813357b9b5342264fa86e7bd4a53792fe5ac3ab389d3a2687abd2942"
+      },
+      "long_tokens_split": 0
+    }
+  ],
+  "runs": [
+    {
+      "label": "C-009-r1",
+      "arm": "control",
+      "pos": 9,
+      "run": 1,
+      "prompt_sha256": "b1186e3472636c627b84f15141950702f8d9759cc93c057bf54c7b450842df31",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-009-r1",
+          "agent_id": "ad4255be2e412f7a1",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-009-r1",
+      "arm": "candidate",
+      "pos": 9,
+      "run": 1,
+      "prompt_sha256": "ccc2c9aba82dd1db1d0a6aaa411a920b67631bf32f04c3aef196ff3a78c6ca30",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-009-r1",
+          "agent_id": "abe4be68dc2f7e4f3",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-009-r2",
+      "arm": "control",
+      "pos": 9,
+      "run": 2,
+      "prompt_sha256": "502f3561fd2efdbb22c4a25c41d05eac8b9d8a3ecca9dc401cb60549987fe050",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-009-r2",
+          "agent_id": "a1b7f7454ff907699",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-009-r2",
+      "arm": "candidate",
+      "pos": 9,
+      "run": 2,
+      "prompt_sha256": "ccc2c9aba82dd1db1d0a6aaa411a920b67631bf32f04c3aef196ff3a78c6ca30",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-009-r2",
+          "agent_id": "a24676415df792ab4",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-009-r3",
+      "arm": "control",
+      "pos": 9,
+      "run": 3,
+      "prompt_sha256": "c52cf977d3fa8a7ab48f9c099a760300e300afd83f727f10104fa5cab50e5b98",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-009-r3",
+          "agent_id": "a60d3b1a91ad987db",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-009-r3",
+      "arm": "candidate",
+      "pos": 9,
+      "run": 3,
+      "prompt_sha256": "ccc2c9aba82dd1db1d0a6aaa411a920b67631bf32f04c3aef196ff3a78c6ca30",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-009-r3",
+          "agent_id": "ab14b09f2f3f035cc",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-018-r1",
+      "arm": "control",
+      "pos": 18,
+      "run": 1,
+      "prompt_sha256": "1f07c8e9cec26b44a40da7bb8e964725f6525041dcdf067bd182d26f32304b1b",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-018-r1",
+          "agent_id": "a76a9b090f732d9fe",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-018-r1",
+      "arm": "candidate",
+      "pos": 18,
+      "run": 1,
+      "prompt_sha256": "92d67b6922c606c879906241dcbadaae0c94039c93bc3b684d084ff651dae059",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-018-r1",
+          "agent_id": "a2124641ce0d001f1",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-018-r2",
+      "arm": "control",
+      "pos": 18,
+      "run": 2,
+      "prompt_sha256": "f740ee81d3f2ecc159c83ec282550a67a9ddf1ef52a880636a3c00527d66faf8",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-018-r2",
+          "agent_id": "ab36c6f5af368ba81",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-018-r2",
+      "arm": "candidate",
+      "pos": 18,
+      "run": 2,
+      "prompt_sha256": "92d67b6922c606c879906241dcbadaae0c94039c93bc3b684d084ff651dae059",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-018-r2",
+          "agent_id": "a4ce289020727996e",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-018-r3",
+      "arm": "control",
+      "pos": 18,
+      "run": 3,
+      "prompt_sha256": "801056f7b3d4df88c5da35c36fc5dfdd5f51c4bab31722a981cbcc676088d9a0",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-018-r3",
+          "agent_id": "a260b2f5f412129e5",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-018-r3",
+      "arm": "candidate",
+      "pos": 18,
+      "run": 3,
+      "prompt_sha256": "92d67b6922c606c879906241dcbadaae0c94039c93bc3b684d084ff651dae059",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-018-r3",
+          "agent_id": "ab4929a38ac5fc3cd",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-036-r1",
+      "arm": "control",
+      "pos": 36,
+      "run": 1,
+      "prompt_sha256": "3c1d70d00a93b5b13f458c861e479da935222d6be16ec25fce0b34954fc72acd",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-036-r1",
+          "agent_id": "a05ffc61d2e8f9b3c",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-036-r1",
+      "arm": "candidate",
+      "pos": 36,
+      "run": 1,
+      "prompt_sha256": "50fc76ff3b1299080cc475e4bc821591c159723ae93bdf8c2518ae3f2196443e",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-036-r1",
+          "agent_id": "a9ca3b73bcc6ce8ff",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-036-r2",
+      "arm": "control",
+      "pos": 36,
+      "run": 2,
+      "prompt_sha256": "36b1687c264cab51333b81ef2d997064b0502a8963e629f2c350d9e8be91df4b",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-036-r2",
+          "agent_id": "a8222d4ceaf8b3aba",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-036-r2",
+      "arm": "candidate",
+      "pos": 36,
+      "run": 2,
+      "prompt_sha256": "50fc76ff3b1299080cc475e4bc821591c159723ae93bdf8c2518ae3f2196443e",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-036-r2",
+          "agent_id": "a226f4da44dc177c7",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-036-r3",
+      "arm": "control",
+      "pos": 36,
+      "run": 3,
+      "prompt_sha256": "4b128ba53905ab72fd28a6d10aae1f52cd408e24b5c1b8a5061851e4568c8bcc",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-036-r3",
+          "agent_id": "a3a541305c695eb5e",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-036-r3",
+      "arm": "candidate",
+      "pos": 36,
+      "run": 3,
+      "prompt_sha256": "50fc76ff3b1299080cc475e4bc821591c159723ae93bdf8c2518ae3f2196443e",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-036-r3",
+          "agent_id": "a98b782bd1b5b3ed4",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-045-r1",
+      "arm": "control",
+      "pos": 45,
+      "run": 1,
+      "prompt_sha256": "56714d22f067e5d3570064701a83030e23ea1d2176b89485e32204f41e1ebce8",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-045-r1",
+          "agent_id": "a12201a7ea76a7906",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-045-r1",
+      "arm": "candidate",
+      "pos": 45,
+      "run": 1,
+      "prompt_sha256": "8129c03dd53460daa9363b2ebf555fabc2e7dcf438d65ff4dee511e4afc350c4",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-045-r1",
+          "agent_id": "a410da4b74bcf9e58",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-045-r2",
+      "arm": "control",
+      "pos": 45,
+      "run": 2,
+      "prompt_sha256": "cd77f033848c19733849c071b3d679d7d8b848af98a2a276711089f22e7b0578",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-045-r2",
+          "agent_id": "a4cdd528fa307349e",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-045-r2",
+      "arm": "candidate",
+      "pos": 45,
+      "run": 2,
+      "prompt_sha256": "8129c03dd53460daa9363b2ebf555fabc2e7dcf438d65ff4dee511e4afc350c4",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-045-r2",
+          "agent_id": "a5addf8cfd86d5ff7",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-045-r3",
+      "arm": "control",
+      "pos": 45,
+      "run": 3,
+      "prompt_sha256": "359923d58416661800d8b207f04bf3d2bd73366bcc280cd67abae7d09805bbb2",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-045-r3",
+          "agent_id": "ad8c3054d160a3db6",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-045-r3",
+      "arm": "candidate",
+      "pos": 45,
+      "run": 3,
+      "prompt_sha256": "8129c03dd53460daa9363b2ebf555fabc2e7dcf438d65ff4dee511e4afc350c4",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-045-r3",
+          "agent_id": "a73c384da53b15c85",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-054-r1",
+      "arm": "control",
+      "pos": 54,
+      "run": 1,
+      "prompt_sha256": "9a4ef0d237f37df4f8dba1c0b2639ab655b2124bcf1ae10ac8e215fd0720a07b",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-054-r1",
+          "agent_id": "a95c5743b4c4ee7da",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-054-r1",
+      "arm": "candidate",
+      "pos": 54,
+      "run": 1,
+      "prompt_sha256": "c761a70a803b66f380749641d76909d1350b6f97785068a6f3eed8f9b6b2b3fc",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-054-r1",
+          "agent_id": "af58118594a867e78",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-054-r2",
+      "arm": "control",
+      "pos": 54,
+      "run": 2,
+      "prompt_sha256": "6ced38207a94125ed8526e210008dfa73119aca14c3e9be3f4a56bf60f7d28f2",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-054-r2",
+          "agent_id": "ab3465770446182eb",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-054-r2",
+      "arm": "candidate",
+      "pos": 54,
+      "run": 2,
+      "prompt_sha256": "c761a70a803b66f380749641d76909d1350b6f97785068a6f3eed8f9b6b2b3fc",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-054-r2",
+          "agent_id": "ad04c7edf4ff46d4a",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-054-r3",
+      "arm": "control",
+      "pos": 54,
+      "run": 3,
+      "prompt_sha256": "f2288f043e019d26d4090a923a831cf5d85d2d61208c3a9c593dff63fa6160bb",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-054-r3",
+          "agent_id": "a834386d6ba1c225c",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-054-r3",
+      "arm": "candidate",
+      "pos": 54,
+      "run": 3,
+      "prompt_sha256": "c761a70a803b66f380749641d76909d1350b6f97785068a6f3eed8f9b6b2b3fc",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-054-r3",
+          "agent_id": "a11f343a72255fddd",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-063-r1",
+      "arm": "control",
+      "pos": 63,
+      "run": 1,
+      "prompt_sha256": "c8ffa937913e46822925adaa774765ae1bda07b4d37534ae8075347684f5d1b2",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-063-r1",
+          "agent_id": "af217f5970a715d60",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-063-r1",
+      "arm": "candidate",
+      "pos": 63,
+      "run": 1,
+      "prompt_sha256": "e550be0bb8211e34e6292e25ce3a0351b1aa6d75d6c567c998c1d1bb7990a0bb",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-063-r1",
+          "agent_id": "ac0bc37ae7039f7bb",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-063-r2",
+      "arm": "control",
+      "pos": 63,
+      "run": 2,
+      "prompt_sha256": "c7ee83a2d38970c1d420df82267e9fd29a5d320a7319347e9a671252dc705cf5",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-063-r2",
+          "agent_id": "afcb2027d0521e62c",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-063-r2",
+      "arm": "candidate",
+      "pos": 63,
+      "run": 2,
+      "prompt_sha256": "e550be0bb8211e34e6292e25ce3a0351b1aa6d75d6c567c998c1d1bb7990a0bb",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-063-r2",
+          "agent_id": "a3e3eb88dce94ebda",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-063-r3",
+      "arm": "control",
+      "pos": 63,
+      "run": 3,
+      "prompt_sha256": "4bd17ebfc399d97b2a03de5b09c2f23472053145458d021f9d0b5a4a6987162a",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-063-r3",
+          "agent_id": "a17722857d3c53f35",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-063-r3",
+      "arm": "candidate",
+      "pos": 63,
+      "run": 3,
+      "prompt_sha256": "e550be0bb8211e34e6292e25ce3a0351b1aa6d75d6c567c998c1d1bb7990a0bb",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-063-r3",
+          "agent_id": "ab8b53dc034fa3a43",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-072-r1",
+      "arm": "control",
+      "pos": 72,
+      "run": 1,
+      "prompt_sha256": "99a70d8cd8f7c561cf61887687c776f8fe70ca0eeadd7baec9c032e99257368e",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-072-r1",
+          "agent_id": "afe4fa9269ad3d50d",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-072-r1",
+      "arm": "candidate",
+      "pos": 72,
+      "run": 1,
+      "prompt_sha256": "b1c170e5066a598fdc572df0304c86e9260f5d9fe45e6700be02dbc596344d3c",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-072-r1",
+          "agent_id": "a69b86628e553076c",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-072-r2",
+      "arm": "control",
+      "pos": 72,
+      "run": 2,
+      "prompt_sha256": "77509944050dabf0dd777b1b7954d9ab13ed1660deb2cfd2e4e57c99dd280c87",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-072-r2",
+          "agent_id": "ab0ff0f855ff2faf5",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-072-r2",
+      "arm": "candidate",
+      "pos": 72,
+      "run": 2,
+      "prompt_sha256": "b1c170e5066a598fdc572df0304c86e9260f5d9fe45e6700be02dbc596344d3c",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-072-r2",
+          "agent_id": "a9057720715fbb907",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-072-r3",
+      "arm": "control",
+      "pos": 72,
+      "run": 3,
+      "prompt_sha256": "ffd89a7a77a4780e983c1b19e5aa54e76f511e864aa7fc15e49d5f2ecd579b5b",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-072-r3",
+          "agent_id": "ad3aab4a8893fa18f",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-072-r3",
+      "arm": "candidate",
+      "pos": 72,
+      "run": 3,
+      "prompt_sha256": "b1c170e5066a598fdc572df0304c86e9260f5d9fe45e6700be02dbc596344d3c",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-072-r3",
+          "agent_id": "a031ffaaef9540381",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-081-r1",
+      "arm": "control",
+      "pos": 81,
+      "run": 1,
+      "prompt_sha256": "dfde5597e0aea6d4ba76d6db73cee18b36d23dbfde9664c61a20531813f6735a",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-081-r1",
+          "agent_id": "a226bada05995a888",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-081-r1",
+      "arm": "candidate",
+      "pos": 81,
+      "run": 1,
+      "prompt_sha256": "cdc2f7d85ad76377845ac3a1cc527f8a5f7d4c572ba8b7907a811ec19becb1cf",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-081-r1",
+          "agent_id": "a1c4f0c7684e280ba",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-081-r2",
+      "arm": "control",
+      "pos": 81,
+      "run": 2,
+      "prompt_sha256": "12503760b653941d4977bcb0d411afc19b2c00d943ba7cee122bbe00346f01da",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-081-r2",
+          "agent_id": "a3918dcbfbd48ac6b",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-081-r2",
+      "arm": "candidate",
+      "pos": 81,
+      "run": 2,
+      "prompt_sha256": "cdc2f7d85ad76377845ac3a1cc527f8a5f7d4c572ba8b7907a811ec19becb1cf",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-081-r2",
+          "agent_id": "a24e2edf801b6bfc0",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-081-r3",
+      "arm": "control",
+      "pos": 81,
+      "run": 3,
+      "prompt_sha256": "1047f0961ebcb51697a3d88897bba17c98b77c9ed8bb97f323e92aa106abe7d8",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-081-r3",
+          "agent_id": "ad93a0cb1cbe25c30",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-081-r3",
+      "arm": "candidate",
+      "pos": 81,
+      "run": 3,
+      "prompt_sha256": "cdc2f7d85ad76377845ac3a1cc527f8a5f7d4c572ba8b7907a811ec19becb1cf",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-081-r3",
+          "agent_id": "ae2295839c29082cd",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-099-r1",
+      "arm": "control",
+      "pos": 99,
+      "run": 1,
+      "prompt_sha256": "818cd955fd0d229541a86aaafe257771a918af1bb2c5e87aed5ba25cf999c27e",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-099-r1",
+          "agent_id": "a35426a870206fcd2",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            },
+            {
+              "offset": 222,
+              "limit": 200
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-099-r1",
+      "arm": "candidate",
+      "pos": 99,
+      "run": 1,
+      "prompt_sha256": "5a4b9440a32be345e55d2ae8b041e3dc60bf02bfcf4b100ea8c0903e3b0fb54a",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-099-r1",
+          "agent_id": "aadbb9619076e8739",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            },
+            {
+              "offset": 223,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-099-r2",
+      "arm": "control",
+      "pos": 99,
+      "run": 2,
+      "prompt_sha256": "5df0bddf6871405a9657f7c53af86d6baa6e4716c50615f2cfc6bd80d5d2cb81",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-099-r2",
+          "agent_id": "a5ee32ccdd8338abf",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            },
+            {
+              "offset": 222,
+              "limit": 150
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-099-r2",
+      "arm": "candidate",
+      "pos": 99,
+      "run": 2,
+      "prompt_sha256": "5a4b9440a32be345e55d2ae8b041e3dc60bf02bfcf4b100ea8c0903e3b0fb54a",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-099-r2",
+          "agent_id": "ad1ff20983e2ec9fb",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            },
+            {
+              "offset": 223,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-099-r3",
+      "arm": "control",
+      "pos": 99,
+      "run": 3,
+      "prompt_sha256": "3e57cccc8a93c5829cbedaedfc2337aadeacb0d5cdfd9b77d33b5d400f19c9e1",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-099-r3",
+          "agent_id": "a14fb092ef09bf378",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            },
+            {
+              "offset": 222,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-099-r3",
+      "arm": "candidate",
+      "pos": 99,
+      "run": 3,
+      "prompt_sha256": "5a4b9440a32be345e55d2ae8b041e3dc60bf02bfcf4b100ea8c0903e3b0fb54a",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-099-r3",
+          "agent_id": "a7e28b324870247cd",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Read",
+            "StructuredOutput",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            },
+            {
+              "offset": 223,
+              "limit": 300
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-108-r1",
+      "arm": "control",
+      "pos": 108,
+      "run": 1,
+      "prompt_sha256": "bee05d17874406bd26d5d6d5cbe6d0de736fb35aaccc9829d0925abb2cac9f7c",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-108-r1",
+          "agent_id": "a3006599bee4809f1",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-108-r1",
+      "arm": "candidate",
+      "pos": 108,
+      "run": 1,
+      "prompt_sha256": "b2883dffd211ddaf1aba38499c8eadee63b6906dc17ad7c68936475ae6b02ed6",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-108-r1",
+          "agent_id": "a71585b2ca0d16f47",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-108-r2",
+      "arm": "control",
+      "pos": 108,
+      "run": 2,
+      "prompt_sha256": "e0b63d741bb126749fa8996242b3fe9ffdc8da0b0d4ef986f47a21d967a9e2c6",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-108-r2",
+          "agent_id": "a45ab5ed0679b2744",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-108-r2",
+      "arm": "candidate",
+      "pos": 108,
+      "run": 2,
+      "prompt_sha256": "b2883dffd211ddaf1aba38499c8eadee63b6906dc17ad7c68936475ae6b02ed6",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-108-r2",
+          "agent_id": "aed8b224a3db04438",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "C-108-r3",
+      "arm": "control",
+      "pos": 108,
+      "run": 3,
+      "prompt_sha256": "c6d0473e4379a86b47b9e4c476a764273459b6e1391a374ef7d022c3ec928669",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "C-108-r3",
+          "agent_id": "a23a6e6165481637a",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "Write",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": true,
+          "flagged_tool_calls": []
+        }
+      ]
+    },
+    {
+      "label": "T-108-r3",
+      "arm": "candidate",
+      "pos": 108,
+      "run": 3,
+      "prompt_sha256": "b2883dffd211ddaf1aba38499c8eadee63b6906dc17ad7c68936475ae6b02ed6",
+      "valid": true,
+      "attempts": [
+        {
+          "label": "T-108-r3",
+          "agent_id": "ab20dfd75d828fe81",
+          "output_source": "journal",
+          "schema_errors": [],
+          "models": [
+            "claude-haiku-4-5-20251001"
+          ],
+          "prompt_matches": true,
+          "tool_calls": [
+            "Read",
+            "StructuredOutput"
+          ],
+          "packet_reads": [
+            {
+              "offset": null,
+              "limit": null
+            }
+          ],
+          "full_packet_read": true,
+          "control_write": null,
+          "flagged_tool_calls": []
+        }
+      ]
+    }
+  ],
+  "per_book": [
+    {
+      "pos": 9,
+      "title": "GME DD - One DD To Rule Them All - Jan. 17, 2021",
+      "control": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "validity_delta": 0,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 4,
+        "evidence": 2,
+        "stronger_model": {
+          "validity": 4,
+          "evidence": 3
+        }
+      }
+    },
+    {
+      "pos": 18,
+      "title": "Citadel Has No Clothes - Mar 13, 2021",
+      "control": {
+        "validity_runs": [
+          3,
+          3,
+          3
+        ],
+        "evidence_runs": [
+          3,
+          4,
+          3
+        ],
+        "validity_median": 3,
+        "evidence_median": 3
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "validity_delta": -1,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 4,
+        "stronger_model": {
+          "validity": 2,
+          "evidence": 3
+        }
+      }
+    },
+    {
+      "pos": 36,
+      "title": "The Naked Short Scam 2 - Using ETFs - Apr. 30, 2021",
+      "control": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "candidate": {
+        "validity_runs": [
+          3,
+          2,
+          3
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 3,
+        "evidence_median": 3
+      },
+      "validity_delta": 1,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 3,
+        "stronger_model": {
+          "validity": 2,
+          "evidence": 3
+        }
+      }
+    },
+    {
+      "pos": 45,
+      "title": "The Fed is Pinned into a Corner - June 21, 2021",
+      "control": {
+        "validity_runs": [
+          3,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          4
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          3,
+          2
+        ],
+        "evidence_runs": [
+          4,
+          3,
+          2
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "validity_delta": 0,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 3,
+        "stronger_model": {
+          "validity": 2,
+          "evidence": 3
+        }
+      }
+    },
+    {
+      "pos": 54,
+      "title": "FINRA Series by dlauer - Jun. 24 - Jul. 8, 2021",
+      "control": {
+        "validity_runs": [
+          4,
+          3,
+          4
+        ],
+        "evidence_runs": [
+          4,
+          4,
+          4
+        ],
+        "validity_median": 4,
+        "evidence_median": 4
+      },
+      "candidate": {
+        "validity_runs": [
+          3,
+          4,
+          3
+        ],
+        "evidence_runs": [
+          4,
+          4,
+          3
+        ],
+        "validity_median": 3,
+        "evidence_median": 4
+      },
+      "validity_delta": -1,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 3,
+        "current_validity": 4,
+        "evidence": 3,
+        "stronger_model": {
+          "validity": 4,
+          "evidence": 4
+        }
+      }
+    },
+    {
+      "pos": 63,
+      "title": "Citadel Has Hostages - July 6, 2021",
+      "control": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          2,
+          2
+        ],
+        "validity_median": 2,
+        "evidence_median": 2
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          2,
+          3,
+          2
+        ],
+        "validity_median": 2,
+        "evidence_median": 2
+      },
+      "validity_delta": 0,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 2,
+        "stronger_model": {
+          "validity": 1,
+          "evidence": 2
+        }
+      }
+    },
+    {
+      "pos": 72,
+      "title": "Cycles and DTCC-NSCC Stuff - Aug. 10, 2021",
+      "control": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          2,
+          2,
+          2
+        ],
+        "validity_median": 2,
+        "evidence_median": 2
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          2,
+          2,
+          2
+        ],
+        "validity_median": 2,
+        "evidence_median": 2
+      },
+      "validity_delta": 0,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 2,
+        "stronger_model": {
+          "validity": 2,
+          "evidence": 2
+        }
+      }
+    },
+    {
+      "pos": 81,
+      "title": "The Algorithm - The Ouroboros 1-2 - Nov. 18, 2021",
+      "control": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          2,
+          2,
+          2
+        ],
+        "validity_median": 2,
+        "evidence_median": 2
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          2,
+          3,
+          3
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "validity_delta": 0,
+      "evidence_delta": 1,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 3,
+        "stronger_model": {
+          "validity": 1,
+          "evidence": 2
+        }
+      }
+    },
+    {
+      "pos": 99,
+      "title": "The Dollar Endgame Part 4 - At World's End - Sept. 13, 2021",
+      "control": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 2,
+        "evidence_median": 3
+      },
+      "validity_delta": 0,
+      "evidence_delta": 0,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 3,
+        "stronger_model": {
+          "validity": 2,
+          "evidence": 3
+        }
+      }
+    },
+    {
+      "pos": 108,
+      "title": "Through the Looking Glass",
+      "control": {
+        "validity_runs": [
+          2,
+          2,
+          2
+        ],
+        "evidence_runs": [
+          3,
+          2,
+          2
+        ],
+        "validity_median": 2,
+        "evidence_median": 2
+      },
+      "candidate": {
+        "validity_runs": [
+          2,
+          3,
+          3
+        ],
+        "evidence_runs": [
+          3,
+          3,
+          3
+        ],
+        "validity_median": 3,
+        "evidence_median": 3
+      },
+      "validity_delta": 1,
+      "evidence_delta": 1,
+      "july": {
+        "haiku_validity": 2,
+        "current_validity": 2,
+        "evidence": 3,
+        "stronger_model": {
+          "validity": 1,
+          "evidence": 2
+        }
+      }
+    }
+  ],
+  "report": {
+    "control_vs_july": {
+      "july_field_validity": "validity_rating_original when present (pre-adjudication Haiku rating), otherwise validity_rating",
+      "july_field_evidence": "evidence_quality",
+      "mean_validity_diff": 0.2,
+      "validity_exact": 8,
+      "validity_within_one": 10,
+      "mean_evidence_diff": -0.1,
+      "books": 10
+    },
+    "candidate_vs_july": {
+      "july_field_validity": "validity_rating_original when present (pre-adjudication Haiku rating), otherwise validity_rating",
+      "july_field_evidence": "evidence_quality",
+      "mean_validity_diff": 0.2,
+      "validity_exact": 8,
+      "validity_within_one": 10,
+      "mean_evidence_diff": 0.1,
+      "books": 10
+    },
+    "key_claims": {
+      "control": {
+        "total_assessed_claims": 213,
+        "counts": {
+          "holds_up": 33,
+          "partially_holds": 49,
+          "does_not_hold": 91,
+          "cannot_assess": 40
+        },
+        "proportions": {
+          "holds_up": 0.155,
+          "partially_holds": 0.23,
+          "does_not_hold": 0.427,
+          "cannot_assess": 0.188
+        }
+      },
+      "candidate": {
+        "total_assessed_claims": 207,
+        "counts": {
+          "holds_up": 39,
+          "partially_holds": 60,
+          "does_not_hold": 86,
+          "cannot_assess": 22
+        },
+        "proportions": {
+          "holds_up": 0.188,
+          "partially_holds": 0.29,
+          "does_not_hold": 0.415,
+          "cannot_assess": 0.106
+        }
+      }
+    },
+    "excluded_book_valid_responses": []
+  },
+  "audit_summary": {
+    "agent_attempts": 60,
+    "retries": 0,
+    "models": [
+      "claude-haiku-4-5-20251001"
+    ],
+    "prompts_match_assembled": 60,
+    "full_packet_reads": 60,
+    "control_writes": [
+      {
+        "label": "C-009-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-009-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-009-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-018-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-018-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-018-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-036-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-036-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-036-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-045-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-045-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-045-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-054-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-054-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-054-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-063-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-063-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-063-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-072-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-072-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-072-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-081-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-081-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-081-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-099-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-099-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-099-r3",
+        "wrote": true
+      },
+      {
+        "label": "C-108-r1",
+        "wrote": true
+      },
+      {
+        "label": "C-108-r2",
+        "wrote": true
+      },
+      {
+        "label": "C-108-r3",
+        "wrote": true
+      }
+    ],
+    "flagged": [],
+    "invalid_or_missing": [],
+    "structured_output_first_submission_rejected": {
+      "control": [
+        "C-009-r1",
+        "C-018-r2",
+        "C-045-r1",
+        "C-045-r3",
+        "C-063-r1",
+        "C-063-r2",
+        "C-081-r1",
+        "C-081-r2"
+      ],
+      "candidate": [
+        "T-009-r1",
+        "T-009-r2",
+        "T-018-r1",
+        "T-018-r2",
+        "T-018-r3",
+        "T-036-r1",
+        "T-036-r3",
+        "T-045-r1",
+        "T-045-r2",
+        "T-045-r3",
+        "T-054-r2",
+        "T-054-r3",
+        "T-063-r1",
+        "T-063-r2",
+        "T-063-r3",
+        "T-072-r3",
+        "T-081-r2",
+        "T-081-r3",
+        "T-099-r1",
+        "T-099-r2",
+        "T-099-r3"
+      ],
+      "first_error_reason_counts": {
+        "more than 6 topics": 24,
+        "key_claims kind not an allowed value": 1,
+        "content_type not an allowed value": 2,
+        "missing required property": 1,
+        "speculation_level not an allowed value": 1
+      },
+      "note": "The StructuredOutput tool rejected these runs' first submission on schema grounds; each resubmitted within the same run and the accepted submission is the stored output."
+    }
+  }
+}

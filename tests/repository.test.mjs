@@ -10,6 +10,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 import { checkDatasetInvariants } from '../scripts/dataset-invariants.mjs';
+import { validateAgainstSchema } from '../scripts/schema-validator.mjs';
 
 const originals = new Map([
   ['reports/REPORT.md', '53c777712e6ff985e1259da5ebe47aa05e499c81d5d0de9916eba9b17ff90cfa'],
@@ -904,12 +905,48 @@ test('p2 preserves all three type blocks with only book changed to work', async 
   assert.deepEqual(typeBlocks(versions), originalBlocks.map((block) => block.replace(/\bbook\b/g, 'work')));
 });
 
-test('p2 stays a candidate with a disclosed unrun calibration gate', async () => {
-  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+test('p2 calibration outputs are committed and the activation record matches their data', async () => {
+  const versions = (await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  const runDirectory = new URL('../harness/calibration-runs/p2/', import.meta.url);
+  const run = JSON.parse(await readFile(new URL('run.json', runDirectory), 'utf8'));
+  const schema = JSON.parse(await readFile(new URL('../harness/output_schema.json', import.meta.url), 'utf8'));
+  const median = (values) => [...values].sort((a, b) => a - b)[1];
+  const outputs = {};
 
+  for (const arm of ['control', 'candidate']) {
+    const files = (await readdir(new URL(`${arm}/`, runDirectory))).sort();
+    assert.equal(files.length, 30, `${arm} must hold 30 run outputs`);
+    for (const file of files) {
+      const output = JSON.parse(await readFile(new URL(`${arm}/${file}`, runDirectory), 'utf8'));
+      assert.deepEqual(validateAgainstSchema(schema, output), [], `${arm}/${file} must satisfy output_schema.json`);
+      assert.equal(output.pos, Number(file.slice(0, 3)), `${arm}/${file} must review its own position`);
+      (outputs[`${arm}:${output.pos}`] ??= []).push(output);
+    }
+  }
+
+  // Every per-book median and gate figure in run.json must follow from the committed outputs.
+  assert.deepEqual(run.sample, [9, 18, 36, 45, 54, 63, 72, 81, 99, 108]);
+  const deltas = { validity: [], evidence: [] };
+  for (const book of run.per_book) {
+    for (const arm of ['control', 'candidate']) {
+      assert.equal(book[arm].validity_median, median(outputs[`${arm}:${book.pos}`].map((output) => output.validity_rating)));
+      assert.equal(book[arm].evidence_median, median(outputs[`${arm}:${book.pos}`].map((output) => output.evidence_quality)));
+    }
+    deltas.validity.push(book.candidate.validity_median - book.control.validity_median);
+    deltas.evidence.push(book.candidate.evidence_median - book.control.evidence_median);
+  }
+  const mean = (values) => Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 1000) / 1000;
+  assert.equal(run.gate.mean_validity_delta, mean(deltas.validity));
+  assert.equal(run.gate.mean_evidence_delta, mean(deltas.evidence));
+  assert.equal(run.gate.passed_numerically, true);
+
+  const signed = (value) => `${value < 0 ? '-' : '+'}${Math.abs(value).toFixed(2)}`;
   assert.match(versions, /\| p1 \| FROZEN \|/);
   assert.match(versions, /\| p2 \| CANDIDATE \|/);
-  assert.match(versions, /\*\*Verdict: NOT RUN — p2 remains CANDIDATE\.\*\*/);
-  assert.match(versions, /API calls: \*\*0\*\*/);
-  assert.match(versions, /\[Activation record\]\(#activation-record\)/);
+  assert.match(versions, /\*\*Verdict: PASSED — 10-book calibration on partial text\. p2 remains CANDIDATE until activation\.\*\*/);
+  assert.ok(versions.includes(`| Mean T − C validity | ${signed(run.gate.mean_validity_delta)} |`));
+  assert.ok(versions.includes(`| Mean T − C evidence quality | ${signed(run.gate.mean_evidence_delta)} |`));
+  assert.ok(versions.includes(`| Validity differences at most 1 | ${run.gate.validity_within_one} |`));
+  assert.match(versions, /\[`run\.json`\]\(calibration-runs\/p2\/run\.json\)/);
+  assert.doesNotMatch(versions, /Verdict: NOT RUN/);
 });

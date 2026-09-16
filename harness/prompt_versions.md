@@ -9,11 +9,12 @@ candidate is recorded below.
 | Version | Status | Text and scope |
 |---|---|---|
 | p1 | FROZEN | [`review_prompt.md`](review_prompt.md), including its three type blocks, plus the verify prompt in [`calibration.md`](calibration.md), incorporated by reference and not duplicated here. Historical July reproduction. |
-| p2 | CANDIDATE | The full text below. Intended for new community DDs and dispute re-ratings only, after the calibration gate passes. See the [Activation record](#activation-record). |
+| p2 | CANDIDATE | The full text below. Intended for new community DDs and dispute re-ratings only. The calibration gate passed on 2026-09-16 (10-book calibration on partial text); see the [Activation record](#activation-record). |
 
-p2 becomes **ACTIVE** only after the gate below passes and its measured results
-and calibration run are linked here. Until then, this document does not route
-current reviews to p2. There is no active living prompt yet.
+p2 becomes **ACTIVE** only after the gate below passes, its measured results and
+calibration run are linked here, and the activation change routes reviews to it.
+The gate has passed; until activation, this document does not route current
+reviews to p2.
 
 Once a version is superseded, retain its full text here and mark it **FROZEN**;
 never silently replace it. p1 remains incorporated by reference to its frozen
@@ -288,40 +289,61 @@ evidence. If still failing, stop with p2 CANDIDATE, a draft PR and no routing ch
 | Version | Date | Change | Rationale | Calibration link |
 |---|---|---|---|---|
 | p1 | 2026-07-21 (original run) | Frozen review and verify prompts incorporated by reference | Preserve the recovered July instructions | [July calibration](calibration.md) |
-| p2 | 2026-09-16 | Initial candidate: living-catalog framing, packet contract, explicit time rules and JSON-only return | Support community DDs and dispute re-ratings on the same rating scale, subject to calibration | [Activation record](#activation-record) — not run |
+| p2 | 2026-09-16 | Initial candidate: living-catalog framing, packet contract, explicit time rules and JSON-only return | Support community DDs and dispute re-ratings on the same rating scale, subject to calibration | [Activation record](#activation-record) — passed 2026-09-16 (10 books, partial text) |
 
 ## Activation record
 
-**Verdict: NOT RUN — p2 remains CANDIDATE.**
+**Verdict: PASSED — 10-book calibration on partial text. p2 remains CANDIDATE until activation.**
 
-On 2026-09-16, no Anthropic API credential was available in the execution environment
-and no Anthropic API connector was available. Calibration was skipped under the
-specified fallback. No API request was attempted and no model output was created.
-There is no calibration run to link; no `run.json` or model JSON is represented as
-having been produced.
+An earlier attempt on 2026-09-16 could not run because no Anthropic API access was
+available. The gate then ran on 2026-09-16 under the protocol amendment above, which
+was committed in `cd6b59c` before any review. Runtime: Claude Code workflow subagents
+(run `wf_47a3c97b-b71`); every transcript reports `claude-haiku-4-5-20251001`. Model
+output is in `calibration-runs/p2/control/` and `calibration-runs/p2/candidate/`;
+metadata, per-run audit and per-book figures are in
+[`run.json`](calibration-runs/p2/run.json).
 
-| Measure | Result | Gate or reporting role |
-|---|---|---|
-| Matched books with completed triplets | 0 of 22 planned | No measured medians |
-| Mean T − C validity | N/A — not run | Must be within ±0.30 |
-| T vs C validity differences at most 1 | N/A — not run | At least 20/22 (91% for a reduced sample) |
-| T vs C validity differences at least 2 | N/A — not run | At most 2, each adjudicated with packet pages |
-| Mean T − C evidence quality | N/A — not run | Must be within ±0.30 |
-| C vs July validity and evidence quality | N/A — not run | Report only |
-| T vs July validity and evidence quality | N/A — not run | Report only |
-| C key_claims assessment distribution | N/A — not run | Report only |
-| T key_claims assessment distribution | N/A — not run | Report only |
+| Measure | Result | Required | Outcome |
+|---|---|---|---|
+| Matched books | 10 of 10 | At least 9 | Pass |
+| Mean T − C validity | +0.00 | Within ±0.30 | Pass |
+| Validity differences at most 1 | 10/10 | At least 90% of matched books | Pass |
+| Validity differences of 2 or more | None | At most 1 | Pass |
+| Mean T − C evidence quality | +0.20 | Within ±0.30 | Pass |
 
-API calls: **0** (132 planned before retries). Extractions attempted: **0**.
-Extraction failures: **none observed; extraction was not attempted**. API or response
-validation failures: **none observed; no requests were made**. Model, `max_tokens`,
-temperature and API request IDs actually used: **N/A**. Revision rounds: **0**;
-candidate text diffs: **none**. No adjudications are claimed.
+Per-book runs and medians (C = p1 control, T = p2 candidate):
 
-**Maintainer work remaining:** run the gate with authenticated Anthropic API access
-and the shared model-neutral assembler, commit the real outputs and run metadata,
-fill in the results and any required page-cited adjudications, and link the run here.
-Only after a pass, mark p2 ACTIVE and complete the gated schema, invariants, version
-stamping, assembler CLI tests and README/CONTRIBUTING routing changes. The original
-ratings, record 251, hindsight facts and current review routing remain unchanged
-in this draft.
+| Book | Validity C | Validity T | Δ | Evidence C | Evidence T | Δ |
+|---|---|---|---|---|---|---|
+| 9 | 2, 2, 2 → 2 | 2, 2, 2 → 2 | 0 | 3, 3, 3 → 3 | 3, 3, 3 → 3 | 0 |
+| 18 | 3, 3, 3 → 3 | 2, 2, 2 → 2 | -1 | 3, 4, 3 → 3 | 3, 3, 3 → 3 | 0 |
+| 36 | 2, 2, 2 → 2 | 3, 2, 3 → 3 | +1 | 3, 3, 3 → 3 | 3, 3, 3 → 3 | 0 |
+| 45 | 3, 2, 2 → 2 | 2, 3, 2 → 2 | 0 | 3, 3, 4 → 3 | 4, 3, 2 → 3 | 0 |
+| 54 | 4, 3, 4 → 4 | 3, 4, 3 → 3 | -1 | 4, 4, 4 → 4 | 4, 4, 3 → 4 | 0 |
+| 63 | 2, 2, 2 → 2 | 2, 2, 2 → 2 | 0 | 3, 2, 2 → 2 | 2, 3, 2 → 2 | 0 |
+| 72 | 2, 2, 2 → 2 | 2, 2, 2 → 2 | 0 | 2, 2, 2 → 2 | 2, 2, 2 → 2 | 0 |
+| 81 | 2, 2, 2 → 2 | 2, 2, 2 → 2 | 0 | 2, 2, 2 → 2 | 2, 3, 3 → 3 | +1 |
+| 99 | 2, 2, 2 → 2 | 2, 2, 2 → 2 | 0 | 3, 3, 3 → 3 | 3, 3, 3 → 3 | 0 |
+| 108 | 2, 2, 2 → 2 | 2, 3, 3 → 3 | +1 | 3, 2, 2 → 2 | 3, 3, 3 → 3 | +1 |
+
+Report only, over the retained matched books:
+
+- **C vs July:** mean validity +0.20, 8/10 exact, 10/10 within one point; mean evidence quality -0.10.
+- **T vs July:** mean validity +0.20, 8/10 exact, 10/10 within one point; mean evidence quality +0.10.
+- July fields: `validity_rating_original` where present (the pre-adjudication Haiku rating for #9 and #54), otherwise `validity_rating`; evidence quality uses `evidence_quality`.
+- **key_claims, C:** 213 claims: holds_up 15.5% (33), partially_holds 23.0% (49), does_not_hold 42.7% (91), cannot_assess 18.8% (40).
+- **key_claims, T:** 207 claims: holds_up 18.8% (39), partially_holds 29.0% (60), does_not_hold 41.5% (86), cannot_assess 10.6% (22).
+- Proportions divide by each arm's own assessed claims. No book was excluded, so there are no excluded-book responses to report.
+
+**Run audit.** All 60 runs returned schema-valid structured output without a workflow retry, and no book was excluded. All 60 transcript prompts match the assembled prompts, all 60 runs read the whole packet, all 30 control runs executed p1's Write step, and no run used any other tool. In 29 runs (8 control, 21 candidate), the StructuredOutput tool rejected the first submission on schema grounds, most often for more than six `topics` (24 runs). Each run resubmitted, and the accepted submission is the stored output. No revision rounds and no adjudications were needed.
+
+**Limits.** Read these before relying on the pass:
+
+- The sample is 10 books with partial text, below the 22-book design.
+- Every subagent received the runtime's standard injected context, including the maintainer's auto-memory index, which mentions the DD library, the July review and p2's candidate status. It was identical in both arms, but the runtime description recorded before the run did not mention it.
+- Temperature, `max_tokens` and request IDs cannot be observed in this runtime.
+- The evidence-quality delta of +0.20 is within the limit, not far from it.
+- Candidate runs needed a schema resubmission more often (21 vs 8). Every final output was valid, but first-try conformance was worse.
+- Candidate runs marked fewer claims `cannot_assess` (10.6% vs 18.8%). Watch this in activated reviews.
+
+**Next step.** The activation change marks p2 ACTIVE by routing new community DDs and dispute re-ratings to it in `README.md` and `CONTRIBUTING.md`, and by adding the review-provenance invariants. The original ratings, record 251, the hindsight facts and current review routing are unchanged here.
