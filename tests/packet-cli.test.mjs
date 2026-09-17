@@ -162,7 +162,8 @@ test('repository validation CLI enforces provenance on an unreviewable community
   const { root, record, save } = await fixture(t);
   // Build the unrated shape from whatever review state record 251 has in the tracked dataset.
   for (const field of ['is_compilation', 'content_type', 'key_claims', 'constituents', 'evidence_quality', 'speculation_level',
-    'validity_rating', 'rating_reconciled', 'validity_rationale', 'quality_variance', 'confidence', 'topics', 'review_provenance']) {
+    'validity_rating', 'validity_rating_original', 'rating_reconciled', 'validity_rationale', 'quality_variance', 'confidence', 'topics',
+    'review_provenance']) {
     delete record[field];
   }
   record.review_status = 'unreviewable';

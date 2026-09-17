@@ -240,8 +240,9 @@ test('reproduces the published calibration statistics from pre-adjudication rati
     contents: await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8')
   })));
   const sample = master.filter((record) => record.calibration);
+  // The July calibration concerns the original corpus; community adjudications keep their own history.
   const historicalRatings = master
-    .filter((record) => Object.hasOwn(record, 'validity_rating_original'))
+    .filter((record) => !record.source_corpus && Object.hasOwn(record, 'validity_rating_original'))
     .map(({ pos, validity_rating_original }) => ({ pos, validity_rating_original }));
   const deltas = sample.map((record) =>
     record.calibration.validity -
