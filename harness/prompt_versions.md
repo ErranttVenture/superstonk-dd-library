@@ -9,7 +9,7 @@ prompt is recorded below.
 | Version | Status | Text and scope |
 |---|---|---|
 | p1 | FROZEN | [`review_prompt.md`](review_prompt.md), including its three type blocks, plus the verify prompt in [`calibration.md`](calibration.md), incorporated by reference and not duplicated here. Historical July reproduction. |
-| p2 | ACTIVE | The full text below. Active for new community DDs and dispute re-ratings as of 2026-09-17 in the [activation PR](https://github.com/ErranttVenture/superstonk-dd-library/compare/main...harness/activate-p2). The calibration gate passed on 2026-09-16 (10-book calibration on partial text); see the [Activation record](#activation-record). |
+| p2 | ACTIVE | The full text below. Active for new community DDs and dispute re-ratings as of 2026-09-17 in [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17). The calibration gate passed on 2026-09-16 (10-book calibration on partial text); see the [Activation record](#activation-record). |
 
 p2 is **ACTIVE** for new community DDs (pos 251 onward) and dispute re-ratings.
 Use the calibrated runtime below with the current hindsight version; see
@@ -295,13 +295,13 @@ evidence. If still failing, stop with p2 CANDIDATE, a draft PR and no routing ch
 |---|---|---|---|---|
 | p1 | 2026-07-21 (original run) | Frozen review and verify prompts incorporated by reference | Preserve the recovered July instructions | [July calibration](calibration.md) |
 | p2 | 2026-09-16 | Initial candidate: living-catalog framing, packet contract, explicit time rules and JSON-only return | Support community DDs and dispute re-ratings on the same rating scale, subject to calibration | [Activation record](#activation-record) — passed 2026-09-16 (10 books, partial text) |
-| p2 | 2026-09-17 | Activation: route new community DDs and dispute re-ratings to p2; add provenance checks and preserved-copy packet CLI | Apply the passed calibration in its calibrated runtime, retaining original ratings | [Activation PR](https://github.com/ErranttVenture/superstonk-dd-library/compare/main...harness/activate-p2); [calibration record](#activation-record) |
+| p2 | 2026-09-17 | Activation: route new community DDs and dispute re-ratings to p2; add provenance checks and preserved-copy packet CLI | Apply the passed calibration in its calibrated runtime, retaining original ratings | [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17); [calibration record](#activation-record) |
 
 ## Activation record
 
 **Verdict: PASSED — 10-book calibration on partial text.**
 
-**Activated:** 2026-09-17 in [activation PR](https://github.com/ErranttVenture/superstonk-dd-library/compare/main...harness/activate-p2).
+**Activated:** 2026-09-17 in [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17).
 
 An earlier attempt on 2026-09-16 could not run because no Anthropic API access was
 available. The gate then ran on 2026-09-16 under the protocol amendment above, which

@@ -965,9 +965,12 @@ test('p2 calibration outputs are committed and the activation record matches the
   assert.match(versions, /\| p1 \| FROZEN \|/);
   assert.match(versions, /\| p2 \| ACTIVE \|/);
   assert.match(versions, /\*\*Verdict: PASSED — 10-book calibration on partial text\.\*\*/);
-  assert.match(versions, /\*\*Activated:\*\* 2026-09-17 in \[[^\]]+\]\(https:\/\/github\.com\/ErranttVenture\/superstonk-dd-library\//);
+  const activation = /\*\*Activated:\*\* 2026-09-17 in (\[#([1-9][0-9]*)\]\(https:\/\/github\.com\/ErranttVenture\/superstonk-dd-library\/pull\/\2\))/.exec(versions);
+  assert.ok(activation, 'activation must link its numbered PR');
+  assert.ok(versions.split('\n').find((line) => line.startsWith('| p2 | ACTIVE |')).includes(activation[1]));
   const changelog = versions.slice(versions.indexOf('## Changelog'), versions.indexOf('## Activation record'));
   assert.match(changelog, /\| p2 \| 2026-09-17 \| Activation:/);
+  assert.ok(changelog.includes(activation[1]));
   assert.ok(versions.includes(`| Mean T − C validity | ${signed(run.gate.mean_validity_delta)} |`));
   assert.ok(versions.includes(`| Mean T − C evidence quality | ${signed(run.gate.mean_evidence_delta)} |`));
   assert.ok(versions.includes(`| Validity differences at most 1 | ${run.gate.validity_within_one} |`));
