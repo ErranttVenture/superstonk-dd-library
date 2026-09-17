@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-import { assemblePrompt, buildPacket, hindsightBlock } from '../harness/assemble_review.mjs';
+import { assemblePrompt, buildPacket, hindsightBlock, hindsightCutoff } from '../harness/assemble_review.mjs';
 import { runNodeCli } from './cli-test-helpers.mjs';
 
 const read = async (path) => (await readFile(new URL(path, import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
@@ -97,6 +97,44 @@ test('assembly inserts values literally and rejects unknown versions or a missin
   assert.throws(() => assemblePrompt({ promptVersion: 'p3', hindsightVersion: 'v1', record: original, packetPath: '/p' }), /Unknown prompt version/);
   assert.throws(() => assemblePrompt({ promptVersion: 'p2', hindsightVersion: 'v9', record: original, packetPath: '/p' }), /Unknown hindsight version/);
   assert.throws(() => assemblePrompt({ promptVersion: 'p1', hindsightVersion: 'v1', record: original, packetPath: '/p' }), /output path/);
+});
+
+test('assembly rejects a work published after the selected hindsight cutoff', () => {
+  const late = { ...original, uploaded: '2026-09-01' };
+
+  assert.equal(hindsightCutoff('v1'), '2026-07-21');
+  assert.equal(hindsightCutoff('v2'), '2026-08-16');
+  for (const kind of ['review', 'verify']) {
+    assert.throws(
+      () => assemblePrompt({ promptVersion: 'p2', hindsightVersion: 'v2', record: late, packetPath: '/p', kind }),
+      /published 2026-09-01, after the v2 hindsight cutoff 2026-08-16/
+    );
+  }
+  assert.throws(
+    () => assemblePrompt({ promptVersion: 'p2', hindsightVersion: 'v1', record: { ...original, uploaded: '2026-07-22' }, packetPath: '/p' }),
+    /after the v1 hindsight cutoff 2026-07-21/
+  );
+  assert.throws(
+    () => assemblePrompt({ promptVersion: 'p1', hindsightVersion: 'v1', record: { ...original, uploaded: '2026-07-22' }, packetPath: '/p', outputPath: '/o' }),
+    /hindsight cutoff/
+  );
+  assert.throws(
+    () => assemblePrompt({ promptVersion: 'p2', hindsightVersion: 'v2', record: { ...original, uploaded: undefined }, packetPath: '/p' }),
+    /publication date/
+  );
+  assert.ok(assemblePrompt({ promptVersion: 'p2', hindsightVersion: 'v1', record: { ...original, uploaded: '2026-07-21' }, packetPath: '/p' }));
+  assert.ok(assemblePrompt({ promptVersion: 'p2', hindsightVersion: 'v2', record: { ...original, uploaded: '2026-08-16' }, packetPath: '/p', kind: 'verify' }));
+});
+
+test('sampled coverage lists every contiguous page range so internal gaps are visible', () => {
+  const sparse = [3, 4, 6, 8, 9].map((page) => ({ page, text: `Page ${page}` }));
+  const range = (first, last) => Array.from({ length: last - first + 1 }, (_, index) => ({ page: first + index, text: 'x' }));
+
+  assert.match(buildPacket({ ...original, pages: 10 }, sparse, { contract: 'p1' }), /\nTEXT COVERAGE: sample: pages 3-4, 6, 8-9 of 10\n/);
+  assert.match(
+    buildPacket({ ...original, pages: 58 }, [...range(3, 13), ...range(15, 35), ...range(37, 56)], { contract: 'p2', evaluatedOn: '2026-09-16' }),
+    /\nTEXT COVERAGE: sample: pages 3-13, 15-35, 37-56 of 58\n/
+  );
 });
 
 test('p2 packets label pages, wrap long lines at whitespace and disclose sampled coverage', () => {

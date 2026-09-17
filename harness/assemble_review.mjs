@@ -82,6 +82,12 @@ export function hindsightBlock(version) {
   return HINDSIGHT[version];
 }
 
+// v1's heading says "as of mid-2026"; prompt_versions.md fixes it at the July run date.
+export function hindsightCutoff(version) {
+  const heading = hindsightBlock(version).split('\n')[0];
+  return /as of (\d{4}-\d{2}-\d{2})/.exec(heading)?.[1] ?? (version === 'v1' ? '2026-07-21' : null);
+}
+
 function typeKey(record) {
   if (record.type === 'compilation') return 'c';
   if (record.type === 'periodical') return 'n';
@@ -99,6 +105,14 @@ export function assemblePrompt({ promptVersion, hindsightVersion, record, packet
   const template = prompts[kind];
   if (promptVersion === 'p1' && !outputPath) {
     throw new Error('p1 prompts require an output path for their Write step');
+  }
+  // A work newer than the hindsight block would have its recent claims graded against stale facts.
+  const cutoff = hindsightCutoff(hindsightVersion);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(record.uploaded ?? '')) {
+    throw new Error(`Record ${record.pos} needs a YYYY-MM-DD publication date (uploaded)`);
+  }
+  if (!cutoff || record.uploaded > cutoff) {
+    throw new Error(`Record ${record.pos} was published ${record.uploaded}, after the ${hindsightVersion} hindsight cutoff ${cutoff}; publish a newer hindsight version first`);
   }
   const values = {
     '{{BOOK_PACKET_PATH}}': packetPath,
@@ -136,6 +150,17 @@ function wrapLine(line, width) {
   return lines;
 }
 
+// Sorted page numbers as contiguous ranges ("3-13, 15-35, 37"), so gaps stay visible.
+function pageRanges(numbers) {
+  const ranges = [];
+  for (const number of numbers) {
+    const last = ranges.at(-1);
+    if (last && number === last[1] + 1) last[1] = number;
+    else ranges.push([number, number]);
+  }
+  return ranges.map(([first, last]) => (first === last ? `${first}` : `${first}-${last}`)).join(', ');
+}
+
 function wrapText(text, width) {
   return text.split('\n').flatMap((line) => wrapLine(line, width)).join('\n');
 }
@@ -171,7 +196,7 @@ export function buildPacket(record, text, { contract, evaluatedOn, maxChars = DE
     body = kept.map((page) => `[page ${page.page}]\n${wrapText(page.text, lineWidth)}`).join('\n\n');
     const total = record.pages ?? pages.length;
     const complete = kept.length === total && kept.every((page, index) => page.page === index + 1);
-    coverage = complete ? 'full text' : `sample: pages ${kept[0].page}-${kept.at(-1).page} of ${total}`;
+    coverage = complete ? 'full text' : `sample: pages ${pageRanges(kept.map((page) => page.page))} of ${total}`;
   }
 
   const header = contract === 'p1'

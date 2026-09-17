@@ -940,6 +940,27 @@ test('p2 calibration outputs are committed and the activation record matches the
   assert.equal(run.gate.mean_evidence_delta, mean(deltas.evidence));
   assert.equal(run.gate.passed_numerically, true);
 
+  // Transcripts expose API request IDs; every attempt keeps them.
+  assert.doesNotMatch(run.runtime.api_request_ids, /unavailable/);
+  for (const entry of run.runs) {
+    for (const attempt of entry.attempts) {
+      assert.ok(
+        attempt.request_ids.length > 0 && attempt.request_ids.every((id) => /^req_[A-Za-z0-9]+$/.test(id)),
+        `${attempt.label} must record its API request IDs`
+      );
+    }
+  }
+  // Coverage headers of the run reported only first and last pages; run.json discloses the gaps.
+  for (const book of run.books) {
+    const missing = [];
+    for (let page = book.text_pages[0]; page <= book.text_pages.at(-1); page += 1) {
+      if (!book.text_pages.includes(page)) missing.push(page);
+    }
+    assert.deepEqual(book.missing_pages_within_range, missing, `book ${book.pos} must list pages missing inside its range`);
+  }
+  assert.doesNotMatch(versions, /request IDs are not exposed|request IDs cannot be observed/);
+  assert.match(versions, /#45, #99 and #108/);
+
   const signed = (value) => `${value < 0 ? '-' : '+'}${Math.abs(value).toFixed(2)}`;
   assert.match(versions, /\| p1 \| FROZEN \|/);
   assert.match(versions, /\| p2 \| CANDIDATE \|/);

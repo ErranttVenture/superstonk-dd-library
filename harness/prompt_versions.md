@@ -107,7 +107,7 @@ PLATFORM: <FlipHTML5 for original records; the submission platform for community
 PUBLISHED: <YYYY-MM-DD; original records use their `uploaded` date>
 PAGES: <integer, or n/a>
 EVALUATED ON: <YYYY-MM-DD>
-TEXT COVERAGE: <full text | sample: pages A-B of N>
+TEXT COVERAGE: <full text | sample: pages A-B[, C-D, ...] of N>
 ---
 <text>
 ```
@@ -115,6 +115,8 @@ TEXT COVERAGE: <full text | sample: pages A-B of N>
 Original records: the text is the page text from `harness/extract_book_text.mjs`, with each page preceded by `[page N]`.
 
 Community records with a preserved copy: the text is everything after the first line consisting only of `---` in `submissions/<issue>/dd.md`. Keep the Markdown headings; they serve as section labels.
+
+Sampled coverage lists every contiguous range of included pages (for example, `sample: pages 3-13, 15-35, 37-56 of 58`), so pages missing inside the range stay visible.
 
 Text limit: use the full text up to 400,000 characters. Past that, include whole pages up to the limit and mark the coverage as a sample.
 
@@ -134,7 +136,8 @@ version through [`hindsight.md`](hindsight.md) and [`ERRATA.md`](ERRATA.md):
 re-date the heading only after confirming the existing facts still hold, and add
 amendments where the work's claims need them. Then assemble with that version.
 For the calibration gate, treat v1's "as of mid-2026" as 2026-07-21, the July run
-date; every calibration book predates it.
+date; every calibration book predates it. `assemble_review.mjs` enforces this check
+and refuses to assemble a prompt for a work published after the selected cutoff.
 
 1. Build the packet using the contract above and keep it outside the repository, at
    an absolute path. Use the preserved community copy when it exists. Replace
@@ -187,8 +190,10 @@ created with `agent()` and `model: 'haiku'` (Claude Haiku 4.5). The assembled pr
 the subagent's task. The subagent reads the packet at its absolute path with its Read
 tool, as the July reviewers did, and returns its assessment through the StructuredOutput
 tool, which enforces `output_schema.json`. It inherits the session's default reasoning
-effort. Temperature and `max_tokens` cannot be set and API request IDs are not
-exposed, so run metadata records them as unavailable. The subagent also has the
+effort. Temperature and `max_tokens` cannot be set, so run metadata records them as
+unavailable. Subagent transcripts record API request IDs, and run metadata keeps them
+per attempt. (Corrected after the run: this paragraph first said request IDs were not
+exposed.) The subagent also has the
 runtime's other tools: a post-run transcript audit records each run's tool calls,
 whether it read the whole packet and the model its transcript reports, and flags any
 tool use beyond reading the packet and, for the control, its Write step. A review run
@@ -242,7 +247,7 @@ Commit only model JSON and run metadata under `harness/calibration-runs/p2/`:
 - `control/NNN-rK.json` and `candidate/NNN-rK.json`, with three-digit positions and
   run numbers 1–3;
 - `run.json`: runtime, the model each transcript reports, effort, the StructuredOutput
-  mechanism, unavailable parameters, run dates, hindsight v1, prompt versions, packet
+  mechanism, unavailable parameters, API request IDs per attempt, run dates, hindsight v1, prompt versions, packet
   formats and delivery, the text source and extraction date, per-book coverage, prompt
   and packet SHA-256 digests, failures, retries, exclusions, control Write-step
   outcomes and the transcript audit.
@@ -341,7 +346,8 @@ Report only, over the retained matched books:
 
 - The sample is 10 books with partial text, below the 22-book design.
 - Every subagent received the runtime's standard injected context, including the maintainer's auto-memory index, which mentions the DD library, the July review and p2's candidate status. It was identical in both arms, but the runtime description recorded before the run did not mention it.
-- Temperature, `max_tokens` and request IDs cannot be observed in this runtime.
+- Temperature and `max_tokens` cannot be observed in this runtime. `run.json` keeps every attempt's API request IDs (189 across the 60 runs); the first version of the run metadata wrongly recorded them as unavailable.
+- Coverage headers for #45, #99 and #108 gave only the first and last included page, not the pages missing inside that range (#45: 2; #99: 14, 36; #108: 6, 33, 34, 39, 57, 58). Both arms saw identical headers, so the T − C comparison is unaffected, but those reviewers were not told about the gaps. `assemble_review.mjs` now lists every contiguous range, and `run.json` records the missing pages.
 - The evidence-quality delta of +0.20 is within the limit, not far from it.
 - Candidate runs needed a schema resubmission more often (21 vs 8). Every final output was valid, but first-try conformance was worse.
 - Candidate runs marked fewer claims `cannot_assess` (10.6% vs 18.8%). Watch this in activated reviews.

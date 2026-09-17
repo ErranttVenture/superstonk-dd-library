@@ -38,7 +38,7 @@
     "effort": "not set; inherited session default",
     "temperature": "unavailable: not settable in this runtime",
     "max_tokens": "unavailable: not settable in this runtime",
-    "api_request_ids": "unavailable: not exposed by this runtime",
+    "api_request_ids": "recorded per attempt as request_ids, from the subagent transcripts",
     "structured_output": "StructuredOutput tool. Its schema is output_schema.json without the $schema, $id, $comment and title annotation keywords; every response is re-validated against the full output_schema.json with validateAgainstSchema.",
     "retry_policy": "one retry of a run that returns no structured output",
     "tools": "the runtime's full tool set was available; the transcript audit records every tool call",
@@ -60,7 +60,8 @@
     "line_width": 500,
     "evaluated_on": "2026-09-16",
     "delivery": "absolute scratch path read with the Read tool",
-    "committed": false
+    "committed": false,
+    "coverage_header_note": "The run's TEXT COVERAGE headers gave only the first and last included page. For #45, #99 and #108 they did not disclose pages missing inside that range (see books[].missing_pages_within_range). Both arms received identical headers. assemble_review.mjs now lists every contiguous range."
   },
   "books": [
     {
@@ -81,7 +82,6 @@
         12
       ],
       "text_chars": 20880,
-      "coverage": "sample: pages 3-12 of 14",
       "packet_lines": {
         "control": 71,
         "candidate": 73
@@ -90,7 +90,9 @@
         "control": "609f3a21528b2b565c82275580533deeb3279127538a6789cf62650d40068b2f",
         "candidate": "24fef4bfaa140a473be6769ab3587690f27660b00bf77ee5bf77460186655e6c"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-12 of 14",
+      "missing_pages_within_range": []
     },
     {
       "pos": 18,
@@ -116,7 +118,6 @@
         18
       ],
       "text_chars": 11808,
-      "coverage": "sample: pages 3-18 of 20",
       "packet_lines": {
         "control": 69,
         "candidate": 71
@@ -125,7 +126,9 @@
         "control": "4849897ad09f5385da7754d62ca14a4313b36a03769be95ba87f751df17f9e36",
         "candidate": "47985d62c8514211281b3b6ddea301fba3e837288891d8d8b8a4e89cc95a1483"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-18 of 20",
+      "missing_pages_within_range": []
     },
     {
       "pos": 36,
@@ -142,7 +145,6 @@
         9
       ],
       "text_chars": 7888,
-      "coverage": "sample: pages 3-9 of 10",
       "packet_lines": {
         "control": 39,
         "candidate": 41
@@ -151,7 +153,9 @@
         "control": "9bd421cd4e869d2c342d7b7f1ed19eaed9b3ad71a66abc703279e3fe45f248d7",
         "candidate": "fbbdaaee00f2330acc203d1adf4ad4b30a7061e3e420fbab8fa29d5dcec31c81"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-9 of 10",
+      "missing_pages_within_range": []
     },
     {
       "pos": 45,
@@ -179,7 +183,6 @@
         19
       ],
       "text_chars": 26470,
-      "coverage": "sample: pages 1-19 of 20",
       "packet_lines": {
         "control": 102,
         "candidate": 104
@@ -188,7 +191,11 @@
         "control": "56260faa4e544afaba1eae206159f22f6455b886115c708a44f96105c2f1de7a",
         "candidate": "625e18e0e7eb8bf0a5c32706f9ccda9699b652aa046bbdc0754fb7bc47846fbd"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 1-19 of 20",
+      "missing_pages_within_range": [
+        2
+      ]
     },
     {
       "pos": 54,
@@ -204,7 +211,6 @@
         8
       ],
       "text_chars": 4446,
-      "coverage": "sample: pages 3-8 of 10",
       "packet_lines": {
         "control": 29,
         "candidate": 31
@@ -213,7 +219,9 @@
         "control": "476faf20309eebaac88e99bce8294c41edbad18a6a7153243e9b1bda73e4af83",
         "candidate": "c37e197b83745b659eec61a1e70f2f0dcaa81c40717575c1cba159d775dbdef9"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-8 of 10",
+      "missing_pages_within_range": []
     },
     {
       "pos": 63,
@@ -227,7 +235,6 @@
         6
       ],
       "text_chars": 14835,
-      "coverage": "sample: pages 3-6 of 8",
       "packet_lines": {
         "control": 45,
         "candidate": 47
@@ -236,7 +243,9 @@
         "control": "316c7ae79cd4bd6805836cfc260973b5b9a0a4a2f470439f8dd95ebdbff9610f",
         "candidate": "c649837f3cfc38b75a55d010a681810c9c469eb0162e96cce9086754b88e2c3b"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-6 of 8",
+      "missing_pages_within_range": []
     },
     {
       "pos": 72,
@@ -262,7 +271,6 @@
         18
       ],
       "text_chars": 17125,
-      "coverage": "sample: pages 3-18 of 20",
       "packet_lines": {
         "control": 79,
         "candidate": 81
@@ -271,7 +279,9 @@
         "control": "ce9aec1436b134cb9f0498d4def71f62abb61d6d0d833daf848013d0d582118e",
         "candidate": "863fa48b45884cb09f9dcaa11c81ac20879ba314e98bd563181bf1024cb4ec1e"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-18 of 20",
+      "missing_pages_within_range": []
     },
     {
       "pos": 81,
@@ -320,7 +330,6 @@
         41
       ],
       "text_chars": 33291,
-      "coverage": "sample: pages 3-41 of 42",
       "packet_lines": {
         "control": 168,
         "candidate": 170
@@ -329,7 +338,9 @@
         "control": "5e01f48aeeb59b7b02b773e62cb57820c44f7ce6fbf058f29f4dc6139253d647",
         "candidate": "33387a0a637517a18c49703ac78476f35a4800cd03be2cdbda10790443cf1ee7"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-41 of 42",
+      "missing_pages_within_range": []
     },
     {
       "pos": 99,
@@ -391,7 +402,6 @@
         56
       ],
       "text_chars": 95119,
-      "coverage": "sample: pages 3-56 of 58",
       "packet_lines": {
         "control": 327,
         "candidate": 329
@@ -400,7 +410,12 @@
         "control": "5ed5b94dae0d511666194732b49da68a1bfa1159e9f74b71fcf8b3feb00d2219",
         "candidate": "e69327fe363e6217af0aeba0f37e5cb75a2b1cd4f396e131948778119a77ac9b"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-56 of 58",
+      "missing_pages_within_range": [
+        14,
+        36
+      ]
     },
     {
       "pos": 108,
@@ -463,7 +478,6 @@
         61
       ],
       "text_chars": 40251,
-      "coverage": "sample: pages 3-61 of 62",
       "packet_lines": {
         "control": 219,
         "candidate": 221
@@ -472,7 +486,16 @@
         "control": "8cfff756f56f9ad3d57a064f466682b641a72fbf88f18fe5be4560628f8619a8",
         "candidate": "11f3c9ed813357b9b5342264fa86e7bd4a53792fe5ac3ab389d3a2687abd2942"
       },
-      "long_tokens_split": 0
+      "long_tokens_split": 0,
+      "coverage": "sample: pages 3-61 of 62",
+      "missing_pages_within_range": [
+        6,
+        33,
+        34,
+        39,
+        57,
+        58
+      ]
     }
   ],
   "runs": [
@@ -487,6 +510,12 @@
         {
           "label": "C-009-r1",
           "agent_id": "ad4255be2e412f7a1",
+          "request_ids": [
+            "req_011Cf7w8UufHsMpXJkf65F54",
+            "req_011Cf7w8cqeg3bkTFF5CNuG9",
+            "req_011Cf7wBxHXScUGaRuxgMnsL",
+            "req_011Cf7wCttuQ4bfcpqqiZTh7"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -522,6 +551,11 @@
         {
           "label": "T-009-r1",
           "agent_id": "abe4be68dc2f7e4f3",
+          "request_ids": [
+            "req_011Cf7w8YREySAY5G6ViLS2i",
+            "req_011Cf7w8omE2gS8G1uuHB7aP",
+            "req_011Cf7wGKkU8RiSgovk5Rjy1"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -556,6 +590,11 @@
         {
           "label": "C-009-r2",
           "agent_id": "a1b7f7454ff907699",
+          "request_ids": [
+            "req_011Cf7wNLMbnfPJXdDrZBjHz",
+            "req_011Cf7wNgMsS4o6zktntWex8",
+            "req_011Cf7wRsSD9abL6mm2QqJN8"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -590,6 +629,11 @@
         {
           "label": "T-009-r2",
           "agent_id": "a24676415df792ab4",
+          "request_ids": [
+            "req_011Cf7wNZUt2meuRucZv32Pr",
+            "req_011Cf7wNmskv9YjLybTna9N5",
+            "req_011Cf7wTRW3wA1jqrUUJhCXp"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -624,6 +668,11 @@
         {
           "label": "C-009-r3",
           "agent_id": "a60d3b1a91ad987db",
+          "request_ids": [
+            "req_011Cf7wcy2sRc4t52UQ63FxM",
+            "req_011Cf7wd9oWxkc3y5Ejp7bLe",
+            "req_011Cf7wgv7MxpKvVYdT5D6F7"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -658,6 +707,10 @@
         {
           "label": "T-009-r3",
           "agent_id": "ab14b09f2f3f035cc",
+          "request_ids": [
+            "req_011Cf7wdmdoBRV3KKxU3yz8p",
+            "req_011Cf7wdyo2j9QbRMaFPk4EH"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -691,6 +744,11 @@
         {
           "label": "C-018-r1",
           "agent_id": "a76a9b090f732d9fe",
+          "request_ids": [
+            "req_011Cf7w8YTUR3hh1SpsdDazH",
+            "req_011Cf7w8vYX5LCmaJNQoWfqo",
+            "req_011Cf7wBstMiyatEGdjAW18f"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -725,6 +783,11 @@
         {
           "label": "T-018-r1",
           "agent_id": "a2124641ce0d001f1",
+          "request_ids": [
+            "req_011Cf7w8YWx3BJ46w19EJTjH",
+            "req_011Cf7w8i8e99DCrv6RuWbCd",
+            "req_011Cf7wDFtDJKcojwPw68AV8"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -759,6 +822,12 @@
         {
           "label": "C-018-r2",
           "agent_id": "ab36c6f5af368ba81",
+          "request_ids": [
+            "req_011Cf7wP9odPYUAGskNePptj",
+            "req_011Cf7wPL5WcQHKnNy7JBJSe",
+            "req_011Cf7wRwdEA9a27XxeFNfo6",
+            "req_011Cf7wScdzdV2Q8H2U8HupW"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -794,6 +863,12 @@
         {
           "label": "T-018-r2",
           "agent_id": "a4ce289020727996e",
+          "request_ids": [
+            "req_011Cf7wRfaphreLKbcBbcM3s",
+            "req_011Cf7wRtVDJNkfh6W8ZAvcE",
+            "req_011Cf7wUwmzQ9DVXCTLAYSsf",
+            "req_011Cf7wVcTfh5rxqmaZmjRRS"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -828,6 +903,11 @@
         {
           "label": "C-018-r3",
           "agent_id": "a260b2f5f412129e5",
+          "request_ids": [
+            "req_011Cf7wecgZkUMkAiFcQr87F",
+            "req_011Cf7wemVPiK2o2v2k4x8Kq",
+            "req_011Cf7wiEsFq49TLhJvSEmWJ"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -862,6 +942,11 @@
         {
           "label": "T-018-r3",
           "agent_id": "ab4929a38ac5fc3cd",
+          "request_ids": [
+            "req_011Cf7wf5DzY27WETbbiFRvu",
+            "req_011Cf7wfHTh9fpKboZcxkqSK",
+            "req_011Cf7wia5QXAQWx8QMmtRNg"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -896,6 +981,11 @@
         {
           "label": "C-036-r1",
           "agent_id": "a05ffc61d2e8f9b3c",
+          "request_ids": [
+            "req_011Cf7w8YUU2GJejQXvNEGh4",
+            "req_011Cf7w8jhu5Fi6kkgSXAeTv",
+            "req_011Cf7wCdG4jGUP49euZZjHh"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -930,6 +1020,11 @@
         {
           "label": "T-036-r1",
           "agent_id": "a9ca3b73bcc6ce8ff",
+          "request_ids": [
+            "req_011Cf7w8YSV3jKSkNCX73eFc",
+            "req_011Cf7w8igdkJuUPvAxwQj5k",
+            "req_011Cf7wCUwG3XdipB6QxiTP3"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -964,6 +1059,11 @@
         {
           "label": "C-036-r2",
           "agent_id": "a8222d4ceaf8b3aba",
+          "request_ids": [
+            "req_011Cf7wRqXNFNYj7JGE92q9E",
+            "req_011Cf7wS49tFUFxhjEySHLpT",
+            "req_011Cf7wUhp6jz3TupMSWyFaE"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -998,6 +1098,10 @@
         {
           "label": "T-036-r2",
           "agent_id": "a226f4da44dc177c7",
+          "request_ids": [
+            "req_011Cf7wRsVSGKTFsPuGrbbP9",
+            "req_011Cf7wS6K7H55TihQD8A8vu"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1031,6 +1135,11 @@
         {
           "label": "C-036-r3",
           "agent_id": "a3a541305c695eb5e",
+          "request_ids": [
+            "req_011Cf7wfWn8v7frAmu25MfjM",
+            "req_011Cf7wfg6y9ypHMJEAhBu1Y",
+            "req_011Cf7wiExxjxDrfKs69gMHG"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1065,6 +1174,11 @@
         {
           "label": "T-036-r3",
           "agent_id": "a98b782bd1b5b3ed4",
+          "request_ids": [
+            "req_011Cf7wiAMeT97ujCuT9PbXM",
+            "req_011Cf7wiTEeSHcooXnjNBCcW",
+            "req_011Cf7wnvz7cSeDRxNVwEzNd"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1099,6 +1213,12 @@
         {
           "label": "C-045-r1",
           "agent_id": "a12201a7ea76a7906",
+          "request_ids": [
+            "req_011Cf7wCtXqDBjPJxTpScx3v",
+            "req_011Cf7wD5SfXutjttrX3JSsa",
+            "req_011Cf7wG7PL1dpJ3ptGQxgSP",
+            "req_011Cf7wGufQHQVFFGSBDxCLe"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1134,6 +1254,11 @@
         {
           "label": "T-045-r1",
           "agent_id": "a410da4b74bcf9e58",
+          "request_ids": [
+            "req_011Cf7wDQXsUuWY9MgDg97jK",
+            "req_011Cf7wDkB4uDc7vZ4ojmio2",
+            "req_011Cf7wHrhqLASrHvSURu6Lj"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1168,6 +1293,11 @@
         {
           "label": "C-045-r2",
           "agent_id": "a4cdd528fa307349e",
+          "request_ids": [
+            "req_011Cf7wSjLKox7xVkAamypbd",
+            "req_011Cf7wTE4U9ZXTxG4Eoeq9T",
+            "req_011Cf7wX2GAn5RAyJaM5roBd"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1202,6 +1332,11 @@
         {
           "label": "T-045-r2",
           "agent_id": "a5addf8cfd86d5ff7",
+          "request_ids": [
+            "req_011Cf7wTNhdYb6cX7JqJKSmt",
+            "req_011Cf7wTYKaCc23kr3FdVBYv",
+            "req_011Cf7wXdB8espst4bwjgDnG"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1236,6 +1371,12 @@
         {
           "label": "C-045-r3",
           "agent_id": "ad8c3054d160a3db6",
+          "request_ids": [
+            "req_011Cf7wiBh1nQtQPt3ttSkuT",
+            "req_011Cf7wihmWwM6EW9micLCDb",
+            "req_011Cf7wmUnzV34xku9b74P29",
+            "req_011Cf7wnNNZns1JhRCpkQAWj"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1271,6 +1412,11 @@
         {
           "label": "T-045-r3",
           "agent_id": "a73c384da53b15c85",
+          "request_ids": [
+            "req_011Cf7wj2Gze7MbuhRdr4uaz",
+            "req_011Cf7wjEpoRL2UqQbQGcDD2",
+            "req_011Cf7wnPcyB6d9tAdk8XDKG"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1305,6 +1451,11 @@
         {
           "label": "C-054-r1",
           "agent_id": "a95c5743b4c4ee7da",
+          "request_ids": [
+            "req_011Cf7wDgL8oxhXhbSeUoKPG",
+            "req_011Cf7wDreVyTJb7Rre1oZxB",
+            "req_011Cf7wG3Qi1ASY6PsjX6Ecc"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1339,6 +1490,11 @@
         {
           "label": "T-054-r1",
           "agent_id": "af58118594a867e78",
+          "request_ids": [
+            "req_011Cf7wDqsNZfj61ssx6DyGm",
+            "req_011Cf7wE5whjmcvnFwjNc98o",
+            "req_011Cf7wJGN8AhZsajM2Nmsir"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1372,6 +1528,11 @@
         {
           "label": "C-054-r2",
           "agent_id": "ab3465770446182eb",
+          "request_ids": [
+            "req_011Cf7wUWTUwu1Pvaj9sayXU",
+            "req_011Cf7wUfkq3MUgn2DQnALDm",
+            "req_011Cf7wWx4QwGn5HnSA9Yksn"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1406,6 +1567,11 @@
         {
           "label": "T-054-r2",
           "agent_id": "ad04c7edf4ff46d4a",
+          "request_ids": [
+            "req_011Cf7wVP1Y1w49rAAFEoWA4",
+            "req_011Cf7wVfD7gM4UTEyR1eJYs",
+            "req_011Cf7wYF3tYu3ZbbqQMRnZ4"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1440,6 +1606,11 @@
         {
           "label": "C-054-r3",
           "agent_id": "a834386d6ba1c225c",
+          "request_ids": [
+            "req_011Cf7wj7yJQXtpzT7NnTpwY",
+            "req_011Cf7wjKLB11weY7fFFhppq",
+            "req_011Cf7wmobqRXJH2RgMFdGFJ"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1474,6 +1645,11 @@
         {
           "label": "T-054-r3",
           "agent_id": "a11f343a72255fddd",
+          "request_ids": [
+            "req_011Cf7wjtE5wvdyMG3SnVrrZ",
+            "req_011Cf7wkB76WehK325paNrYB",
+            "req_011Cf7wodYA2sRtbYPXTPVzh"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1508,6 +1684,12 @@
         {
           "label": "C-063-r1",
           "agent_id": "af217f5970a715d60",
+          "request_ids": [
+            "req_011Cf7wEDojLzRVDQLcPjQ9M",
+            "req_011Cf7wER78BxFn4i7mtnyR1",
+            "req_011Cf7wHN88GxY1zh6Y5eT1x",
+            "req_011Cf7wJ4y2Zhmch7Z6uqBGx"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1543,6 +1725,11 @@
         {
           "label": "T-063-r1",
           "agent_id": "ac0bc37ae7039f7bb",
+          "request_ids": [
+            "req_011Cf7wGnYmpmu7S8zURLWFV",
+            "req_011Cf7wGxDhHbKh28s7CjZod",
+            "req_011Cf7wLYo9tkaNeAj7yyZMy"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1577,6 +1764,12 @@
         {
           "label": "C-063-r2",
           "agent_id": "afcb2027d0521e62c",
+          "request_ids": [
+            "req_011Cf7wVehrKAPS6ejhqMf31",
+            "req_011Cf7wVpgd6NsKKECsEN92F",
+            "req_011Cf7wYNoxsL9fA8FhSfRbc",
+            "req_011Cf7wZ22LkEijXAShXC11N"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1612,6 +1805,11 @@
         {
           "label": "T-063-r2",
           "agent_id": "a3e3eb88dce94ebda",
+          "request_ids": [
+            "req_011Cf7wWAUzrgB2dbbvuiGVm",
+            "req_011Cf7wWMqckMRjpF2Jmo2fb",
+            "req_011Cf7wYyVYCBtoZZSZVCRP5"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1646,6 +1844,11 @@
         {
           "label": "C-063-r3",
           "agent_id": "a17722857d3c53f35",
+          "request_ids": [
+            "req_011Cf7wmozQ71LvLD568GNer",
+            "req_011Cf7wmy9p4EsvWzRm85cse",
+            "req_011Cf7wpxzij9N1BDyBwCCPp"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1680,6 +1883,11 @@
         {
           "label": "T-063-r3",
           "agent_id": "ab8b53dc034fa3a43",
+          "request_ids": [
+            "req_011Cf7wne5sPEqus3yZLdFHx",
+            "req_011Cf7wnsndZ3NaWHSJBGjbm",
+            "req_011Cf7wrBzLvaQaUGnCuZnVo"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1714,6 +1922,11 @@
         {
           "label": "C-072-r1",
           "agent_id": "afe4fa9269ad3d50d",
+          "request_ids": [
+            "req_011Cf7wHDUiYkFTa9AcacA5o",
+            "req_011Cf7wHQUm397ngTdbkbcN3",
+            "req_011Cf7wMJGZdqJ8a7kSuxwDm"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1748,6 +1961,10 @@
         {
           "label": "T-072-r1",
           "agent_id": "a69b86628e553076c",
+          "request_ids": [
+            "req_011Cf7wHnZYaZNNNKMZhVqFE",
+            "req_011Cf7wJ1hpRNmt8xYqPZCgQ"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1781,6 +1998,11 @@
         {
           "label": "C-072-r2",
           "agent_id": "ab0ff0f855ff2faf5",
+          "request_ids": [
+            "req_011Cf7wXkeqbGN7CnM3HShuS",
+            "req_011Cf7wXzr7vtdx9t33XgQAj",
+            "req_011Cf7wbCyxFz6j1h94tWcn5"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1815,6 +2037,11 @@
         {
           "label": "T-072-r2",
           "agent_id": "a9057720715fbb907",
+          "request_ids": [
+            "req_011Cf7wXuzAsR2nqTtCqc44P",
+            "req_011Cf7wY8F7f5JaDxJyhW8Pr",
+            "req_011Cf7wbzc6SV1hcBwBY9kSc"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1848,6 +2075,11 @@
         {
           "label": "C-072-r3",
           "agent_id": "ad3aab4a8893fa18f",
+          "request_ids": [
+            "req_011Cf7woDZGP2G4k4qQrtw1q",
+            "req_011Cf7woPpexQNsMrWfBekta",
+            "req_011Cf7wrMv92WcTCqmzt7tf7"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1882,6 +2114,12 @@
         {
           "label": "T-072-r3",
           "agent_id": "a031ffaaef9540381",
+          "request_ids": [
+            "req_011Cf7woHfKcHnFgrYoTDTEh",
+            "req_011Cf7woYJ97GCjEPAhvqwCD",
+            "req_011Cf7wsJubLHjzwLK7k2c8P",
+            "req_011Cf7wtHwaPaSiFSkgTTN9s"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1916,6 +2154,12 @@
         {
           "label": "C-081-r1",
           "agent_id": "a226bada05995a888",
+          "request_ids": [
+            "req_011Cf7wJcrRYD2WL8UWtMNcR",
+            "req_011Cf7wJpLyvkmT4g694yDX9",
+            "req_011Cf7wMS5N8NKyZnusKXPQQ",
+            "req_011Cf7wMz2yMugU1FkGQmyzN"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1951,6 +2195,10 @@
         {
           "label": "T-081-r1",
           "agent_id": "a1c4f0c7684e280ba",
+          "request_ids": [
+            "req_011Cf7wJsq5TrFYzXKKa93Pr",
+            "req_011Cf7wK754BcgyqU1KfqDzd"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -1984,6 +2232,12 @@
         {
           "label": "C-081-r2",
           "agent_id": "a3918dcbfbd48ac6b",
+          "request_ids": [
+            "req_011Cf7wYfNcqHMae85VuczRS",
+            "req_011Cf7wYvm5dmYnPfyyLzPWH",
+            "req_011Cf7wbh8sQuxQtSrnEu2fD",
+            "req_011Cf7wcDv3VV4NHgonbn8nB"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2019,6 +2273,11 @@
         {
           "label": "T-081-r2",
           "agent_id": "a24e2edf801b6bfc0",
+          "request_ids": [
+            "req_011Cf7wYvedjA6whUXGog8nx",
+            "req_011Cf7wZ8R4WCVUqss1jDJHD",
+            "req_011Cf7wctRYkkUod4TLGoA4F"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2053,6 +2312,11 @@
         {
           "label": "C-081-r3",
           "agent_id": "ad93a0cb1cbe25c30",
+          "request_ids": [
+            "req_011Cf7wopK44hq22fD3DEpc3",
+            "req_011Cf7woxDZXSr6XQPxkzzjL",
+            "req_011Cf7wrnn7UFjyQCjMiGH9w"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2087,6 +2351,11 @@
         {
           "label": "T-081-r3",
           "agent_id": "ae2295839c29082cd",
+          "request_ids": [
+            "req_011Cf7wpJELGcKQr7zTF3PBb",
+            "req_011Cf7wpYkTRjDDoJ1kLxWt2",
+            "req_011Cf7wshwS2dSYWDo6sRZDK"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2121,6 +2390,12 @@
         {
           "label": "C-099-r1",
           "agent_id": "a35426a870206fcd2",
+          "request_ids": [
+            "req_011Cf7wJyKUzQcatgE48cGi5",
+            "req_011Cf7wKCnMUHzgdw81nADgi",
+            "req_011Cf7wKRYZ6Y38CBK9PCmLW",
+            "req_011Cf7wNFgKDis8jHmb1LNv6"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2160,6 +2435,12 @@
         {
           "label": "T-099-r1",
           "agent_id": "aadbb9619076e8739",
+          "request_ids": [
+            "req_011Cf7wM84PmYvd5GrwqmH1G",
+            "req_011Cf7wMKJKST9FynAt8UDbZ",
+            "req_011Cf7wMWx41UiXKhMYbk5a5",
+            "req_011Cf7wQeGRXqPPK4iwsrpvn"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2199,6 +2480,12 @@
         {
           "label": "C-099-r2",
           "agent_id": "a5ee32ccdd8338abf",
+          "request_ids": [
+            "req_011Cf7wZsYdpNuq7cTmm1aZ1",
+            "req_011Cf7wa5Nn3pvBPyo2QRbxh",
+            "req_011Cf7waH6EQWPvpw3Mux6oj",
+            "req_011Cf7wdqSFB896Gkj4XWMPp"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2238,6 +2525,12 @@
         {
           "label": "T-099-r2",
           "agent_id": "ad1ff20983e2ec9fb",
+          "request_ids": [
+            "req_011Cf7wZrqiVC6QUUAz5Ykum",
+            "req_011Cf7wa5hNxxJdUzw4DvJcb",
+            "req_011Cf7waKPe26KnrPr5Bjpub",
+            "req_011Cf7weFXahP3qywAHPEAHM"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2277,6 +2570,12 @@
         {
           "label": "C-099-r3",
           "agent_id": "a14fb092ef09bf378",
+          "request_ids": [
+            "req_011Cf7wqoeBN2RirTumzwqzb",
+            "req_011Cf7wqzCvLcoy7MoZByRQs",
+            "req_011Cf7wrBzbH6XEWQcrmyWjb",
+            "req_011Cf7wueDFu3bKpD8NYqjbq"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2316,6 +2615,12 @@
         {
           "label": "T-099-r3",
           "agent_id": "a7e28b324870247cd",
+          "request_ids": [
+            "req_011Cf7ws7KpxYwnYFZkHyYua",
+            "req_011Cf7wsHUmeKu5tYvQn7N4t",
+            "req_011Cf7wsTr7Gj5VV8WedeQLQ",
+            "req_011Cf7wwBj7D2TozNxdT1Qjy"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2355,6 +2660,11 @@
         {
           "label": "C-108-r1",
           "agent_id": "a3006599bee4809f1",
+          "request_ids": [
+            "req_011Cf7wMCtrNQWKsryogCHDD",
+            "req_011Cf7wMR9oVVQLwdd3cTY51",
+            "req_011Cf7wR9Sr5SCCgpQSjXuLr"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2389,6 +2699,10 @@
         {
           "label": "T-108-r1",
           "agent_id": "a71585b2ca0d16f47",
+          "request_ids": [
+            "req_011Cf7wNB4Vr3NKnaxk81vok",
+            "req_011Cf7wNTtnJS3gf8uL7bX91"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2422,6 +2736,11 @@
         {
           "label": "C-108-r2",
           "agent_id": "a45ab5ed0679b2744",
+          "request_ids": [
+            "req_011Cf7wcMrHUPHPyxzfbfaAD",
+            "req_011Cf7wcYCPFMwpueJfyq92n",
+            "req_011Cf7web45ZmX6uwSaPznje"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2456,6 +2775,10 @@
         {
           "label": "T-108-r2",
           "agent_id": "aed8b224a3db04438",
+          "request_ids": [
+            "req_011Cf7wcoFFaQDzYxC8MZdWV",
+            "req_011Cf7wd3FNLkwBT5gQfvfJP"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2489,6 +2812,11 @@
         {
           "label": "C-108-r3",
           "agent_id": "a23a6e6165481637a",
+          "request_ids": [
+            "req_011Cf7wsGAeKGA1UEGjMfNyK",
+            "req_011Cf7wsSrpqrLEtZ6Ek915i",
+            "req_011Cf7wv3BNnb6eFS9khr4W2"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -2523,6 +2851,10 @@
         {
           "label": "T-108-r3",
           "agent_id": "ab20dfd75d828fe81",
+          "request_ids": [
+            "req_011Cf7wspJuxCMGQrbmwyyee",
+            "req_011Cf7wt3sjvzHxaKuLydjcw"
+          ],
           "output_source": "journal",
           "schema_errors": [],
           "models": [
@@ -3206,5 +3538,9 @@
       },
       "note": "The StructuredOutput tool rejected these runs' first submission on schema grounds; each resubmitted within the same run and the accepted submission is the stored output."
     }
-  }
+  },
+  "post_run_corrections": [
+    "Added request_ids per attempt; the metadata first recorded API request IDs as unavailable, but the transcripts contain them.",
+    "Added books[].missing_pages_within_range and packets.coverage_header_note to disclose gaps inside sampled page ranges."
+  ]
 }
