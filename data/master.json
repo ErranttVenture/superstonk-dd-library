@@ -15974,8 +15974,71 @@
   "url": "https://www.justthebros.co/blog/market-maker-locate-exemption/",
   "type": "original",
   "text_available": true,
+  "is_compilation": false,
+  "content_type": "market_dd",
+  "summary": "This work explains the market maker exemption to Regulation SHO's locate requirement (Rule 203(b)(2)(iii)) and its enforcement history. The author demonstrates through extensive primary-source citation that market makers may legally sell shares without confirming a borrow arrangement, while retail traders cannot. The exemption exists to provide continuous liquidity, but FINRA and SEC enforcement records show firms have misused it to conduct proprietary trading without locates. The work documents SEC cases (Hazan, TJM, Wolfson, optionsXpress) where traders improperly claimed the exemption or used reset transactions to avoid delivery. It carefully disclaims that abuse is \"rampant and unpunished everywhere,\" citing the SEC's GameStop finding that fails \"spiked but didn't persist at the clearing-member level.\" Part of the Goose & Gander series on market structure.",
+  "key_claims": [
+   {
+    "claim": "Market makers can legally sell shares without locating them under Rule 203(b)(2)(iii), while retail traders cannot",
+    "kind": "verifiable_fact",
+    "assessment": "holds_up",
+    "note": "Rule text cited at 17 CFR § 242.203(b)(1)-(2)(iii); exemption is accurately quoted and contrasted"
+   },
+   {
+    "claim": "The rule never defines 'bona-fide market making' and leaves the exemption boundary to SEC guidance and after-the-fact enforcement",
+    "kind": "verifiable_fact",
+    "assessment": "holds_up",
+    "note": "Accurate reading of CFR text; the exemption contains only the phrase quoted, no definition"
+   },
+   {
+    "claim": "FINRA examination reports document firms failing to distinguish bona-fide market making from ineligible proprietary trading",
+    "kind": "verifiable_fact",
+    "assessment": "holds_up",
+    "note": "FINRA 2024/2025 Annual Regulatory Oversight Reports cited; activity documented as recurring exam finding"
+   },
+   {
+    "claim": "The SEC has enforced against traders improperly claiming the market maker exemption to conduct sham reset transactions (Hazan, TJM, Wolfson brothers, optionsXpress)",
+    "kind": "verifiable_fact",
+    "assessment": "holds_up",
+    "note": "SEC enforcement record, OCIE risk alert (2013), and ALJ decisions cited; cases are documented"
+   },
+   {
+    "claim": "In the optionsXpress case, one customer's short positions were responsible for 64% of all shares failing to settle in the entire clearing system in affected stocks during the period",
+    "kind": "verifiable_fact",
+    "assessment": "holds_up",
+    "note": "SEC ALJ decision ID 490 cited; verifiable in decision document"
+   },
+   {
+    "claim": "Phantom supply from unlocated market-maker shorting can be used as a temporary tool to suppress prices, with the SEC conceding this mechanism exists",
+    "kind": "speculation",
+    "assessment": "holds_up",
+    "note": "SEC 2008 antifraud release and emergency order explicitly acknowledge fails to deliver can be used to 'drive down a company's stock price' and create 'unnecessary or artificial price movements'; empirical scale shown in optionsXpress case"
+   },
+   {
+    "claim": "Naked shorting by market makers is not rampant and unpunished everywhere; the SEC's GameStop report found fails spiked but did not persist at the clearing-member level",
+    "kind": "verifiable_fact",
+    "assessment": "holds_up",
+    "note": "Work explicitly disclaims the strongest version of the claim; cites SEC staff report on January 2021 event"
+   }
+  ],
+  "constituents": [],
+  "evidence_quality": 5,
+  "speculation_level": "low",
+  "validity_rating": 5,
+  "rating_reconciled": false,
+  "validity_rationale": "All factual claims check out against the documented regulatory record and enforcement history. Market mechanics are accurately described (supply constraints, price-setting at margin). No time-bound predictions are made that could be falsified. Speculation about short-term price impact is grounded in explicit SEC statements from 2008 and demonstrated at scale in the optionsXpress case. The work is careful about boundaries, explicitly disclaiming that abuse is universal and citing SEC's own finding that GameStop fails spiked but did not persist systematically. Primary sources throughout (CFR, FINRA, SEC decisions) are cited and used correctly.",
+  "quality_variance": "na",
+  "confidence": "high",
+  "topics": [
+   "market structure",
+   "short selling",
+   "regulatory exemptions",
+   "market maker privileges",
+   "SEC enforcement",
+   "Regulation SHO"
+  ],
   "source_corpus": "community",
-  "review_status": "pending",
+  "review_status": "reviewed",
   "submission": {
    "submitted_on": "2026-09-16",
    "submitted_by": "ErranttVenture",
@@ -15986,6 +16049,13 @@
     "sha256": "159f5341fc7337d59cf07d83a642271ffa56c639815ee5b6c967be165e8d9abc"
    },
    "platform": "other"
+  },
+  "review_provenance": {
+   "model": "claude-haiku-4-5-20251001",
+   "evaluated_on": "2026-09-17",
+   "hindsight_version": "v2",
+   "prompt_revision": "p2",
+   "reviewer": "ErranttVenture"
   }
  }
 ]

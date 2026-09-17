@@ -160,6 +160,11 @@ test('packet CLI refuses malformed evaluation dates and mixed CLI modes', async 
 
 test('repository validation CLI enforces provenance on an unreviewable community record', async (t) => {
   const { root, record, save } = await fixture(t);
+  // Build the unrated shape from whatever review state record 251 has in the tracked dataset.
+  for (const field of ['is_compilation', 'content_type', 'key_claims', 'constituents', 'evidence_quality', 'speculation_level',
+    'validity_rating', 'rating_reconciled', 'validity_rationale', 'quality_variance', 'confidence', 'topics', 'review_provenance']) {
+    delete record[field];
+  }
   record.review_status = 'unreviewable';
   record.summary = 'Not enough readable text for a fair review.';
   await save();
