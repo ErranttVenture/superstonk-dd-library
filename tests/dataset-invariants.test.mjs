@@ -46,6 +46,24 @@ test('community provenance rejects p1 and dates after the selected hindsight ver
   assert.match(checkDatasetInvariants([...baseline, record], baseline).errors.join('\n'), /pos 251.*Unknown hindsight version/);
 });
 
+test('pending community records must not carry review provenance', () => {
+  const record = { ...community(251), uploaded: '2026-08-16', review_status: 'pending', review_provenance: provenance() };
+  assert.match(checkDatasetInvariants([...baseline, record], baseline).errors.join('\n'), /pos 251.*pending.*review_provenance/);
+});
+
+test('reviews and dispute re-ratings must stamp a review prompt version, never p1 or an unregistered one', () => {
+  for (const revision of ['p1', 'p9']) {
+    const submission = { ...community(251), uploaded: '2026-08-16', review_status: 'reviewed', review_provenance: provenance({ prompt_revision: revision }) };
+    assert.match(checkDatasetInvariants([...baseline, submission], baseline).errors.join('\n'), new RegExp(`pos 251.*${revision}`));
+    const master = structuredClone(baseline);
+    Object.assign(master[8], { validity_rating: 2, hindsight_version: 'v2', review_provenance: provenance({ prompt_revision: revision }) });
+    assert.match(checkDatasetInvariants(master, baseline).errors.join('\n'), new RegExp(`pos 9.*${revision}`));
+  }
+  const adjudicated = structuredClone(baseline);
+  Object.assign(adjudicated[8], { validity_rating: 2, hindsight_version: 'v2', review_provenance: provenance({ model: 'maintainer-adjudication' }) });
+  assert.deepEqual(checkDatasetInvariants(adjudicated, baseline).errors, []);
+});
+
 test('each changed preserved assessment requires provenance and a top-level hindsight version', () => {
   for (const [field, value] of Object.entries({ validity_rating: 3, evidence_quality: 4, key_claims: [{ claim: 'Changed' }] })) {
     const originals = structuredClone(baseline);
@@ -208,8 +226,8 @@ test('repository invariants reject uppercase tracking duplicates of original rec
 
 test('required repository validation CLI rejects manually edited credential links and tracking duplicates', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dd-validation-'));
+  // Only scripts/ and data/: repository validation must not depend on harness documentation.
   await cp(new URL('../scripts/', import.meta.url), join(root, 'scripts'), { recursive: true });
-  await cp(new URL('../harness/', import.meta.url), join(root, 'harness'), { recursive: true });
   await mkdir(join(root, 'data'));
   for (const file of ['schema.json', 'original-master.json']) {
     await cp(new URL(`../data/${file}`, import.meta.url), join(root, 'data', file));

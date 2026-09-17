@@ -2,12 +2,23 @@
 // recovered p1 sources and the maintained prompt_versions.md registry. It never invokes a
 // model; see prompt_versions.md for the calibrated runtime that consumes its output.
 import { readFileSync } from 'node:fs';
-import { readFile, realpath, writeFile } from 'node:fs/promises';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { readFile, realpath, stat, writeFile } from 'node:fs/promises';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { digest, validatePreservedFiles } from '../scripts/preservation.mjs';
+import { preservedCopyError, readPreservedCopy } from '../scripts/preservation.mjs';
+import { hindsightCutoff } from '../scripts/review-versions.mjs';
+import { validateAgainstSchema } from '../scripts/schema-validator.mjs';
 
-const USAGE = 'Usage: node harness/assemble_review.mjs --pos <n> --prompt <p1|p2> --hindsight <v1|v2> --packet <path> [--kind <review|verify>] [--output <path>]\n   or: node harness/assemble_review.mjs --pos <n> --packet-out <path> --evaluated-on <YYYY-MM-DD>';
+export { hindsightCutoff };
+
+const USAGE = [
+  'Usage: node harness/assemble_review.mjs --pos <n> --prompt <p1|p2> --hindsight <v1|v2> --packet <path> [--kind <review|verify>] [--output <path>]',
+  '   or: node harness/assemble_review.mjs --pos <n> --packet-out <path> --evaluated-on <YYYY-MM-DD>',
+  '   or: node harness/assemble_review.mjs --pos <n> --validate-output <result.json>',
+  '   or: node harness/assemble_review.mjs --tool-schema'
+].join('\n');
+// The calibrated StructuredOutput schema: output_schema.json without its annotation keywords.
+const ANNOTATION_KEYWORDS = ['$schema', '$id', '$comment', 'title'];
 const DEFAULT_MAX_CHARS = 400000;
 const DEFAULT_LINE_WIDTH = 500;
 const PLACEHOLDERS = /\{\{BOOK_PACKET_PATH\}\}|\{\{REVIEW_OUTPUT_PATH\}\}|\{\{VERIFY_OUTPUT_PATH\}\}|\$\{typeBlock\}|\$\{HINDSIGHT\}|\$\{RUBRIC\}|\$\{TIME_RULES\}|\$\{p\}/g;
@@ -83,12 +94,6 @@ export function hindsightBlock(version) {
     throw new Error(`Unknown hindsight version: ${version}`);
   }
   return HINDSIGHT[version];
-}
-
-// v1's heading says "as of mid-2026"; prompt_versions.md fixes it at the July run date.
-export function hindsightCutoff(version) {
-  const heading = hindsightBlock(version).split('\n')[0];
-  return /as of (\d{4}-\d{2}-\d{2})/.exec(heading)?.[1] ?? (version === 'v1' ? '2026-07-21' : null);
 }
 
 function typeKey(record) {
@@ -223,21 +228,46 @@ export function buildPacket(record, text, { contract, evaluatedOn, maxChars = DE
 }
 
 function parseArguments(arguments_) {
+  if (arguments_.length === 1 && arguments_[0] === '--tool-schema') {
+    return { mode: 'tool-schema' };
+  }
   const options = {};
   for (let index = 0; index < arguments_.length; index += 2) {
     const [flag, value] = [arguments_[index], arguments_[index + 1]];
-    if (!/^--(pos|prompt|hindsight|packet|kind|output|packet-out|evaluated-on)$/.test(flag) || !value || value.startsWith('--') || Object.hasOwn(options, flag.slice(2))) {
+    if (!/^--(pos|prompt|hindsight|packet|kind|output|packet-out|evaluated-on|validate-output)$/.test(flag) || !value || value.startsWith('--') || Object.hasOwn(options, flag.slice(2))) {
       throw new Error(USAGE);
     }
     options[flag.slice(2)] = value;
   }
-  const packetMode = Object.hasOwn(options, 'packet-out');
-  if (!/^[1-9][0-9]*$/.test(options.pos ?? '') || (packetMode
-    ? (!options['evaluated-on'] || ['prompt', 'hindsight', 'packet', 'kind', 'output'].some((key) => Object.hasOwn(options, key)))
-    : (!options.prompt || !options.hindsight || !options.packet || Object.hasOwn(options, 'evaluated-on')))) {
+  // Each mode takes exactly its own flags besides --pos.
+  const modes = {
+    packet: { flag: 'packet-out', required: ['packet-out', 'evaluated-on'], optional: [] },
+    validate: { flag: 'validate-output', required: ['validate-output'], optional: [] },
+    prompt: { flag: 'prompt', required: ['prompt', 'hindsight', 'packet'], optional: ['kind', 'output'] }
+  };
+  const mode = Object.keys(modes).find((name) => Object.hasOwn(options, modes[name].flag)) ?? 'prompt';
+  const { required, optional } = modes[mode];
+  const allowed = new Set(['pos', ...required, ...optional]);
+  if (!/^[1-9][0-9]*$/.test(options.pos ?? '') || required.some((key) => !Object.hasOwn(options, key)) ||
+      Object.keys(options).some((key) => !allowed.has(key))) {
     throw new Error(USAGE);
   }
-  return options;
+  return { mode, ...options };
+}
+
+function toolSchema() {
+  const schema = JSON.parse(readFileSync(new URL('output_schema.json', import.meta.url), 'utf8'));
+  return Object.fromEntries(Object.entries(schema).filter(([key]) => !ANNOTATION_KEYWORDS.includes(key)));
+}
+
+async function validateOutput(pos, path) {
+  const schema = JSON.parse(readFileSync(new URL('output_schema.json', import.meta.url), 'utf8'));
+  const output = JSON.parse(await readFile(path, 'utf8'));
+  const errors = validateAgainstSchema(schema, output).map(({ path: at, message }) => `${at}: ${message}`);
+  if (output?.pos !== pos) {
+    errors.push(`pos ${output?.pos} does not match the selected record ${pos}`);
+  }
+  return errors;
 }
 
 function isWithin(root, path) {
@@ -256,22 +286,30 @@ async function writeCommunityPacket(record, path, evaluatedOn) {
   }
   const root = fileURLToPath(new URL('../', import.meta.url));
   const output = resolve(path);
-  // Check both the spelling and the real parent: an external junction can lead back inside.
-  if (isWithin(root, output) || isWithin(await realpath(root), await realpath(dirname(output)))) {
+  if (isWithin(root, output)) {
     throw new Error('Packet output must be outside the repository');
   }
-  const errors = await validatePreservedFiles([record], root);
-  if (errors.length) throw new Error(errors.join('\n'));
-  const bytes = await readFile(join(root, copy.path));
-  // Hash the actual buffer used below as well as validating the canonical preserved path.
-  if (digest(bytes) !== copy.sha256) throw new Error(`Record ${record.pos}: Preserved text SHA-256 mismatch.`);
+  const parent = dirname(output);
+  if (!(await stat(parent).then((entry) => entry.isDirectory(), () => false))) {
+    throw new Error(`Packet output directory does not exist: ${parent}`);
+  }
+  // Also compare real paths: an external junction can lead back inside the repository.
+  if (isWithin(await realpath(root), await realpath(parent))) {
+    throw new Error('Packet output must be outside the repository');
+  }
+  let bytes;
+  try {
+    bytes = await readPreservedCopy(record, root);
+  } catch (error) {
+    throw new Error(preservedCopyError(record, error));
+  }
   const text = bytes.toString('utf8');
   const separator = /^---\r?$/m.exec(text);
   if (!separator) throw new Error(`Record ${record.pos}: preserved text has no --- separator line`);
   let start = separator.index + separator[0].length;
   if (text[start] === '\n') start += 1;
-  // Preserved Markdown is already the source text: retain its exact body, including long lines.
-  const packet = buildPacket(record, text.slice(start), { contract: 'p2', evaluatedOn, lineWidth: Infinity });
+  // Same 500-character wrap as the calibration packets, so the Read tool never truncates a line.
+  const packet = buildPacket(record, text.slice(start), { contract: 'p2', evaluatedOn });
   // Exclusive creation also refuses existing symlinks and protects previous packet files.
   await writeFile(output, packet, { encoding: 'utf8', flag: 'wx' });
   return output;
@@ -280,12 +318,22 @@ async function writeCommunityPacket(record, path, evaluatedOn) {
 async function main() {
   try {
     const options = parseArguments(process.argv.slice(2));
+    if (options.mode === 'tool-schema') {
+      process.stdout.write(`${JSON.stringify(toolSchema(), null, 2)}\n`);
+      return;
+    }
     const master = JSON.parse(readFileSync(new URL('../data/master.json', import.meta.url), 'utf8'));
     const record = master.find((candidate) => candidate.pos === Number(options.pos));
     if (!record) {
       throw new Error(`No record at position ${options.pos}`);
     }
-    if (options['packet-out']) {
+    if (options.mode === 'validate') {
+      const errors = await validateOutput(record.pos, options['validate-output']);
+      if (errors.length) throw new Error(`Review output is invalid:\n${errors.join('\n')}`);
+      process.stdout.write(`Review output is valid for position ${record.pos}\n`);
+      return;
+    }
+    if (options.mode === 'packet') {
       process.stdout.write(`${await writeCommunityPacket(record, options['packet-out'], options['evaluated-on'])}\n`);
       return;
     }

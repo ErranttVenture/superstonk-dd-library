@@ -414,7 +414,9 @@ test('schema permits required review provenance on unreviewable community and re
     hindsight_version: 'v2', prompt_revision: 'p2', reviewer: 'QA maintainer' };
   assert.deepEqual(validateAgainstSchema(schema, { ...communityPending, review_status: 'unreviewable',
     summary: 'Insufficient readable text.', review_provenance: provenance }), []);
-  assert.deepEqual(validateAgainstSchema(schema, { ...record, review_status: 'reviewed',
+  assert.deepEqual(validateAgainstSchema(schema, { ...record, review_provenance: provenance, hindsight_version: 'v2' }), []);
+  // review_status is a community field; preserved re-ratings carry provenance and a top-level stamp instead.
+  assert.notDeepEqual(validateAgainstSchema(schema, { ...record, review_status: 'reviewed',
     review_provenance: provenance, hindsight_version: 'v2' }), []);
 });
 

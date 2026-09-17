@@ -4,7 +4,12 @@ import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/pr
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { digest } from '../scripts/preservation.mjs';
+import { validateAgainstSchema } from '../scripts/schema-validator.mjs';
+import { buildPacket } from '../harness/assemble_review.mjs';
 import { runNodeCli } from './cli-test-helpers.mjs';
+
+const bodyAfterSeparator = (text) => text.slice(text.indexOf('\n---\n') + 5);
+const longestLine = (text) => Math.max(...text.split('\n').map((line) => line.replace(/\r$/, '').length));
 
 async function fixture(t) {
   const directory = await mkdtemp(join(tmpdir(), 'dd-packet-'));
@@ -24,7 +29,7 @@ async function fixture(t) {
   return { directory, root, master, record, output, run, save };
 }
 
-test('packet CLI builds 251 with exact preserved body and p2 metadata', async (t) => {
+test('packet CLI builds 251 with p2 metadata and the calibrated 500-character line wrap', async (t) => {
   const { root, record, output, run } = await fixture(t);
   const result = await run();
   assert.equal(result.status, 0, result.stderr);
@@ -34,7 +39,9 @@ test('packet CLI builds 251 with exact preserved body and p2 metadata', async (t
   assert.match(packet, /^PLATFORM: other$/m);
   assert.match(packet, /^TEXT COVERAGE: full text$/m);
   assert.match(packet, /^EVALUATED ON: 2026-09-17$/m);
-  assert.equal(packet.slice(packet.indexOf('\n---\n') + 5), preserved.slice(preserved.indexOf('\n---\n') + 5));
+  assert.ok(longestLine(bodyAfterSeparator(preserved)) > 500, 'fixture must exercise wrapping');
+  assert.ok(longestLine(packet) <= 500, 'packet lines must fit the calibrated Read-safe width');
+  assert.equal(packet, buildPacket(record, bodyAfterSeparator(preserved), { contract: 'p2', evaluatedOn: '2026-09-17' }));
 });
 
 test('packet CLI verifies hashes, requires a community preserved copy and a separator', async (t) => {
@@ -64,17 +71,60 @@ test('packet CLI verifies hashes, requires a community preserved copy and a sepa
   await assert.rejects(readFile(output), { code: 'ENOENT' });
 });
 
-test('packet CLI uses the first separator and preserves CRLF, blank lines and long lines', async (t) => {
+test('packet CLI uses the first separator, keeps CRLF and blank lines, and wraps long lines only at spaces', async (t) => {
   const { root, record, output, run, save } = await fixture(t);
-  const body = `\r\n${'x'.repeat(900)}\r\n---\r\nSecond section\r\n`;
+  const paragraph = Array.from({ length: 700 }, (_, index) => `word${index}`).join(' ');
+  const body = `\r\n${paragraph}\r\n---\r\nSecond section\r\n`;
   const bytes = Buffer.from(`Attribution\r\n---\r\n${body}`);
   await writeFile(join(root, record.submission.preserved_text.path), bytes);
   record.submission.preserved_text.sha256 = digest(bytes);
   await save();
   const result = await run();
   assert.equal(result.status, 0, result.stderr);
-  const packet = await readFile(output, 'utf8');
-  assert.equal(packet.slice(packet.indexOf('\n---\n') + 5), body);
+  const packetBody = bodyAfterSeparator(await readFile(output, 'utf8'));
+  assert.ok(longestLine(packetBody) <= 500);
+  const lines = packetBody.split('\r\n');
+  assert.equal(lines[0], '', 'the blank line after the separator stays');
+  assert.equal(lines[1].split('\n').join(' '), paragraph, 'wrapping only replaces spaces with line breaks');
+  assert.deepEqual(lines.slice(2), ['---', 'Second section', '']);
+});
+
+test('packet CLI reports a missing output directory outside the repository clearly', async (t) => {
+  const { directory, run } = await fixture(t);
+  const result = await run(join(directory, 'missing', 'packet.txt'));
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Packet output directory does not exist/);
+  assert.doesNotMatch(result.stderr, /ENOENT/);
+});
+
+test('CLI prints the calibrated StructuredOutput schema and validates a review output', async (t) => {
+  const { directory, root } = await fixture(t);
+  const cli = join(root, 'harness/assemble_review.mjs');
+  const schema = JSON.parse(await readFile(join(root, 'harness/output_schema.json'), 'utf8'));
+
+  const printed = await runNodeCli(cli, ['--tool-schema']);
+  assert.equal(printed.status, 0, printed.stderr);
+  const { $schema, $id, $comment, title, ...calibrated } = schema;
+  assert.deepEqual(JSON.parse(printed.stdout), calibrated);
+
+  const valid = join(directory, 'valid.json');
+  await cp(new URL('../harness/calibration-runs/p2/candidate/009-r1.json', import.meta.url), valid);
+  const passed = await runNodeCli(cli, ['--pos', '9', '--validate-output', valid]);
+  assert.equal(passed.status, 0, passed.stderr);
+  assert.match(passed.stdout, /valid/i);
+
+  const wrongPosition = await runNodeCli(cli, ['--pos', '18', '--validate-output', valid]);
+  assert.equal(wrongPosition.status, 1);
+  assert.match(wrongPosition.stderr, /pos 9.*18/);
+
+  const invalid = join(directory, 'invalid.json');
+  const output = JSON.parse(await readFile(valid, 'utf8'));
+  delete output.summary;
+  assert.notDeepEqual(validateAgainstSchema(schema, output), []);
+  await writeFile(invalid, JSON.stringify(output));
+  const failed = await runNodeCli(cli, ['--pos', '9', '--validate-output', invalid]);
+  assert.equal(failed.status, 1);
+  assert.match(failed.stderr, /summary/);
 });
 
 test('packet CLI rejects repository paths, including a directory alias, and never replaces output', async (t) => {

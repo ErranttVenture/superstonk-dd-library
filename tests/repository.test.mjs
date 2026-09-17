@@ -965,11 +965,14 @@ test('p2 calibration outputs are committed and the activation record matches the
   assert.match(versions, /\| p1 \| FROZEN \|/);
   assert.match(versions, /\| p2 \| ACTIVE \|/);
   assert.match(versions, /\*\*Verdict: PASSED — 10-book calibration on partial text\.\*\*/);
-  const activation = /\*\*Activated:\*\* 2026-09-17 in (\[#([1-9][0-9]*)\]\(https:\/\/github\.com\/ErranttVenture\/superstonk-dd-library\/pull\/\2\))/.exec(versions);
+  // Activation takes effect when its PR merges, so the registry names the PR, not a guessed date.
+  const activation = /\*\*Activated:\*\* when (\[#([1-9][0-9]*)\]\(https:\/\/github\.com\/ErranttVenture\/superstonk-dd-library\/pull\/\2\)) merged/.exec(versions);
   assert.ok(activation, 'activation must link its numbered PR');
-  assert.ok(versions.split('\n').find((line) => line.startsWith('| p2 | ACTIVE |')).includes(activation[1]));
+  const activeRow = versions.split('\n').find((line) => line.startsWith('| p2 | ACTIVE |'));
+  assert.ok(activeRow.includes(activation[1]));
+  assert.doesNotMatch(activeRow, /\d{4}-\d{2}-\d{2} in \[#/);
   const changelog = versions.slice(versions.indexOf('## Changelog'), versions.indexOf('## Activation record'));
-  assert.match(changelog, /\| p2 \| 2026-09-17 \| Activation:/);
+  assert.match(changelog, new RegExp(`\\| p2 \\| On merge of #${activation[2]} \\| Activation:`));
   assert.ok(changelog.includes(activation[1]));
   assert.ok(versions.includes(`| Mean T − C validity | ${signed(run.gate.mean_validity_delta)} |`));
   assert.ok(versions.includes(`| Mean T − C evidence quality | ${signed(run.gate.mean_evidence_delta)} |`));
@@ -990,6 +993,15 @@ test('active p2 routing describes its calibrated runtime, validation and complet
     assert.ok(section.includes(required), `p2 procedure must describe ${required}`);
   }
   assert.doesNotMatch(readme, /## Insert a review model|model of your choice|p2 remains CANDIDATE/);
+  // Review fixes: calibrated tool schema, shell-independent validation, working extraction path,
+  // calibrated wrapping, website schema order, and preserved re-ratings without review_status.
+  for (const required of ['--tool-schema', '--validate-output', '--html', 'vendored', 'justthebros']) {
+    assert.ok(section.includes(required), `p2 procedure must describe ${required}`);
+  }
+  assert.doesNotMatch(section, /node --input-type=module -e|check Read responses for truncation|preserves the remaining Markdown body exactly/);
+  assert.match(section, /review_status[^.\n]*community record/);
+  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+  assert.doesNotMatch(versions, /preserves the Markdown body exactly, including long lines/);
   const contributing = await readFile(new URL('../CONTRIBUTING.md', import.meta.url), 'utf8');
   const policy = contributing.slice(contributing.indexOf('## Review and accepted changes'), contributing.indexOf('## Author right of reply'));
   assert.match(policy, /pending community record[\s\S]*maintainer-run review PR[\s\S]*neither a dispute nor a correction issue/);

@@ -127,7 +127,6 @@
         "calibration": { "$ref": "#/$defs/calibration" },
         "insufficient_text": { "$ref": "#/$defs/boolean" },
         "hindsight_version": { "$ref": "#/$defs/hindsightVersion" },
-        "review_status": { "$ref": "#/$defs/reviewedStatus" },
         "review_provenance": { "$ref": "#/$defs/reviewProvenance" },
         "author_response": { "$ref": "#/$defs/string" }
       },

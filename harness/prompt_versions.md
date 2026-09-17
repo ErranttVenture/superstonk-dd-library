@@ -9,7 +9,7 @@ prompt is recorded below.
 | Version | Status | Text and scope |
 |---|---|---|
 | p1 | FROZEN | [`review_prompt.md`](review_prompt.md), including its three type blocks, plus the verify prompt in [`calibration.md`](calibration.md), incorporated by reference and not duplicated here. Historical July reproduction. |
-| p2 | ACTIVE | The full text below. Active for new community DDs and dispute re-ratings as of 2026-09-17 in [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17). The calibration gate passed on 2026-09-16 (10-book calibration on partial text); see the [Activation record](#activation-record). |
+| p2 | ACTIVE | The full text below. Active for new community DDs and dispute re-ratings since [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17) merged. The calibration gate passed on 2026-09-16 (10-book calibration on partial text); see the [Activation record](#activation-record). |
 
 p2 is **ACTIVE** for new community DDs (pos 251 onward) and dispute re-ratings.
 Use the calibrated runtime below with the current hindsight version; see
@@ -120,7 +120,7 @@ Sampled coverage lists every contiguous range of included pages (for example, `s
 
 Text limit: use the full text up to 400,000 characters. Past that, include whole pages up to the limit and mark the coverage as a sample.
 
-Line width for extracted page text: wrap text at spaces into lines of at most 500 characters, so the reviewer's Read tool never truncates a line. Wrapping changes only line breaks; a single token longer than 500 characters is split. [`assemble_review.mjs`](assemble_review.mjs) builds packets to this contract. Its community `--packet-out` mode preserves the Markdown body exactly, including long lines. Check the Read output for truncation and obtain the complete packet before accepting a review; record any incomplete coverage instead of claiming full text. This preservation rule does not change the calibration packets or results.
+Line width: wrap text at spaces into lines of at most 500 characters, so the reviewer's Read tool never truncates a line. Wrapping changes only line breaks; a single token longer than 500 characters is split. [`assemble_review.mjs`](assemble_review.mjs) builds packets to this contract, including community packets from preserved copies (`--packet-out`).
 
 Never commit packets. They contain third-party text.
 
@@ -295,13 +295,13 @@ evidence. If still failing, stop with p2 CANDIDATE, a draft PR and no routing ch
 |---|---|---|---|---|
 | p1 | 2026-07-21 (original run) | Frozen review and verify prompts incorporated by reference | Preserve the recovered July instructions | [July calibration](calibration.md) |
 | p2 | 2026-09-16 | Initial candidate: living-catalog framing, packet contract, explicit time rules and JSON-only return | Support community DDs and dispute re-ratings on the same rating scale, subject to calibration | [Activation record](#activation-record) — passed 2026-09-16 (10 books, partial text) |
-| p2 | 2026-09-17 | Activation: route new community DDs and dispute re-ratings to p2; add provenance checks and preserved-copy packet CLI | Apply the passed calibration in its calibrated runtime, retaining original ratings | [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17); [calibration record](#activation-record) |
+| p2 | On merge of #17 | Activation: route new community DDs and dispute re-ratings to p2; add provenance checks and preserved-copy packet CLI | Apply the passed calibration in its calibrated runtime, retaining original ratings | [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17); [calibration record](#activation-record) |
 
 ## Activation record
 
 **Verdict: PASSED — 10-book calibration on partial text.**
 
-**Activated:** 2026-09-17 in [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17).
+**Activated:** when [#17](https://github.com/ErranttVenture/superstonk-dd-library/pull/17) merged; its merge commit records the date.
 
 An earlier attempt on 2026-09-16 could not run because no Anthropic API access was
 available. The gate then ran on 2026-09-16 under the protocol amendment above, which
@@ -355,4 +355,4 @@ Report only, over the retained matched books:
 - Candidate runs needed a schema resubmission more often (21 vs 8). Every final output was valid, but first-try conformance was worse.
 - Candidate runs marked fewer claims `cannot_assess` (10.6% vs 18.8%). Watch this in activated reviews.
 
-**Activation changes.** p2 is ACTIVE for new community DDs and dispute re-ratings. `README.md` and `CONTRIBUTING.md` route those reviews through the calibrated runtime, schema validation and explicit record mapping. Repository validation enforces provenance and hindsight stamps; the packet CLI builds hash-verified community packets outside the repository. Activation changes no original ratings, record 251, hindsight facts or calibration artifacts, and runs no reviews.
+**Activation changes.** p2 is ACTIVE for new community DDs and dispute re-ratings. `README.md` and `CONTRIBUTING.md` route those reviews through the calibrated runtime, schema validation and explicit record mapping. Repository validation enforces provenance, review prompt versions and hindsight stamps from `scripts/review-versions.mjs`; the assembler CLI builds hash-verified community packets outside the repository with the calibrated line wrap, prints the calibrated StructuredOutput schema and validates review output. The justthebros importer's vendored schema must accept the new optional provenance fields before the first unreviewable community record or dispute re-rating merges. Activation changes no original ratings, record 251, hindsight facts or calibration artifacts, and runs no reviews.

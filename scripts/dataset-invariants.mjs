@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import { hindsightCutoff } from '../harness/assemble_review.mjs';
+import { REVIEW_PROMPT_VERSIONS, hindsightCutoff } from './review-versions.mjs';
 import { isPublicHttpUrl, normalizeUrl } from './submission.mjs';
 
 const PRESERVED_COUNT = 250;
@@ -47,14 +47,17 @@ export function checkDatasetInvariants(master, baseline) {
   const originals = new Map(baseline.map((record) => [record.pos, record]));
   for (const record of master) {
     const provenance = record.review_provenance;
+    if (provenance && !REVIEW_PROMPT_VERSIONS.includes(provenance.prompt_revision)) {
+      errors.push(`record at pos ${record.pos} stamps prompt_revision ${provenance.prompt_revision}; reviews and dispute re-ratings must use ${REVIEW_PROMPT_VERSIONS.join(' or ')}`);
+    }
     if (record.pos > PRESERVED_COUNT) {
       if (['reviewed', 'unreviewable'].includes(record.review_status) && !provenance) {
         errors.push(`community record at pos ${record.pos} requires review_provenance`);
       }
+      if (record.review_status === 'pending' && provenance) {
+        errors.push(`community record at pos ${record.pos} is pending and must not carry review_provenance`);
+      }
       if (provenance) {
-        if (provenance.prompt_revision === 'p1') {
-          errors.push(`community record at pos ${record.pos} must not use p1 review provenance`);
-        }
         try {
           const cutoff = hindsightCutoff(provenance.hindsight_version);
           if (!cutoff || !/^\d{4}-\d{2}-\d{2}$/.test(record.uploaded ?? '')) {
