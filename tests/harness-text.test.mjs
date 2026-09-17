@@ -59,6 +59,31 @@ test('extractPageText rejects nonnumeric page markers', () => {
     () => extractPageText('<span class="flip-basic-num">seven</span><p>Text</p>'),
     /Invalid page marker/
   );
+  assert.throws(
+    () => extractPageText('<div class="flip-basic-num">P:seven</div><p>Text</p>'),
+    /Invalid page marker/
+  );
+});
+
+test('extractPageText accepts the current P:NN page-marker format', () => {
+  assert.deepEqual(
+    extractPageText('<div class="flip-basic-num">P:03</div><p>Third</p><div class="flip-basic-num">P:10</div><p>Tenth</p>'),
+    { textAvailable: true, pages: [{ page: 3, text: 'Third' }, { page: 10, text: 'Tenth' }] }
+  );
+});
+
+test('saved-page CLI extracts text from a local HTML file without fetching', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'saved-page-'));
+  try {
+    const path = join(directory, 'book.html');
+    await writeFile(path, textFixture, 'utf8');
+    const result = await runNodeCli('harness/extract_book_text.mjs', ['--html', path]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), { path, ...extractPageText(textFixture) });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('extractPageText recognizes only an HTML class attribute as a page marker', () => {

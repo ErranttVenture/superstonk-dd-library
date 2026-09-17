@@ -1,0 +1,64 @@
+{
+  "pos": 81,
+  "is_compilation": false,
+  "content_type": "market_dd",
+  "summary": "Two-part November 2021 post arguing GameStop's price movements since 2002 have been controlled by a single, unchanged HFT algorithm. Part 1 analyzes dividend cycles and options patterns, claiming quarterly swings are manufactured around dividend dates and predicting a November 23, 2021 mini squeeze. Part 2 examines historical price data, $0.25 price multiples, and volume anomalies to argue algorithmic control repeats in lock-step patterns across decades, claiming 2021 data was 'prewritten' from past algorithmic patterns.",
+  "key_claims": [
+    {
+      "claim": "Claims that closing and opening prices on GME are 'manipulated to hit specific values' and constrained to precise ranges, while high-low deltas correlate with volume but open-close values do not.",
+      "kind": "speculation",
+      "assessment": "partially_holds",
+      "note": "Correlative analysis presented with real data (pages 20-24), but the leap from correlation to proof of manipulation is unsupported. Range-bound trading and volume patterns have many conventional explanations."
+    },
+    {
+      "claim": "Predicts a 'mini squeeze' on November 23, 2021.",
+      "kind": "prediction",
+      "assessment": "does_not_hold",
+      "note": "By September 2026, this prediction clearly did not materialize. GME traded $100-150 range in late November 2021. Page 11."
+    },
+    {
+      "claim": "Claims that the same HFT algorithm has controlled GME's price since December 2002 and continues unchanged to the present day.",
+      "kind": "speculation",
+      "assessment": "does_not_hold",
+      "note": "While HFT did begin circa 2002 and is real, the claim that identical algorithms run for 19 years controlling decimal-point price patterns is implausible and unverified. No algorithmic code or mechanism provided. Pages 31-37."
+    },
+    {
+      "claim": "Claims approximately 21% of all $0.25 OHLC multiples from 2002-present occurred in only 2003 and 2021, proving algorithmic manipulation during those years.",
+      "kind": "speculation",
+      "assessment": "does_not_hold",
+      "note": "Statistical reasoning is flawed. Volatile periods (bankruptcy risks in 2003, squeeze event in 2021) naturally produce more round-number closes. Analysis does not control for volatility or market conditions. Pages 27-28."
+    },
+    {
+      "claim": "Claims mirror patterns between 2008 and 2018 price peaks, and 2002 and 2019 lows, with 'rates of change' matching exactly, suggesting algorithmic repetition.",
+      "kind": "speculation",
+      "assessment": "does_not_hold",
+      "note": "Pattern-matching across 10+ year gaps is highly susceptible to apophenia. No causal mechanism proposed. Visual similarity is insufficient evidence for algorithmic control. Pages 35-36."
+    },
+    {
+      "claim": "Claims 2021 price data was already 'prewritten' based on algorithmic patterns from the past and cannot be changed.",
+      "kind": "speculation",
+      "assessment": "does_not_hold",
+      "note": "Presented as near-certain (pages 37-41) but contradicts author's earlier admission: 'I am still in the middle of definitively proving this as thoroughly as I like to so not all of this shit may be accurate' (page 37)."
+    },
+    {
+      "claim": "Claims that options IV30 volatility increases and calls become cheaper on dividend announcement and ex-dividend dates.",
+      "kind": "verifiable_fact",
+      "assessment": "holds_up",
+      "note": "Options mechanics are correctly described. Calls do become cheaper before ex-dividend dates due to expected stock decline (pages 9, 32). This is standard market behavior, not evidence of manipulation by itself."
+    }
+  ],
+  "evidence_quality": 3,
+  "speculation_level": "high",
+  "validity_rating": 2,
+  "validity_rationale": "The work uses real market data (NASDAQ, SEC, NYSE records) and correctly describes options mechanics, but its core thesis—that a single, unchanged algorithm has controlled GME's price for 19 years—relies on pattern-matching (apophenia) rather than causal evidence and remains unproven. The key prediction (Nov 23, 2021 squeeze) failed. The author chains correlations into causal conclusions while acknowledging mid-analysis uncertainty, then presents most conclusions with high confidence. No evidence of the alleged algorithm itself, no independent verification of claimed patterns, and the statistical analysis has methodological flaws (ignoring volatility's effect on round-number prices).\"",
+  "quality_variance": "na",
+  "confidence": "high",
+  "topics": [
+    "GameStop (GME)",
+    "High-frequency trading (HFT)",
+    "Stock price manipulation",
+    "Market structure",
+    "Options trading",
+    "Algorithmic trading"
+  ]
+}

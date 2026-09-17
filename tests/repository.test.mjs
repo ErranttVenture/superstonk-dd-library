@@ -10,6 +10,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 import { checkDatasetInvariants } from '../scripts/dataset-invariants.mjs';
+import { validateAgainstSchema } from '../scripts/schema-validator.mjs';
 
 const originals = new Map([
   ['reports/REPORT.md', '53c777712e6ff985e1259da5ebe47aa05e499c81d5d0de9916eba9b17ff90cfa'],
@@ -312,7 +313,8 @@ test('labels every harness file with either a reconstruction or a verbatim-recov
     ['calibration.md', 'recovered'],
     ['ERRATA.md', 'maintained'],
     ['hindsight.md', 'maintained'],
-    ['prompt_versions.md', 'maintained']
+    ['prompt_versions.md', 'maintained'],
+    ['assemble_review.mjs', 'maintained']
   ]);
 
   const entries = await readdir(harnessDirectory, { withFileTypes: true });
@@ -838,15 +840,27 @@ test('p2 review prompt is pinned to the recorded candidate text', async () => {
   assert.equal(createHash('sha256').update(review).digest('hex'), '994dd322e89c203b9931073b4de72b01124b637e0ec575ed528a3f4d82ef36cf');
 });
 
+test('p2 calibration records its amended protocol and runtime before any run', async () => {
+  const versions = (await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+
+  assert.match(versions, /### Protocol amendment \(2026-09-16, recorded before any run\)/);
+  assert.match(versions, /\*\*9, 18, 36, 45, 54, 63, 72, 81, 99, 108\*\*/);
+  assert.match(versions, /`model: 'haiku'`/);
+  assert.match(versions, /StructuredOutput\s+tool/);
+  assert.match(versions, /Read\s+tool/);
+  assert.match(versions, /at least 9 matched books/);
+  assert.match(versions, /\| Books with validity difference at most 1 \| At least 90% of matched books \(9 of 10\) \|/);
+  assert.match(versions, /\| Books with validity difference at least 2 \| At most 1,/);
+  assert.match(versions, /lines of at most 500 characters/);
+  assert.doesNotMatch(versions, /real Anthropic API response|FILE: packets\/NNN\.txt|132 planned calls|Provide no tools/);
+});
+
 test('p2 calibration fixes packet delivery, hindsight dating and failure exclusion', async () => {
   const versions = (await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 
-  assert.match(versions, /FILE: packets\/NNN\.txt/);
-  assert.match(versions, /Provide no tools/);
-  assert.match(versions, /control-only limitation/);
   assert.match(versions, /PUBLISHED date is later than the\s+hindsight block's "as of" date/);
   assert.match(versions, /"as of mid-2026" as\s+2026-07-21/);
-  assert.match(versions, /exclude that book from both arms/);
+  assert.match(versions, /exclude\s+that\s+book\s+from\s+both\s+arms/);
   assert.doesNotMatch(versions, /leave the gate incomplete/);
   // Report-only figures share the gate's denominator: an excluded book's surviving runs never skew one arm.
   assert.match(versions, /retained\s+matched\s+books\s+only/);
@@ -891,12 +905,69 @@ test('p2 preserves all three type blocks with only book changed to work', async 
   assert.deepEqual(typeBlocks(versions), originalBlocks.map((block) => block.replace(/\bbook\b/g, 'work')));
 });
 
-test('p2 stays a candidate with a disclosed unrun calibration gate', async () => {
-  const versions = await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8');
+test('p2 calibration outputs are committed and the activation record matches their data', async () => {
+  const versions = (await readFile(new URL('../harness/prompt_versions.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  const runDirectory = new URL('../harness/calibration-runs/p2/', import.meta.url);
+  const run = JSON.parse(await readFile(new URL('run.json', runDirectory), 'utf8'));
+  const schema = JSON.parse(await readFile(new URL('../harness/output_schema.json', import.meta.url), 'utf8'));
+  const median = (values) => [...values].sort((a, b) => a - b)[1];
+  const outputs = {};
 
+  for (const arm of ['control', 'candidate']) {
+    const files = (await readdir(new URL(`${arm}/`, runDirectory))).sort();
+    assert.equal(files.length, 30, `${arm} must hold 30 run outputs`);
+    for (const file of files) {
+      const output = JSON.parse(await readFile(new URL(`${arm}/${file}`, runDirectory), 'utf8'));
+      assert.deepEqual(validateAgainstSchema(schema, output), [], `${arm}/${file} must satisfy output_schema.json`);
+      assert.equal(output.pos, Number(file.slice(0, 3)), `${arm}/${file} must review its own position`);
+      (outputs[`${arm}:${output.pos}`] ??= []).push(output);
+    }
+  }
+
+  // Every per-book median and gate figure in run.json must follow from the committed outputs.
+  assert.deepEqual(run.sample, [9, 18, 36, 45, 54, 63, 72, 81, 99, 108]);
+  const deltas = { validity: [], evidence: [] };
+  for (const book of run.per_book) {
+    for (const arm of ['control', 'candidate']) {
+      assert.equal(book[arm].validity_median, median(outputs[`${arm}:${book.pos}`].map((output) => output.validity_rating)));
+      assert.equal(book[arm].evidence_median, median(outputs[`${arm}:${book.pos}`].map((output) => output.evidence_quality)));
+    }
+    deltas.validity.push(book.candidate.validity_median - book.control.validity_median);
+    deltas.evidence.push(book.candidate.evidence_median - book.control.evidence_median);
+  }
+  const mean = (values) => Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 1000) / 1000;
+  assert.equal(run.gate.mean_validity_delta, mean(deltas.validity));
+  assert.equal(run.gate.mean_evidence_delta, mean(deltas.evidence));
+  assert.equal(run.gate.passed_numerically, true);
+
+  // Transcripts expose API request IDs; every attempt keeps them.
+  assert.doesNotMatch(run.runtime.api_request_ids, /unavailable/);
+  for (const entry of run.runs) {
+    for (const attempt of entry.attempts) {
+      assert.ok(
+        attempt.request_ids.length > 0 && attempt.request_ids.every((id) => /^req_[A-Za-z0-9]+$/.test(id)),
+        `${attempt.label} must record its API request IDs`
+      );
+    }
+  }
+  // Coverage headers of the run reported only first and last pages; run.json discloses the gaps.
+  for (const book of run.books) {
+    const missing = [];
+    for (let page = book.text_pages[0]; page <= book.text_pages.at(-1); page += 1) {
+      if (!book.text_pages.includes(page)) missing.push(page);
+    }
+    assert.deepEqual(book.missing_pages_within_range, missing, `book ${book.pos} must list pages missing inside its range`);
+  }
+  assert.doesNotMatch(versions, /request IDs are not exposed|request IDs cannot be observed/);
+  assert.match(versions, /#45, #99 and #108/);
+
+  const signed = (value) => `${value < 0 ? '-' : '+'}${Math.abs(value).toFixed(2)}`;
   assert.match(versions, /\| p1 \| FROZEN \|/);
   assert.match(versions, /\| p2 \| CANDIDATE \|/);
-  assert.match(versions, /\*\*Verdict: NOT RUN — p2 remains CANDIDATE\.\*\*/);
-  assert.match(versions, /API calls: \*\*0\*\*/);
-  assert.match(versions, /\[Activation record\]\(#activation-record\)/);
+  assert.match(versions, /\*\*Verdict: PASSED — 10-book calibration on partial text\. p2 remains CANDIDATE until activation\.\*\*/);
+  assert.ok(versions.includes(`| Mean T − C validity | ${signed(run.gate.mean_validity_delta)} |`));
+  assert.ok(versions.includes(`| Mean T − C evidence quality | ${signed(run.gate.mean_evidence_delta)} |`));
+  assert.ok(versions.includes(`| Validity differences at most 1 | ${run.gate.validity_within_one} |`));
+  assert.match(versions, /\[`run\.json`\]\(calibration-runs\/p2\/run\.json\)/);
+  assert.doesNotMatch(versions, /Verdict: NOT RUN/);
 });
