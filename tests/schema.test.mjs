@@ -409,6 +409,17 @@ test('record schema accepts community pending and reviewed records', () => {
   assert.deepEqual(validateAgainstSchema(schema, communityReviewed), []);
 });
 
+test('schema permits required review provenance on unreviewable community and re-rated preserved records', () => {
+  const provenance = { model: 'claude-haiku-4-5-20251001', evaluated_on: '2026-09-17',
+    hindsight_version: 'v2', prompt_revision: 'p2', reviewer: 'QA maintainer' };
+  assert.deepEqual(validateAgainstSchema(schema, { ...communityPending, review_status: 'unreviewable',
+    summary: 'Insufficient readable text.', review_provenance: provenance }), []);
+  assert.deepEqual(validateAgainstSchema(schema, { ...record, review_provenance: provenance, hindsight_version: 'v2' }), []);
+  // review_status is a community field; preserved re-ratings carry provenance and a top-level stamp instead.
+  assert.notDeepEqual(validateAgainstSchema(schema, { ...record, review_status: 'reviewed',
+    review_provenance: provenance, hindsight_version: 'v2' }), []);
+});
+
 test('record schema accepts an unreviewable community record with a summary', () => {
   const candidate = {
     ...communityPending,

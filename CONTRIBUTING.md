@@ -119,11 +119,13 @@ The acceptance CLI writes the copy before atomically replacing the dataset and r
 
 ## Review and accepted changes
 
-Every pull request requires maintainer review. A data change requires an accepted rating dispute or an accepted correction issue; maintainers apply or explicitly approve the resulting patch to `data/master.json`. Rating, claim-assessment, and rationale changes require the dispute path. Metadata, link, transcription, and other factual corrections use the correction path. No drive-by rating edits are accepted, and pull requests that bypass the applicable issue record are closed.
+Every pull request requires maintainer review. A data change requires an accepted rating dispute or an accepted correction issue; maintainers apply or explicitly approve the resulting patch to `data/master.json`. **Exception:** rating a pending community record is a maintainer-run review PR using ACTIVE p2 and the current hindsight version, and needs neither a dispute nor a correction issue. Follow [Run a p2 review](harness/README.md#run-a-p2-review). Changes to an existing rating, claim assessment or rationale require the dispute path. Metadata, link, transcription, and other factual corrections use the correction path. No drive-by rating edits are accepted, and pull requests that bypass the applicable issue record are closed.
 
 No contribution may modify `data/original-master.json`. It is the permanent launch-state evidence, not a second editable copy of the canonical dataset.
 
 An accepted change never erases the historical assessment. The affected rationale or claim note preserves the original assessment visibly inside an `ADJUDICATED` note, followed by the new conclusion, evidence, and adjudication date. This keeps the audit trail inspectable instead of rewriting history.
+
+A dispute re-rating uses the ACTIVE prompt (currently p2) and current hindsight version (currently v2), and stamps both in `review_provenance` along with model, evaluation date and reviewer. A re-rated preserved record (pos 1–250) also sets top-level `hindsight_version` to the same version. A pure maintainer adjudication sets `review_provenance.model` to `maintainer-adjudication`; do not attribute a human decision to a model run.
 
 ## Author right of reply
 
@@ -138,6 +140,6 @@ Use the [correction form](https://github.com/ErranttVenture/superstonk-dd-librar
 
 ## Re-running the review
 
-The [recovered harness](harness/README.md) supports one-book evaluation with another model using the same rubric and structured output contract. Record the model, evaluation date, hindsight version (the current facts block is assembled from [harness/hindsight.md](harness/hindsight.md); new facts or corrections go through [harness/ERRATA.md](harness/ERRATA.md)), prompt revision, and any adjudication so results can be compared responsibly. To challenge a hindsight fact, use the correction form citing `harness/hindsight.md` as the location, with primary-source evidence; accepted or rejected, the outcome is recorded as an ERRATA entry.
+New community reviews and dispute re-ratings use [ACTIVE p2 in its calibrated runtime](harness/README.md#run-a-p2-review): a Claude Code workflow subagent with `model: 'haiku'` (Claude Haiku 4.5), Read and StructuredOutput. A review run elsewhere is not p2-calibrated. Record the model, evaluation date, current hindsight version (assembled from [harness/hindsight.md](harness/hindsight.md)), prompt revision and reviewer through the documented record mapping. p1 with v1 is reserved for deliberate July reproduction. New facts or corrections go through [harness/ERRATA.md](harness/ERRATA.md). To challenge a hindsight fact, use the correction form citing `harness/hindsight.md` as the location, with primary-source evidence; accepted or rejected, the outcome is recorded as an ERRATA entry.
 
 The published review data and reports use CC BY-SA 4.0. If you publish same-rubric re-ratings or an adapted dataset, share them back under the same license and include enough provenance to reproduce or audit the changes. Opening an issue or pull request with the resulting dataset is the preferred way to return that work to the community.

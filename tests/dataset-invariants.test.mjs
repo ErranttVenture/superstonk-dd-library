@@ -13,6 +13,88 @@ const baseline = Array.from({ length: 250 }, (_, index) => ({
 }));
 const community = (pos) => ({ pos, title: `Submission ${pos}`, source_corpus: 'community' });
 
+const provenance = (overrides = {}) => ({
+  model: 'claude-haiku-4-5-20251001', evaluated_on: '2026-09-17',
+  hindsight_version: 'v2', prompt_revision: 'p2', reviewer: 'QA maintainer', ...overrides
+});
+
+test('reviewed and unreviewable community records require provenance; pending records do not', () => {
+  for (const review_status of ['reviewed', 'unreviewable']) {
+    const record = { ...community(251), uploaded: '2026-08-16', review_status };
+    for (const missing of [undefined, null]) {
+      record.review_provenance = missing;
+      assert.match(checkDatasetInvariants([...baseline, record], baseline).errors.join('\n'), /pos 251.*review_provenance/);
+    }
+    record.review_provenance = provenance();
+    assert.deepEqual(checkDatasetInvariants([...baseline, record], baseline).errors, []);
+  }
+  assert.deepEqual(checkDatasetInvariants([...baseline, { ...community(251), review_status: 'pending' }], baseline).errors, []);
+});
+
+test('community provenance rejects p1 and dates after the selected hindsight version', () => {
+  const record = { ...community(251), uploaded: '2026-07-21', review_provenance: provenance() };
+  record.review_provenance.prompt_revision = 'p1';
+  assert.match(checkDatasetInvariants([...baseline, record], baseline).errors.join('\n'), /pos 251.*p1/);
+  for (const [version, boundary, later] of [['v1', '2026-07-21', '2026-07-22'], ['v2', '2026-08-16', '2026-08-17']]) {
+    record.review_provenance = provenance({ hindsight_version: version });
+    record.uploaded = boundary;
+    assert.deepEqual(checkDatasetInvariants([...baseline, record], baseline).errors, []);
+    record.uploaded = later;
+    assert.match(checkDatasetInvariants([...baseline, record], baseline).errors.join('\n'), /pos 251.*after.*cutoff/);
+  }
+  record.review_provenance = provenance({ hindsight_version: 'v999' });
+  assert.match(checkDatasetInvariants([...baseline, record], baseline).errors.join('\n'), /pos 251.*Unknown hindsight version/);
+});
+
+test('pending community records must not carry review provenance', () => {
+  const record = { ...community(251), uploaded: '2026-08-16', review_status: 'pending', review_provenance: provenance() };
+  assert.match(checkDatasetInvariants([...baseline, record], baseline).errors.join('\n'), /pos 251.*pending.*review_provenance/);
+});
+
+test('reviews and dispute re-ratings must stamp a review prompt version, never p1 or an unregistered one', () => {
+  for (const revision of ['p1', 'p9']) {
+    const submission = { ...community(251), uploaded: '2026-08-16', review_status: 'reviewed', review_provenance: provenance({ prompt_revision: revision }) };
+    assert.match(checkDatasetInvariants([...baseline, submission], baseline).errors.join('\n'), new RegExp(`pos 251.*${revision}`));
+    const master = structuredClone(baseline);
+    Object.assign(master[8], { validity_rating: 2, hindsight_version: 'v2', review_provenance: provenance({ prompt_revision: revision }) });
+    assert.match(checkDatasetInvariants(master, baseline).errors.join('\n'), new RegExp(`pos 9.*${revision}`));
+  }
+  const adjudicated = structuredClone(baseline);
+  Object.assign(adjudicated[8], { validity_rating: 2, hindsight_version: 'v2', review_provenance: provenance({ model: 'maintainer-adjudication' }) });
+  assert.deepEqual(checkDatasetInvariants(adjudicated, baseline).errors, []);
+});
+
+test('each changed preserved assessment requires provenance and a top-level hindsight version', () => {
+  for (const [field, value] of Object.entries({ validity_rating: 3, evidence_quality: 4, key_claims: [{ claim: 'Changed' }] })) {
+    const originals = structuredClone(baseline);
+    originals[8][field] = value;
+    const master = structuredClone(originals);
+    assert.deepEqual(checkDatasetInvariants(master, originals).errors, [], 'structurally equal claim objects are unchanged');
+    master[8][field] = field === 'key_claims' ? [{ claim: 'Re-rated' }] : 2;
+    let errors = checkDatasetInvariants(master, originals).errors.join('\n');
+    assert.match(errors, /pos 9.*review_provenance/, field);
+    assert.match(errors, /pos 9.*top-level hindsight_version/, field);
+    master[8].review_provenance = provenance();
+    assert.match(checkDatasetInvariants(master, originals).errors.join('\n'), /pos 9.*top-level hindsight_version/);
+    master[8].hindsight_version = 'v2';
+    assert.deepEqual(checkDatasetInvariants(master, originals).errors, []);
+    delete master[8].review_provenance;
+    assert.match(checkDatasetInvariants(master, originals).errors.join('\n'), /pos 9.*review_provenance/);
+    delete master[8][field];
+    assert.match(checkDatasetInvariants(master, originals).errors.join('\n'), /pos 9.*review_provenance/, 'removing an assessment also changes it');
+  }
+});
+
+test('top-level and provenance hindsight versions must agree on preserved and community records', () => {
+  for (const pos of [9, 251]) {
+    const master = [...structuredClone(baseline), community(251)];
+    Object.assign(master[pos - 1], { uploaded: '2026-07-21', hindsight_version: 'v1', review_provenance: provenance() });
+    assert.match(checkDatasetInvariants(master, baseline).errors.join('\n'), new RegExp(`pos ${pos}.*hindsight_version.*match`));
+    master[pos - 1].hindsight_version = 'v2';
+    assert.deepEqual(checkDatasetInvariants(master, baseline).errors, []);
+  }
+});
+
 test('accepts the preserved dataset with no community records', () => {
   const result = checkDatasetInvariants(baseline, baseline);
 
@@ -144,6 +226,7 @@ test('repository invariants reject uppercase tracking duplicates of original rec
 
 test('required repository validation CLI rejects manually edited credential links and tracking duplicates', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dd-validation-'));
+  // Only scripts/ and data/: repository validation must not depend on harness documentation.
   await cp(new URL('../scripts/', import.meta.url), join(root, 'scripts'), { recursive: true });
   await mkdir(join(root, 'data'));
   for (const file of ['schema.json', 'original-master.json']) {

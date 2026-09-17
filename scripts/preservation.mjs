@@ -41,19 +41,31 @@ async function assertRegularPath(root, path, io = fs) {
   if (!(await io.stat(current)).isFile()) throw new Error('Preserved text must be a regular file.');
 }
 
+// Verifies a record's preserved copy (canonical path, no symbolic links, SHA-256) and returns
+// the verified bytes, so callers use exactly what was checked.
+export async function readPreservedCopy(record, root) {
+  const copy = record.submission.preserved_text;
+  if (!COPY.test(copy.path) || copy.path !== `submissions/${issueNumber(record.submission.issue)}/dd.md`) {
+    throw new Error('Preserved path must match its canonical submission issue.');
+  }
+  await assertRegularPath(root, copy.path);
+  const bytes = await fs.readFile(join(root, copy.path));
+  if (digest(bytes) !== copy.sha256) throw new Error('Preserved text SHA-256 mismatch.');
+  return bytes;
+}
+
+export function preservedCopyError(record, error) {
+  return `Record ${record.pos}: ${error.code === 'ENOENT' ? 'Preserved text file is missing.' : error.message}`;
+}
+
 export async function validatePreservedFiles(records, root) {
   const errors = [];
   for (const record of records) {
-    const copy = record.submission?.preserved_text;
-    if (!copy) continue;
+    if (!record.submission?.preserved_text) continue;
     try {
-      if (!COPY.test(copy.path) || copy.path !== `submissions/${issueNumber(record.submission.issue)}/dd.md`) {
-        throw new Error('Preserved path must match its canonical submission issue.');
-      }
-      await assertRegularPath(root, copy.path);
-      if (digest(await fs.readFile(join(root, copy.path))) !== copy.sha256) throw new Error('Preserved text SHA-256 mismatch.');
+      await readPreservedCopy(record, root);
     } catch (error) {
-      errors.push(`Record ${record.pos}: ${error.code === 'ENOENT' ? 'Preserved text file is missing.' : error.message}`);
+      errors.push(preservedCopyError(record, error));
     }
   }
   return errors;
