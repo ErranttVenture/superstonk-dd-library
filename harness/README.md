@@ -19,8 +19,8 @@ This directory documents and supports a reproducible, model-neutral version of t
 - `output_schema.json` — **recovered verbatim** (`SCHEMA`, converted to JSON Schema with property names, order, and the required-fields list unchanged).
 - `calibration.md` — **hybrid.** The calibration statistics and adjudication record are drawn directly from the immutable `reports/REPORT.md`, not reconstructed guesses, and carry over unchanged. `verifyPrompt()` and `VERIFY_SCHEMA`, the prompt and schema that produced that calibration sample, are now **recovered verbatim** alongside them.
 - `hindsight.md` — **maintained.** The current versioned ground truth; new reviews assemble their facts block from it. Not a recovered artifact.
-- [`prompt_versions.md`](prompt_versions.md) — **maintained.** Frozen p1 references and the full p2 candidate, packet contract and calibration gate. p2 remains CANDIDATE: its calibration gate passed on 2026-09-16 (10 books, partial text) and activation is pending, so current review routing is unchanged.
-- [`assemble_review.mjs`](assemble_review.mjs) — **maintained.** Model-neutral assembly of review packets and p1/p2 prompts from the recovered sources and `prompt_versions.md`; never invokes a model.
+- [`prompt_versions.md`](prompt_versions.md) — **maintained.** Frozen p1 references and ACTIVE p2, its packet contract and passed calibration gate (2026-09-16, 10 books, partial text). New community DDs and dispute re-ratings use p2 in the calibrated runtime below.
+- [`assemble_review.mjs`](assemble_review.mjs) — **maintained.** Builds hash-verified p2 packets from preserved community copies outside the repository, and assembles p1/p2 prompts from the recovered sources and `prompt_versions.md`; never invokes a model.
 - `ERRATA.md` — **maintained.** The audit trail of challenges to the facts block; never sent to a reviewer.
 - `extract_bookcase.mjs` — still reconstructs bookcase inventory extraction. Not part of the recovered review workflow script; no source has surfaced for it.
 - `extract_book_text.mjs` — still reconstructs single-book and bounded-inventory page-text extraction. Same as above. As of September 2026, `fliphtml5.com` book pages sit behind a Cloudflare bot challenge and the `online.fliphtml5.com` reader has no text layer, so live fetches return no text; `--html <file>` parses a book page saved from a browser, and markers in the current `P:NN` format are accepted.
@@ -60,17 +60,43 @@ Inventory extraction defaults to four concurrent requests and never exceeds the 
 
 Inventory mode only extracts text. It does not invoke a model, review a book, or perform the 214-book evaluation.
 
-## Insert a review model
+## Run a p2 review
 
-The recovered `review_prompt.md` template expects the book as a **file the model reads**, not text pasted into the prompt — that is how the original run actually worked (each agent had a `Read` tool and was pointed at a packet file).
+p2 is ACTIVE for new community DDs and dispute re-ratings. Its calibrated runtime is a Claude Code workflow subagent created with `agent()` and `model: 'haiku'` (Claude Haiku 4.5). A review run anywhere else is not p2-calibrated. See [`prompt_versions.md`, "Runtime"](prompt_versions.md#runtime) for the runtime and transcript-audit requirements. Model invocation stays outside this repository.
 
-1. Select one canonical record from `data/master.json` for its metadata (title, byline, official page count, upload date), and decide its type: pre-classified compilation (`'c'`), periodical (`'n'`), or original work (default).
-2. Run the one-book extractor to get its ordered page text, then assemble a packet file: a metadata header (title, byline, official page count, upload date, and a text-coverage note — full text or a sample) followed by the page-labeled book text. This is exactly what `review_prompt.md`'s STEP 1 describes reading.
-3. Point `{{BOOK_PACKET_PATH}}` in `review_prompt.md` at that packet file, substitute in the one type-specific block matching step 1's classification, and expand `${HINDSIGHT}` with the current assembled facts block from [`hindsight.md`](hindsight.md) (see step 5). Send the completed prompt to the model of your choice. Where supported, configure the model API for structured output using `output_schema.json`.
-4. Require the response to be only the JSON object, then validate it against `output_schema.json` before mapping review fields back into a canonical record. (`{{REVIEW_OUTPUT_PATH}}` in the template only mattered for the original agent runtime's own `Write`-tool step — a direct API call can just capture the structured response and skip it.)
-5. Record the model, evaluation date, hindsight version, prompt revision, and any adjudication. The `HINDSIGHT` block embedded in `review_prompt.md` is **v1** — frozen as the historical record of the July run. A new review assembles the current block per the "Assembling the block for a review" section of [`hindsight.md`](hindsight.md) and records the version used (currently `hindsight_version: v2`) — recorded on the canonical record via the optional top-level `hindsight_version` field, and in the run's own metadata or notes for the per-book AI output, which uses the recovered `output_schema.json` and deliberately has no such field (see [`hindsight.md`](hindsight.md)); send the embedded v1 block only when deliberately reproducing the original run, and record that as `hindsight_version: v1`. New facts or corrections must go through [`ERRATA.md`](ERRATA.md) and produce a new hindsight version — never a silent replacement of the block — and `ERRATA.md` itself is never included in a reviewer's prompt.
+Check the work's publication date against the current hindsight version before review. The current block is **v2**, dated **2026-08-16**. A newer work needs a newer facts version first, through [`hindsight.md`](hindsight.md) and [`ERRATA.md`](ERRATA.md); never silently replace the block or send the ERRATA audit trail to the reviewer. The assembler refuses a work published after its selected facts date.
 
-Model invocation is intentionally not bundled because providers expose different APIs and credentials. The repository does not launch or batch a model and does not automatically perform the full 214-book run.
+1. **Build the packet.** Select the canonical record and an evaluation date. For a community record with `submission.preserved_text`, run from the repository root (replace the angle-bracket placeholders):
+
+   ```text
+   node harness/assemble_review.mjs --pos <n> --packet-out <absolute path> --evaluated-on <YYYY-MM-DD>
+   ```
+
+   Use a new file in an existing directory outside the repository, such as a temporary directory. The CLI verifies the copy's canonical path and SHA-256, removes the attribution through the first `---` line, and preserves the remaining Markdown body exactly. It refuses an internal output path, an existing output file, a missing preserved copy or a hash mismatch. Long Markdown lines remain intact; check Read responses for truncation and obtain the complete text before accepting a full-text review. For a preserved July book being re-rated through a dispute, use the extractor and `buildPacket(record, pages, { contract: 'p2', evaluatedOn })` from `assemble_review.mjs`, writing the packet outside this repository with accurate page coverage. Community records without a preserved copy use the manual capture path below.
+
+2. **Assemble the prompt.** Use the same absolute packet path:
+
+   ```text
+   node harness/assemble_review.mjs --pos <n> --prompt p2 --hindsight v2 --packet <absolute path>
+   ```
+
+   Standard output is the assembled prompt. The assembler selects the type block from the canonical record and expands the unchanged rubric and current hindsight facts. Keep the prompt, packet and run metadata outside the repository.
+
+3. **Run the calibrated workflow subagent.** Give the assembled prompt as its task, use `model: 'haiku'`, and set its structured-output schema to the parsed contents of `harness/output_schema.json`. It reads the packet with its Read tool and returns through StructuredOutput. Save the returned JSON and audit the transcript for the reported model (`claude-haiku-4-5-20251001`), complete packet reads, API request IDs and unexpected tool use. Record evaluation date, packet coverage, prompt and hindsight versions, runtime settings and any limitations; temperature and `max_tokens` are unavailable in this runtime. Do not treat a different runtime or model as p2-calibrated.
+
+4. **Validate the returned result.** Use `validateAgainstSchema` from `scripts/schema-validator.mjs` with `output_schema.json` and require an empty errors array. For example, from the repository root, replacing the result path with the external JSON file:
+
+   ```text
+   node --input-type=module -e 'import { readFile } from "node:fs/promises"; import { validateAgainstSchema } from "./scripts/schema-validator.mjs"; const schema = JSON.parse(await readFile("harness/output_schema.json", "utf8")); const output = JSON.parse(await readFile(process.argv[1], "utf8")); const errors = validateAgainstSchema(schema, output); if (errors.length) { console.error(errors); process.exitCode = 1; }' <absolute result.json path>
+   ```
+
+   Also confirm that `output.pos` matches the selected record. Keep failed output out of the dataset; a schema-valid response alone does not establish that the text supports a fair rating.
+
+5. **Map the reviewed result into the canonical record.** Copy every `output_schema.json` field except `pos`. Set `constituents` to `[]` when the output omits it, and set `rating_reconciled: false` and `review_status: "reviewed"`. Add `review_provenance` with `model: "claude-haiku-4-5-20251001"`, `evaluated_on` (the actual evaluation date, matching the packet), `hindsight_version: "v2"`, `prompt_revision: "p2"`, and `reviewer` (the responsible maintainer). Keep canonical metadata and the submission unchanged. A dispute re-rating of a preserved record (pos 1–250) also sets top-level `hindsight_version` to the same version; preserve the original assessment in an `ADJUDICATED` note as [CONTRIBUTING.md](../CONTRIBUTING.md#review-and-accepted-changes) requires. Do not backfill the original 250.
+
+   When a community work's text cannot support a fair rating, use `review_status: "unreviewable"`, explain why in `summary`, add no rating fields, and still add `review_provenance`. This is the unrated mapping; do not copy a forced rating from the model or fabricate a schema-valid model response. If this is a pure maintainer adjudication rather than a model review, use `review_provenance.model: "maintainer-adjudication"` as CONTRIBUTING specifies. Run `npm test` and `npm run validate` before submitting the maintainer review PR.
+
+p1 with v1 is reserved for deliberately reproducing the July run; its recovered Write step and output-path substitution remain part of that historical procedure. Activation performs no reviews: record 251 remains pending for a later PR.
 
 ## Current live status
 
@@ -78,8 +104,8 @@ On 2026-08-15, `node harness/extract_bookcase.mjs https://fliphtml5.com/bookcase
 
 ## Reviewing a community submission
 
-Community records at position 251 and above enter the dataset with `review_status: "pending"` and no rating. Promoting one to `reviewed` uses the same rubric, packet, and output contract as the original run, with two differences.
+Community records at position 251 and above enter the dataset with `review_status: "pending"` and no rating. Their first rating is a maintainer-run review PR using ACTIVE p2 and the current hindsight version, following [Run a p2 review](#run-a-p2-review). It needs neither a rating-dispute issue nor a correction issue. The July rubric and output schema remain unchanged.
 
-Text comes from the preserved copy when one exists. If the record has `submission.preserved_text`, use the text after the first `---` line of that hash-verified file. Otherwise capture it by hand: `extract_book_text.mjs` understands FlipHTML5 only, so for a Reddit post, a Substack essay, or a hosted PDF, capture the text manually, keep it outside this repository, and record how and when it was captured.
+Text comes from the preserved copy when one exists. If the record has `submission.preserved_text`, use the hash-verified packet CLI above. Otherwise capture it by hand: `extract_book_text.mjs` understands FlipHTML5 only, so for a Reddit post, a Substack essay, or a hosted PDF, capture the text manually, keep it outside this repository, and record how and when it was captured. Use `buildPacket(record, text, { contract: 'p2', evaluatedOn })` for full captured text, or ordered page objects for a labeled sample, then continue at prompt assembly. The preserved-copy CLI deliberately refuses this case.
 
-Every community review must populate `review_provenance` with `model`, `evaluated_on`, `hindsight_version`, `prompt_revision` (a prompt version such as `p1`, never a file or commit reference), and `reviewer`. Unlike the original run, community reviews accumulate across models and dates, and a rating without that block cannot be reproduced or fairly compared. Where the captured text cannot support a fair judgment, set `review_status` to `unreviewable` and record why in `summary` rather than forcing a rating.
+Both `reviewed` and `unreviewable` community records require `review_provenance`, using the mapping above. `npm run validate` rejects missing provenance, p1 community stamps, publication dates later than the stamped hindsight version, changed preserved assessments without provenance and top-level hindsight stamps, and conflicting hindsight fields. The current stamps are p2, v2 and `claude-haiku-4-5-20251001`; p1 was never calibrated for community works.

@@ -44,7 +44,8 @@ be graded fairly. This file is not a rolling macro commentary.
 `ERRATA.md` is the audit trail — it is never included in a reviewer's prompt. Reviewers
 receive only the assembled facts block. To run a v2-graded review, expand the
 `${HINDSIGHT}` placeholder — it appears in both [`review_prompt.md`](review_prompt.md)'s
-review prompt and [`calibration.md`](calibration.md)'s verify prompt — with, in order:
+review prompt and [`calibration.md`](calibration.md)'s verify prompt, and in the p2
+review and verify prompts in [`prompt_versions.md`](prompt_versions.md) — with, in order:
 
 1. The heading line `VERIFIED HINDSIGHT FACTS (as of 2026-08-16 — treat as ground truth
    when assessing claims/predictions):`
@@ -55,7 +56,7 @@ review prompt and [`calibration.md`](calibration.md)'s verify prompt — with, i
    appended verbatim, including their grading guidance.
 
 Record `hindsight_version: v2` alongside the model, evaluation date, and prompt revision
-(see the harness [`README.md`](README.md), "Insert a review model", step 5). A review
+(see the harness [`README.md`](README.md#run-a-p2-review), "Run a p2 review", step 5). A review
 assembled any other way must not be recorded as v2-graded.
 
 A verify/calibration pass must expand the same assembled version as the reviews it

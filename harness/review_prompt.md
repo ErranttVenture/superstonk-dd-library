@@ -9,8 +9,8 @@
 > of this file is ever edited.
 
 > **Prompt versions.** This recovered prompt is frozen as p1. The maintained
-> [`prompt_versions.md`](prompt_versions.md) records the p2 candidate and its
-> calibration gate. p2 is not active; the verbatim blocks below remain unchanged.
+> [`prompt_versions.md`](prompt_versions.md) records p2 and its passed calibration
+> gate. p2 is ACTIVE for new community DDs and dispute re-ratings; the verbatim blocks below remain unchanged.
 
 ## Placeholder substitution
 

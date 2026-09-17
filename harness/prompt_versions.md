@@ -1,6 +1,6 @@
 **Provenance: MAINTAINED.** This version registry is a maintained document, not a
-recovered artifact. The p1 sources remain frozen; the complete p2 calibration
-candidate is recorded below.
+recovered artifact. The p1 sources remain frozen; the complete calibrated p2
+prompt is recorded below.
 
 # Review prompts — versioned instructions
 
@@ -9,12 +9,12 @@ candidate is recorded below.
 | Version | Status | Text and scope |
 |---|---|---|
 | p1 | FROZEN | [`review_prompt.md`](review_prompt.md), including its three type blocks, plus the verify prompt in [`calibration.md`](calibration.md), incorporated by reference and not duplicated here. Historical July reproduction. |
-| p2 | CANDIDATE | The full text below. Intended for new community DDs and dispute re-ratings only. The calibration gate passed on 2026-09-16 (10-book calibration on partial text); see the [Activation record](#activation-record). |
+| p2 | ACTIVE | The full text below. Active for new community DDs and dispute re-ratings as of 2026-09-17 in the [activation PR](https://github.com/ErranttVenture/superstonk-dd-library/compare/main...harness/activate-p2). The calibration gate passed on 2026-09-16 (10-book calibration on partial text); see the [Activation record](#activation-record). |
 
-p2 becomes **ACTIVE** only after the gate below passes, its measured results and
-calibration run are linked here, and the activation change routes reviews to it.
-The gate has passed; until activation, this document does not route current
-reviews to p2.
+p2 is **ACTIVE** for new community DDs (pos 251 onward) and dispute re-ratings.
+Use the calibrated runtime below with the current hindsight version; see
+[`README.md`, "Run a p2 review"](README.md#run-a-p2-review). p1 stays **FROZEN**
+and is used only for deliberate reproduction of the July run.
 
 Once a version is superseded, retain its full text here and mark it **FROZEN**;
 never silently replace it. p1 remains incorporated by reference to its frozen
@@ -120,14 +120,14 @@ Sampled coverage lists every contiguous range of included pages (for example, `s
 
 Text limit: use the full text up to 400,000 characters. Past that, include whole pages up to the limit and mark the coverage as a sample.
 
-Line width: wrap text at spaces into lines of at most 500 characters, so the reviewer's Read tool never truncates a line. Wrapping changes only line breaks; a single token longer than 500 characters is split. [`assemble_review.mjs`](assemble_review.mjs) builds packets to this contract.
+Line width for extracted page text: wrap text at spaces into lines of at most 500 characters, so the reviewer's Read tool never truncates a line. Wrapping changes only line breaks; a single token longer than 500 characters is split. [`assemble_review.mjs`](assemble_review.mjs) builds packets to this contract. Its community `--packet-out` mode preserves the Markdown body exactly, including long lines. Check the Read output for truncation and obtain the complete packet before accepting a review; record any incomplete coverage instead of claiming full text. This preservation rule does not change the calibration packets or results.
 
 Never commit packets. They contain third-party text.
 
 ## Assembling a p2 review
 
-These instructions define candidate assembly for calibration and, **after
-activation**, new community DDs and dispute re-ratings. They do not activate p2.
+These instructions define p2 assembly for new community DDs and dispute re-ratings,
+and document the calibration assembly that preceded activation.
 Model invocation remains outside the repository, per [`README.md`](README.md).
 
 Check hindsight dating first. If the work's PUBLISHED date is later than the
@@ -295,10 +295,13 @@ evidence. If still failing, stop with p2 CANDIDATE, a draft PR and no routing ch
 |---|---|---|---|---|
 | p1 | 2026-07-21 (original run) | Frozen review and verify prompts incorporated by reference | Preserve the recovered July instructions | [July calibration](calibration.md) |
 | p2 | 2026-09-16 | Initial candidate: living-catalog framing, packet contract, explicit time rules and JSON-only return | Support community DDs and dispute re-ratings on the same rating scale, subject to calibration | [Activation record](#activation-record) — passed 2026-09-16 (10 books, partial text) |
+| p2 | 2026-09-17 | Activation: route new community DDs and dispute re-ratings to p2; add provenance checks and preserved-copy packet CLI | Apply the passed calibration in its calibrated runtime, retaining original ratings | [Activation PR](https://github.com/ErranttVenture/superstonk-dd-library/compare/main...harness/activate-p2); [calibration record](#activation-record) |
 
 ## Activation record
 
-**Verdict: PASSED — 10-book calibration on partial text. p2 remains CANDIDATE until activation.**
+**Verdict: PASSED — 10-book calibration on partial text.**
+
+**Activated:** 2026-09-17 in [activation PR](https://github.com/ErranttVenture/superstonk-dd-library/compare/main...harness/activate-p2).
 
 An earlier attempt on 2026-09-16 could not run because no Anthropic API access was
 available. The gate then ran on 2026-09-16 under the protocol amendment above, which
@@ -352,4 +355,4 @@ Report only, over the retained matched books:
 - Candidate runs needed a schema resubmission more often (21 vs 8). Every final output was valid, but first-try conformance was worse.
 - Candidate runs marked fewer claims `cannot_assess` (10.6% vs 18.8%). Watch this in activated reviews.
 
-**Next step.** The activation change marks p2 ACTIVE by routing new community DDs and dispute re-ratings to it in `README.md` and `CONTRIBUTING.md`, and by adding the review-provenance invariants. The original ratings, record 251, the hindsight facts and current review routing are unchanged here.
+**Activation changes.** p2 is ACTIVE for new community DDs and dispute re-ratings. `README.md` and `CONTRIBUTING.md` route those reviews through the calibrated runtime, schema validation and explicit record mapping. Repository validation enforces provenance and hindsight stamps; the packet CLI builds hash-verified community packets outside the repository. Activation changes no original ratings, record 251, hindsight facts or calibration artifacts, and runs no reviews.

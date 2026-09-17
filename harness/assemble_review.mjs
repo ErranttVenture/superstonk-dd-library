@@ -2,9 +2,12 @@
 // recovered p1 sources and the maintained prompt_versions.md registry. It never invokes a
 // model; see prompt_versions.md for the calibrated runtime that consumes its output.
 import { readFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { readFile, realpath, writeFile } from 'node:fs/promises';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { digest, validatePreservedFiles } from '../scripts/preservation.mjs';
 
-const USAGE = 'Usage: node harness/assemble_review.mjs --pos <n> --prompt <p1|p2> --hindsight <v1|v2> --packet <path> [--kind <review|verify>] [--output <path>]';
+const USAGE = 'Usage: node harness/assemble_review.mjs --pos <n> --prompt <p1|p2> --hindsight <v1|v2> --packet <path> [--kind <review|verify>] [--output <path>]\n   or: node harness/assemble_review.mjs --pos <n> --packet-out <path> --evaluated-on <YYYY-MM-DD>';
 const DEFAULT_MAX_CHARS = 400000;
 const DEFAULT_LINE_WIDTH = 500;
 const PLACEHOLDERS = /\{\{BOOK_PACKET_PATH\}\}|\{\{REVIEW_OUTPUT_PATH\}\}|\{\{VERIFY_OUTPUT_PATH\}\}|\$\{typeBlock\}|\$\{HINDSIGHT\}|\$\{RUBRIC\}|\$\{TIME_RULES\}|\$\{p\}/g;
@@ -223,24 +226,68 @@ function parseArguments(arguments_) {
   const options = {};
   for (let index = 0; index < arguments_.length; index += 2) {
     const [flag, value] = [arguments_[index], arguments_[index + 1]];
-    if (!/^--(pos|prompt|hindsight|packet|kind|output)$/.test(flag) || value === undefined) {
+    if (!/^--(pos|prompt|hindsight|packet|kind|output|packet-out|evaluated-on)$/.test(flag) || !value || value.startsWith('--') || Object.hasOwn(options, flag.slice(2))) {
       throw new Error(USAGE);
     }
     options[flag.slice(2)] = value;
   }
-  if (!options.pos || !options.prompt || !options.hindsight || !options.packet) {
+  const packetMode = Object.hasOwn(options, 'packet-out');
+  if (!/^[1-9][0-9]*$/.test(options.pos ?? '') || (packetMode
+    ? (!options['evaluated-on'] || ['prompt', 'hindsight', 'packet', 'kind', 'output'].some((key) => Object.hasOwn(options, key)))
+    : (!options.prompt || !options.hindsight || !options.packet || Object.hasOwn(options, 'evaluated-on')))) {
     throw new Error(USAGE);
   }
   return options;
 }
 
-function main() {
+function isWithin(root, path) {
+  const distance = relative(root, path);
+  return distance === '' || (distance !== '..' && !distance.startsWith(`..${sep}`) && !isAbsolute(distance));
+}
+
+async function writeCommunityPacket(record, path, evaluatedOn) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(evaluatedOn) || !Number.isFinite(Date.parse(evaluatedOn)) ||
+      new Date(evaluatedOn).toISOString().slice(0, 10) !== evaluatedOn) {
+    throw new Error('--evaluated-on must be a valid YYYY-MM-DD date');
+  }
+  const copy = record.submission?.preserved_text;
+  if (record.pos <= 250 || record.source_corpus !== 'community' || !copy) {
+    throw new Error(`Record ${record.pos}: packet mode requires a community record with submission.preserved_text`);
+  }
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  const output = resolve(path);
+  // Check both the spelling and the real parent: an external junction can lead back inside.
+  if (isWithin(root, output) || isWithin(await realpath(root), await realpath(dirname(output)))) {
+    throw new Error('Packet output must be outside the repository');
+  }
+  const errors = await validatePreservedFiles([record], root);
+  if (errors.length) throw new Error(errors.join('\n'));
+  const bytes = await readFile(join(root, copy.path));
+  // Hash the actual buffer used below as well as validating the canonical preserved path.
+  if (digest(bytes) !== copy.sha256) throw new Error(`Record ${record.pos}: Preserved text SHA-256 mismatch.`);
+  const text = bytes.toString('utf8');
+  const separator = /^---\r?$/m.exec(text);
+  if (!separator) throw new Error(`Record ${record.pos}: preserved text has no --- separator line`);
+  let start = separator.index + separator[0].length;
+  if (text[start] === '\n') start += 1;
+  // Preserved Markdown is already the source text: retain its exact body, including long lines.
+  const packet = buildPacket(record, text.slice(start), { contract: 'p2', evaluatedOn, lineWidth: Infinity });
+  // Exclusive creation also refuses existing symlinks and protects previous packet files.
+  await writeFile(output, packet, { encoding: 'utf8', flag: 'wx' });
+  return output;
+}
+
+async function main() {
   try {
     const options = parseArguments(process.argv.slice(2));
     const master = JSON.parse(readFileSync(new URL('../data/master.json', import.meta.url), 'utf8'));
     const record = master.find((candidate) => candidate.pos === Number(options.pos));
     if (!record) {
       throw new Error(`No record at position ${options.pos}`);
+    }
+    if (options['packet-out']) {
+      process.stdout.write(`${await writeCommunityPacket(record, options['packet-out'], options['evaluated-on'])}\n`);
+      return;
     }
     process.stdout.write(`${assemblePrompt({
       promptVersion: options.prompt,

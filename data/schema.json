@@ -127,6 +127,8 @@
         "calibration": { "$ref": "#/$defs/calibration" },
         "insufficient_text": { "$ref": "#/$defs/boolean" },
         "hindsight_version": { "$ref": "#/$defs/hindsightVersion" },
+        "review_status": { "$ref": "#/$defs/reviewedStatus" },
+        "review_provenance": { "$ref": "#/$defs/reviewProvenance" },
         "author_response": { "$ref": "#/$defs/string" }
       },
       "additionalProperties": false
@@ -158,6 +160,7 @@
         "text_available": { "$ref": "#/$defs/boolean" },
         "source_corpus": { "$ref": "#/$defs/sourceCorpus" },
         "review_status": { "$ref": "#/$defs/unratedStatus" },
+        "review_provenance": { "$ref": "#/$defs/reviewProvenance" },
         "submission": { "$ref": "#/$defs/submission" },
         "summary": { "$ref": "#/$defs/string" },
         "author_response": { "$ref": "#/$defs/string" }

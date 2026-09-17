@@ -963,11 +963,40 @@ test('p2 calibration outputs are committed and the activation record matches the
 
   const signed = (value) => `${value < 0 ? '-' : '+'}${Math.abs(value).toFixed(2)}`;
   assert.match(versions, /\| p1 \| FROZEN \|/);
-  assert.match(versions, /\| p2 \| CANDIDATE \|/);
-  assert.match(versions, /\*\*Verdict: PASSED — 10-book calibration on partial text\. p2 remains CANDIDATE until activation\.\*\*/);
+  assert.match(versions, /\| p2 \| ACTIVE \|/);
+  assert.match(versions, /\*\*Verdict: PASSED — 10-book calibration on partial text\.\*\*/);
+  assert.match(versions, /\*\*Activated:\*\* 2026-09-17 in \[[^\]]+\]\(https:\/\/github\.com\/ErranttVenture\/superstonk-dd-library\//);
+  const changelog = versions.slice(versions.indexOf('## Changelog'), versions.indexOf('## Activation record'));
+  assert.match(changelog, /\| p2 \| 2026-09-17 \| Activation:/);
   assert.ok(versions.includes(`| Mean T − C validity | ${signed(run.gate.mean_validity_delta)} |`));
   assert.ok(versions.includes(`| Mean T − C evidence quality | ${signed(run.gate.mean_evidence_delta)} |`));
   assert.ok(versions.includes(`| Validity differences at most 1 | ${run.gate.validity_within_one} |`));
   assert.match(versions, /\[`run\.json`\]\(calibration-runs\/p2\/run\.json\)/);
   assert.doesNotMatch(versions, /Verdict: NOT RUN/);
+});
+
+test('active p2 routing describes its calibrated runtime, validation and complete record mapping', async () => {
+  const readme = await readFile(new URL('../harness/README.md', import.meta.url), 'utf8');
+  const section = readme.slice(readme.indexOf('## Run a p2 review'), readme.indexOf('## Current live status'));
+  for (const required of ['--packet-out', '--evaluated-on', '--prompt p2 --hindsight v2', "model: 'haiku'",
+    'agent()', 'StructuredOutput', 'Read', 'output_schema.json', 'validateAgainstSchema',
+    'Copy every', 'except `pos`', '`constituents` to `[]`', '`rating_reconciled: false`',
+    '`review_status: "reviewed"`', '`review_status: "unreviewable"`', 'no rating fields',
+    '`summary`', 'review_provenance', 'claude-haiku-4-5-20251001', 'evaluated_on',
+    'hindsight_version: "v2"', 'prompt_revision: "p2"', 'reviewer', 'top-level `hindsight_version`']) {
+    assert.ok(section.includes(required), `p2 procedure must describe ${required}`);
+  }
+  assert.doesNotMatch(readme, /## Insert a review model|model of your choice|p2 remains CANDIDATE/);
+  const contributing = await readFile(new URL('../CONTRIBUTING.md', import.meta.url), 'utf8');
+  const policy = contributing.slice(contributing.indexOf('## Review and accepted changes'), contributing.indexOf('## Author right of reply'));
+  assert.match(policy, /pending community record[\s\S]*maintainer-run review PR[\s\S]*neither a dispute nor a correction issue/);
+  assert.match(contributing, /ACTIVE p2/);
+  assert.match(contributing, /review_provenance\.model[^\n]*maintainer-adjudication/);
+  for (const file of ['review_prompt.md', 'calibration.md']) {
+    const text = await readFile(new URL(`../harness/${file}`, import.meta.url), 'utf8');
+    const note = text.slice(text.indexOf('> **Prompt versions.**')).split(/\r?\n\r?\n/)[0];
+    assert.match(note, /p2 is ACTIVE/);
+    assert.match(note, /calibrat/);
+    assert.doesNotMatch(note, /not active|has not run|candidate/);
+  }
 });

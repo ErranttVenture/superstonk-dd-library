@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+import { hindsightCutoff } from '../harness/assemble_review.mjs';
 import { isPublicHttpUrl, normalizeUrl } from './submission.mjs';
 
 const PRESERVED_COUNT = 250;
@@ -40,6 +42,46 @@ export function checkDatasetInvariants(master, baseline) {
       errors.push(`duplicate pos ${record.pos}`);
     }
     seen.add(record.pos);
+  }
+
+  const originals = new Map(baseline.map((record) => [record.pos, record]));
+  for (const record of master) {
+    const provenance = record.review_provenance;
+    if (record.pos > PRESERVED_COUNT) {
+      if (['reviewed', 'unreviewable'].includes(record.review_status) && !provenance) {
+        errors.push(`community record at pos ${record.pos} requires review_provenance`);
+      }
+      if (provenance) {
+        if (provenance.prompt_revision === 'p1') {
+          errors.push(`community record at pos ${record.pos} must not use p1 review provenance`);
+        }
+        try {
+          const cutoff = hindsightCutoff(provenance.hindsight_version);
+          if (!cutoff || !/^\d{4}-\d{2}-\d{2}$/.test(record.uploaded ?? '')) {
+            errors.push(`community record at pos ${record.pos} needs a publication date and a dated hindsight version`);
+          } else if (record.uploaded > cutoff) {
+            errors.push(`community record at pos ${record.pos} was published ${record.uploaded}, after the ${provenance.hindsight_version} hindsight cutoff ${cutoff}`);
+          }
+        } catch (error) {
+          errors.push(`community record at pos ${record.pos}: ${error.message}`);
+        }
+      }
+    } else {
+      const original = originals.get(record.pos);
+      const changed = original && ['validity_rating', 'evidence_quality', 'key_claims']
+        .some((field) => !isDeepStrictEqual(record[field], original[field]));
+      if (changed) {
+        if (!provenance) {
+          errors.push(`changed preserved assessment at pos ${record.pos} requires review_provenance`);
+        }
+        if (!record.hindsight_version) {
+          errors.push(`changed preserved assessment at pos ${record.pos} requires top-level hindsight_version`);
+        }
+      }
+    }
+    if (record.hindsight_version && provenance?.hindsight_version && record.hindsight_version !== provenance.hindsight_version) {
+      errors.push(`record at pos ${record.pos}: top-level hindsight_version must match review_provenance.hindsight_version`);
+    }
   }
 
   const seenUrls = new Map();
